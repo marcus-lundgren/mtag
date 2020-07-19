@@ -1,0 +1,203 @@
+from datetime import timedelta
+
+import gi
+import cairo
+from entity.application import Application
+from entity.category import Category
+from entity.loggedentry import LoggedEntry
+from entity.taggedentry import TaggedEntry
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+from gi.repository import Gdk
+from gi.repository import GObject
+import datetime
+from random import randrange
+
+
+app_names = ["Word", "Outlook", "Emacs"]
+applications = []
+for idx, n in enumerate(app_names):
+    a = Application(n, idx)
+    applications.append(a)
+
+logged_entries = []
+current_time = datetime.datetime.fromisoformat("2020-07-14")
+current_time += datetime.timedelta(hours=5)
+for i in range(0, 5):
+    minutes = randrange(30, 240)
+    elapsed_time = datetime.timedelta(minutes=minutes)
+    a = applications[i % len(applications)]
+    e = LoggedEntry(start = current_time, stop=current_time + elapsed_time, application = a, title=f"Window title {i}")
+    logged_entries.append(e)
+    current_time += elapsed_time
+
+categories = []
+category_names = ["development", "support", "management"]
+for idx, name in enumerate(category_names):
+    c = Category(db_id=idx, name=name)
+    categories.append(c)
+
+tagged_entries = []
+
+
+class GtkSpy(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title = "GtkSpy")
+        self.set_default_size(720, 400)
+        b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(b)
+
+        self.rect_start = None, None
+        self.current_mouse_pos = 0
+
+        self.drawing_area = Gtk.DrawingArea()
+        self.drawing_area.connect("draw", self._on_draw)
+        self.drawing_area.add_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK)
+        self.drawing_area.connect("motion_notify_event", self._on_motion_notify)
+        self.drawing_area.connect("button_press_event", self._on_button_press)
+        self.drawing_area.connect("button_release_event", self._on_button_release)
+
+        b.pack_start(self.drawing_area, expand=True, fill=True, padding=0)
+
+        lists_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        logged_entries_box = Gtk.ListBox()
+        tagged_entries_box = Gtk.ListBox()
+
+        lists_box.pack_start(logged_entries_box, expand=True, fill=True, padding=25)
+        lists_box.pack_end(tagged_entries_box, expand=True, fill=True, padding=25)
+        b.pack_end(lists_box, expand=True, fill=True, padding=10)
+
+        for le in logged_entries:
+            lbr = Gtk.ListBoxRow()
+            l = Gtk.Label(label=f"{le.title}@{le.application.name}")
+            lbr.add(l)
+            logged_entries_box.add(lbr)
+
+        tagged_entries_box.add(Gtk.Label(label="Tagged entry 1"))
+
+        self.timeline_side_padding = 13;
+        self.timeline_top_padding = 15;
+        self.timeline_height = 80;
+        self.pixels_per_minute = 2;
+
+        self.current_tagged_entry = None
+
+    def _on_motion_notify(self, widget, event):
+        if self.current_tagged_entry is not None:
+            stop_date = self._pixel_to_datetime(event.x)
+            self.current_tagged_entry.stop = stop_date
+        self.current_mouse_pos = event.x
+        self.drawing_area.queue_draw()
+
+    def _on_button_press(self, widget, event):
+        c = Category(name="Test")
+        start_date = self._pixel_to_datetime(event.x)
+        self.current_tagged_entry = TaggedEntry(category=c, start=start_date, stop=start_date)
+
+    def _on_button_release(self, widget, event: Gdk.EventType):
+        self.current_tagged_entry.stop = self._pixel_to_datetime(event.x)
+        tagged_entries.append(self.current_tagged_entry)
+        self.current_tagged_entry = None
+
+        # Choose category
+        list_store = Gtk.ListStore(int, str)
+        for c in categories:
+            list_store.append([c.db_id, c.name])
+
+        combobox = Gtk.ComboBox.new_with_model_and_entry(list_store)
+        combobox.connect("changed", self._on_category_combobox_changed)
+        combobox.set_entry_text_column(1)
+
+        dialog = Gtk.Dialog(title="Choose category", parent=self, destroy_with_parent=True, modal=True)
+        dialog.set_default_size(100, 100)
+        dialog.vbox.pack_start(combobox, expand=True, fill=True, padding=50)
+        dialog.add_button(Gtk.STOCK_OK, Gtk.ResponseType.OK)
+        combobox.show()
+        r = dialog.run()
+        dialog.destroy()
+        print(r)
+
+    def _on_category_combobox_changed(self, combo):
+        tree_iter = combo.get_active_iter()
+        if tree_iter is not None:
+            model = combo.get_model()
+            row_id, name = model[tree_iter][:2]
+            print("Selected: ID=%d, name=%s" % (row_id, name))
+        else:
+            entry = combo.get_child()
+            print("Entered: %s" % entry.get_text())
+
+    def _on_draw(self, w, cr: cairo.Context):
+        # Get the size
+        drawing_area_size, _ = self.drawing_area.get_allocated_size()
+        self.timeline_height = drawing_area_size.height * 0.25
+        self.timeline_top_padding = drawing_area_size.height * 0.08
+
+        # Draw the hour lines
+        hour_x_offset = (drawing_area_size.width - self.timeline_side_padding * 2) / 24
+        for h in range(0, 25):
+            # Hour line
+            hx = self.timeline_side_padding + hour_x_offset * h
+            cr.set_source_rgb(0.5, 0.5, 0.5)
+            cr.new_path()
+            cr.move_to(hx, 10)
+            cr.line_to(hx, drawing_area_size.height - 50) # Make 50 a variable (hourlineLength)
+            cr.stroke()
+
+            # Hour text
+            hour_string = str(h)
+            text_offset = 5 if len(hour_string) == 1 else 10
+            cr.move_to(hx - text_offset, drawing_area_size.height - 30)
+            cr.set_font_size(16)
+            cr.show_text(str(h))
+
+        colors = [0.2, 0.5, 0.7]
+        self.pixels_per_minute = (drawing_area_size.width - self.timeline_side_padding * 2) / (24 * 60)
+        for idx, le in enumerate(logged_entries):
+            start_x = self.pixels_per_minute * (le.start.hour * 60 + le.start.minute) + self.timeline_side_padding
+            stop_x = self.pixels_per_minute * (le.stop.hour * 60 + le.stop.minute) + self.timeline_side_padding
+
+            i = idx + 1
+            cr.set_source_rgb(colors[i % len(colors)], colors[i % len(colors)], colors[i % len(colors)])
+            cr.rectangle(start_x, self.timeline_height + self.timeline_top_padding * 2, stop_x - start_x, self.timeline_height)
+            cr.fill()
+
+        for tagged_entry in tagged_entries:
+            self._draw_tagged_entry(tagged_entry, cr)
+
+        if self.current_tagged_entry is not None:
+            self._draw_tagged_entry(self.current_tagged_entry, cr)
+
+        # Show a guiding line under the mouse cursor
+        cr.new_path()
+        cr.set_source_rgb(0.7, 0.7, 0.7)
+        cr.move_to(self.current_mouse_pos, 10)
+        cr.line_to(self.current_mouse_pos, drawing_area_size.height - 10)
+        cr.stroke()
+
+    def _draw_tagged_entry(self, tagged_entry: TaggedEntry, cr: cairo.Context):
+        start_x = self.pixels_per_minute * (tagged_entry.start.hour * 60 + tagged_entry.start.minute) + self.timeline_side_padding
+        stop_x = self.pixels_per_minute * (tagged_entry.stop.hour * 60 + tagged_entry.stop.minute) + self.timeline_side_padding
+
+        cr.set_source_rgb(0, 1, 0)
+        if tagged_entry.category is not None:
+            r, g, b = tagged_entry.category.color_rgb
+            cr.set_source_rgb(r, g, b)
+        cr.rectangle(start_x, self.timeline_top_padding, stop_x - start_x, self.timeline_height)
+        cr.fill()
+
+    def _pixel_to_datetime(self, x_position: int) -> datetime:
+        total_minutes = (x_position - self.timeline_side_padding) / self.pixels_per_minute
+        hours = total_minutes // 60
+        minutes = int(total_minutes % 60)
+        stop_date = datetime.datetime.fromisoformat("2020-07-14")
+        stop_date += datetime.timedelta(hours=hours, minutes=minutes)
+        return stop_date
+
+
+w = GtkSpy()
+w.show_all()
+w.connect("destroy", Gtk.main_quit)
+Gtk.main()
+
