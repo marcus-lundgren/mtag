@@ -10,7 +10,6 @@ from entity.taggedentry import TaggedEntry
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from gi.repository import Gdk
-from gi.repository import GObject
 import datetime
 from random import randrange
 
@@ -96,18 +95,21 @@ class GtkSpy(Gtk.Window):
         self.current_tagged_entry = TaggedEntry(category=c, start=start_date, stop=start_date)
 
     def _on_button_release(self, widget, event: Gdk.EventType):
+        # Ensure that an entry is being created.
+        if self.current_tagged_entry is None:
+            return
+
         self.current_tagged_entry.stop = self._pixel_to_datetime(event.x)
         tagged_entries.append(self.current_tagged_entry)
-        self.current_tagged_entry = None
 
         # Choose category
-        list_store = Gtk.ListStore(int, str)
+        list_store = Gtk.ListStore(str)
         for c in categories:
-            list_store.append([c.db_id, c.name])
+            list_store.append([c.name])
 
         combobox = Gtk.ComboBox.new_with_model_and_entry(list_store)
         combobox.connect("changed", self._on_category_combobox_changed)
-        combobox.set_entry_text_column(1)
+        combobox.set_entry_text_column(0)
 
         dialog = Gtk.Dialog(title="Choose category", parent=self, destroy_with_parent=True, modal=True)
         dialog.set_default_size(100, 100)
@@ -115,18 +117,37 @@ class GtkSpy(Gtk.Window):
         dialog.add_button(Gtk.STOCK_OK, Gtk.ResponseType.OK)
         combobox.show()
         r = dialog.run()
-        dialog.destroy()
+
         print(r)
 
+        # Set chosen category
+        chosen_category_name = self._get_chosen_combobox_value(combobox)
+        chosen_category = [c for c in categories if c.name == chosen_category_name]
+        if len(chosen_category) == 1:
+            chosen_category = chosen_category[0]
+        else:
+            new_category = Category(name=chosen_category_name, db_id=100)
+            categories.append(new_category)
+            chosen_category = new_category
+
+        self.current_tagged_entry.category = chosen_category
+
+        print(self._get_chosen_combobox_value(combobox))
+        self.current_tagged_entry = None
+
+        dialog.destroy()
+
     def _on_category_combobox_changed(self, combo):
+        print(f"Chosen combobox value: {self._get_chosen_combobox_value(combo)}")
+
+    def _get_chosen_combobox_value(self, combo: Gtk.ComboBox):
         tree_iter = combo.get_active_iter()
         if tree_iter is not None:
             model = combo.get_model()
-            row_id, name = model[tree_iter][:2]
-            print("Selected: ID=%d, name=%s" % (row_id, name))
-        else:
-            entry = combo.get_child()
-            print("Entered: %s" % entry.get_text())
+            return model[tree_iter][0]
+
+        return combo.get_child().get_text()
+
 
     def _on_draw(self, w, cr: cairo.Context):
         # Get the size

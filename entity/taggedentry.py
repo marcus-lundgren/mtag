@@ -13,6 +13,10 @@ class TaggedEntry():
     def category(self):
         return self._category
 
+    @category.setter
+    def category(self, value):
+        self._category = value
+
     @property
     def stop(self):
         return self._stop
