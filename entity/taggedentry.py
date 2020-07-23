@@ -7,6 +7,7 @@ class TaggedEntry():
         self.db_id = db_id
         self.start = start
         self._stop = stop
+        self.initial_position = self.start
         self._category = category
 
     @property
@@ -23,4 +24,9 @@ class TaggedEntry():
 
     @stop.setter
     def stop(self, value):
-        self._stop = value
+        if value < self.initial_position:
+            self._stop = self.initial_position
+            self.start = value
+        else:
+            self.start = self.initial_position
+            self._stop = value

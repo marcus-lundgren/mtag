@@ -59,21 +59,36 @@ class GtkSpy(Gtk.Window):
 
         b.pack_start(self.drawing_area, expand=True, fill=True, padding=0)
 
-        lists_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        logged_entries_box = Gtk.ListBox()
-        tagged_entries_box = Gtk.ListBox()
+        lists_grid = Gtk.Grid()
+        lists_grid.set_column_homogeneous(True)
+        lists_grid.set_row_homogeneous(True)
+        lists_grid.set_column_spacing(20)
 
-        lists_box.pack_start(logged_entries_box, expand=True, fill=True, padding=25)
-        lists_box.pack_end(tagged_entries_box, expand=True, fill=True, padding=25)
-        b.pack_end(lists_box, expand=True, fill=True, padding=10)
+        self.tagged_entries_box = Gtk.ListBox()
 
+        # Logged entries list
+        logged_entries_list_store = Gtk.ListStore(str, str, str, str)
         for le in logged_entries:
-            lbr = Gtk.ListBoxRow()
-            l = Gtk.Label(label=f"{le.title}@{le.application.name}")
-            lbr.add(l)
-            logged_entries_box.add(lbr)
+            logged_entries_list_store.append([le.application.name, le.title, le.start.strftime('%Y-%m-%d %H:%M:%S'), le.stop.strftime('%Y-%m-%d %H:%M:%S')])
 
-        tagged_entries_box.add(Gtk.Label(label="Tagged entry 1"))
+        self.logged_entries_tree_view = Gtk.TreeView.new_with_model(logged_entries_list_store)
+
+        for i, title in enumerate(["Application", "Title", "Start", "Stop"]):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(title, renderer, text=i)
+            self.logged_entries_tree_view.append_column(column)
+
+        # Tagged entries list
+        self.tagged_entries_list_store = Gtk.ListStore(str, str, str)
+        for tagged_entry in tagged_entries:
+            self._add_tagged_entry_to_list(tagged_entry)
+
+        self.tagged_entries_tree_view = Gtk.TreeView.new_with_model(self.tagged_entries_list_store)
+
+        for i, title in enumerate(["Category", "Start", "Stop"]):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(title, renderer, text=i)
+            self.tagged_entries_tree_view.append_column(column)
 
         self.timeline_side_padding = 13;
         self.timeline_top_padding = 15;
@@ -81,6 +96,17 @@ class GtkSpy(Gtk.Window):
         self.pixels_per_minute = 2;
 
         self.current_tagged_entry = None
+
+        self.logged_entries_tree_view.set_headers_clickable(True)
+
+        lists_grid.attach(self.logged_entries_tree_view, 0, 0, 1, 1)
+        lists_grid.attach(self.tagged_entries_tree_view, 1, 0, 1, 1)
+
+        b.pack_end(lists_grid, expand=True, fill=True, padding=10)
+
+    def _add_tagged_entry_to_list(self, tagged_entry):
+        print(f"Adding new tagged entry to list {tagged_entry.category.name}")
+        self.tagged_entries_list_store.append([tagged_entry.category.name, tagged_entry.start.strftime('%Y-%m-%d %H:%M:%S'), tagged_entry.stop.strftime('%Y-%m-%d %H:%M:%S')])
 
     def _on_motion_notify(self, widget, event):
         if self.current_tagged_entry is not None:
@@ -133,11 +159,14 @@ class GtkSpy(Gtk.Window):
         self.current_tagged_entry.category = chosen_category
 
         print(self._get_chosen_combobox_value(combobox))
+        self._add_tagged_entry_to_list(self.current_tagged_entry)
         self.current_tagged_entry = None
 
         dialog.destroy()
 
-    def _on_category_combobox_changed(self, combo):
+        self.drawing_area.queue_draw()
+
+    def _on_category_combobox_changed(self, combo: Gtk.ComboBox):
         print(f"Chosen combobox value: {self._get_chosen_combobox_value(combo)}")
 
     def _get_chosen_combobox_value(self, combo: Gtk.ComboBox):
@@ -147,7 +176,6 @@ class GtkSpy(Gtk.Window):
             return model[tree_iter][0]
 
         return combo.get_child().get_text()
-
 
     def _on_draw(self, w, cr: cairo.Context):
         # Get the size
