@@ -232,7 +232,7 @@ class GtkSpy(Gtk.Window):
         cr.set_source_rgb(0, 1, 0)
         if tagged_entry.category is not None:
             color_string = tagged_entry.category.color_rgb
-            color = Gdk.Color.parse(color_string)[1]
+            color = Gdk.color_parse(spec=color_string)
             cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
         cr.rectangle(start_x, self.timeline_top_padding, stop_x - start_x, self.timeline_height)
         cr.fill()
