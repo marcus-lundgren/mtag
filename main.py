@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 import gi
 import cairo
 from entity.application import Application
