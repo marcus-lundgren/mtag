@@ -130,7 +130,6 @@ class GtkSpy(Gtk.Window):
 
         timeline_x = self._get_timeline_x(event.x, self.drawing_area)
         self.current_tagged_entry.stop = self._pixel_to_datetime(timeline_x)
-        tagged_entries.append(self.current_tagged_entry)
 
         # Choose category
         list_store = Gtk.ListStore(str)
@@ -150,22 +149,24 @@ class GtkSpy(Gtk.Window):
 
         print(r)
 
-        # Set chosen category
-        chosen_category_name = self._get_chosen_combobox_value(combobox)
-        chosen_category = [c for c in categories if c.name == chosen_category_name]
-        if len(chosen_category) == 1:
-            chosen_category = chosen_category[0]
-        else:
-            new_category = Category(name=chosen_category_name, db_id=100)
-            categories.append(new_category)
-            chosen_category = new_category
+        if r == Gtk.ResponseType.OK:
+            # Set chosen category
+            chosen_category_name = self._get_chosen_combobox_value(combobox)
+            chosen_category = [c for c in categories if c.name == chosen_category_name]
+            if len(chosen_category) == 1:
+                chosen_category = chosen_category[0]
+            else:
+                new_category = Category(name=chosen_category_name, db_id=100)
+                categories.append(new_category)
+                chosen_category = new_category
 
-        self.current_tagged_entry.category = chosen_category
+            self.current_tagged_entry.category = chosen_category
 
-        print(self._get_chosen_combobox_value(combobox))
-        self._add_tagged_entry_to_list(self.current_tagged_entry)
+            print(self._get_chosen_combobox_value(combobox))
+            self._add_tagged_entry_to_list(self.current_tagged_entry)
+            tagged_entries.append(self.current_tagged_entry)
+
         self.current_tagged_entry = None
-
         dialog.destroy()
 
         self.drawing_area.queue_draw()
