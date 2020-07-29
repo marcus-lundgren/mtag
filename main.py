@@ -106,16 +106,18 @@ class GtkSpy(Gtk.Window):
         print(f"Adding new tagged entry to list {tagged_entry.category.name}")
         self.tagged_entries_list_store.append([tagged_entry.category.name, tagged_entry.start.strftime('%Y-%m-%d %H:%M:%S'), tagged_entry.stop.strftime('%Y-%m-%d %H:%M:%S')])
 
-    def _on_motion_notify(self, widget, event):
+    def _on_motion_notify(self, widget: Gtk.DrawingArea, event):
         if self.current_tagged_entry is not None:
-            stop_date = self._pixel_to_datetime(event.x)
+            timeline_x = self._get_timeline_x(event.x, widget)
+            stop_date = self._pixel_to_datetime(timeline_x)
             self.current_tagged_entry.stop = stop_date
         self.current_mouse_pos = event.x
-        self.drawing_area.queue_draw()
+        widget.queue_draw()
 
     def _on_button_press(self, widget, event):
         c = Category(name="Test")
-        start_date = self._pixel_to_datetime(event.x)
+        timeline_x = self._get_timeline_x(event.x, self.drawing_area)
+        start_date = self._pixel_to_datetime(timeline_x)
         self.current_tagged_entry = TaggedEntry(category=c, start=start_date, stop=start_date)
 
     def _on_button_release(self, widget, event: Gdk.EventType):
@@ -123,7 +125,8 @@ class GtkSpy(Gtk.Window):
         if self.current_tagged_entry is None:
             return
 
-        self.current_tagged_entry.stop = self._pixel_to_datetime(event.x)
+        timeline_x = self._get_timeline_x(event.x, self.drawing_area)
+        self.current_tagged_entry.stop = self._pixel_to_datetime(timeline_x)
         tagged_entries.append(self.current_tagged_entry)
 
         # Choose category
@@ -175,11 +178,22 @@ class GtkSpy(Gtk.Window):
 
         return combo.get_child().get_text()
 
-    def _on_draw(self, w, cr: cairo.Context):
+    def _get_timeline_x(self, mouse_position: float, drawing_area: Gtk.DrawingArea):
+        max_timeline_x = drawing_area.get_allocated_size()[0].width - self.timeline_side_padding - 0.00001
+        min_timeline_x = self.timeline_side_padding
+
+        timeline_x = max(mouse_position, min_timeline_x)
+        timeline_x = min(max_timeline_x, timeline_x)
+        return timeline_x
+
+
+    def _on_draw(self, w: Gtk.DrawingArea, cr: cairo.Context):
         # Get the size
-        drawing_area_size, _ = self.drawing_area.get_allocated_size()
+        drawing_area_size, _ = w.get_allocated_size()
         self.timeline_height = drawing_area_size.height * 0.25
         self.timeline_top_padding = drawing_area_size.height * 0.08
+
+        timeline_x = self._get_timeline_x(self.current_mouse_pos, w)
 
         # Draw the hour lines
         hour_x_offset = (drawing_area_size.width - self.timeline_side_padding * 2) / 24
@@ -219,8 +233,8 @@ class GtkSpy(Gtk.Window):
         # Show a guiding line under the mouse cursor
         cr.new_path()
         cr.set_source_rgb(0.7, 0.7, 0.7)
-        cr.move_to(self.current_mouse_pos, 10)
-        cr.line_to(self.current_mouse_pos, drawing_area_size.height - 10)
+        cr.move_to(timeline_x, 10)
+        cr.line_to(timeline_x, drawing_area_size.height - 10)
         cr.stroke()
 
     def _draw_tagged_entry(self, tagged_entry: TaggedEntry, cr: cairo.Context):
