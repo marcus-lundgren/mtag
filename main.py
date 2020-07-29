@@ -74,6 +74,7 @@ class GtkSpy(Gtk.Window):
         for i, title in enumerate(["Application", "Title", "Start", "Stop"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
+            column.set_sort_column_id(i)
             self.logged_entries_tree_view.append_column(column)
 
         # Tagged entries list
@@ -82,10 +83,12 @@ class GtkSpy(Gtk.Window):
             self._add_tagged_entry_to_list(tagged_entry)
 
         self.tagged_entries_tree_view = Gtk.TreeView.new_with_model(self.tagged_entries_list_store)
+        self.tagged_entries_tree_view.set_headers_clickable(True)
 
         for i, title in enumerate(["Category", "Start", "Stop"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
+            column.set_sort_column_id(i)
             self.tagged_entries_tree_view.append_column(column)
 
         self.timeline_side_padding = 13;
