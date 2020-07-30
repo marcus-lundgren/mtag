@@ -91,10 +91,10 @@ class GtkSpy(Gtk.Window):
             column.set_sort_column_id(i)
             self.tagged_entries_tree_view.append_column(column)
 
-        self.timeline_side_padding = 13;
-        self.timeline_top_padding = 15;
-        self.timeline_height = 80;
-        self.pixels_per_minute = 2;
+        self.timeline_side_padding = 13
+        self.timeline_top_padding = 15
+        self.timeline_height = 80
+        self.pixels_per_minute = 2
 
         self.current_tagged_entry = None
 
