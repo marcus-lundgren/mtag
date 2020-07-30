@@ -110,16 +110,49 @@ class GtkSpy(Gtk.Window):
         self.tagged_entries_list_store.append([tagged_entry.category.name, tagged_entry.start.strftime('%Y-%m-%d %H:%M:%S'), tagged_entry.stop.strftime('%Y-%m-%d %H:%M:%S')])
 
     def _on_motion_notify(self, widget: Gtk.DrawingArea, event):
+        timeline_x = self._get_timeline_x(event.x, widget)
+        stop_date = self._pixel_to_datetime(timeline_x)
+
+        next_mouse_pos = event.x
         if self.current_tagged_entry is not None:
-            timeline_x = self._get_timeline_x(event.x, widget)
-            stop_date = self._pixel_to_datetime(timeline_x)
-            self.current_tagged_entry.stop = stop_date
-        self.current_mouse_pos = event.x
+            datetime_used = self._set_tagged_entry_stop_date(stop_date, self.current_tagged_entry, tagged_entries)
+            if datetime_used is not None:
+                next_mouse_pos = self._datetime_to_pixel(datetime_used)
+        else:
+            for t in tagged_entries:
+                if t.contains_datetime(stop_date):
+                    start_delta = stop_date - t.start
+                    stop_delta = t.stop - stop_date
+
+                    datetime_position = t.start if start_delta < stop_delta else t.stop
+                    next_mouse_pos = self._datetime_to_pixel(datetime_position)
+                    break
+
+        self.current_mouse_pos = next_mouse_pos
         widget.queue_draw()
+
+    def _set_tagged_entry_stop_date(self, stop_date: datetime, tagged_entry: TaggedEntry, tagged_entries: list):
+        tagged_entry.stop = stop_date
+
+        creation_is_right = stop_date == tagged_entry.stop
+        date_to_use = None
+        for t in tagged_entries:
+            if creation_is_right:
+                if t.start < stop_date and t.stop > tagged_entry.start:
+                    date_to_use = t.start
+                    break
+            else:
+                if stop_date < t.stop and t.start < tagged_entry.stop:
+                    date_to_use = t.stop
+
+        if date_to_use is not None:
+            tagged_entry.stop = date_to_use
+
+        return date_to_use
 
     def _on_button_press(self, widget, event):
         c = Category(name="Test")
-        timeline_x = self._get_timeline_x(event.x, self.drawing_area)
+        timeline_x = self._get_timeline_x(self.current_mouse_pos, self.drawing_area)
         start_date = self._pixel_to_datetime(timeline_x)
         self.current_tagged_entry = TaggedEntry(category=c, start=start_date, stop=start_date)
 
@@ -129,7 +162,8 @@ class GtkSpy(Gtk.Window):
             return
 
         timeline_x = self._get_timeline_x(event.x, self.drawing_area)
-        self.current_tagged_entry.stop = self._pixel_to_datetime(timeline_x)
+        stop_date = self._pixel_to_datetime(timeline_x)
+        self._set_tagged_entry_stop_date(stop_date, self.current_tagged_entry, tagged_entries)
 
         # Choose category
         list_store = Gtk.ListStore(str)
@@ -165,6 +199,7 @@ class GtkSpy(Gtk.Window):
             print(self._get_chosen_combobox_value(combobox))
             self._add_tagged_entry_to_list(self.current_tagged_entry)
             tagged_entries.append(self.current_tagged_entry)
+            tagged_entries.sort(key=lambda t: t.start)
 
         self.current_tagged_entry = None
         dialog.destroy()
@@ -220,8 +255,8 @@ class GtkSpy(Gtk.Window):
         colors = [0.2, 0.5, 0.7]
         self.pixels_per_minute = (drawing_area_size.width - self.timeline_side_padding * 2) / (24 * 60)
         for idx, le in enumerate(logged_entries):
-            start_x = self.pixels_per_minute * (le.start.hour * 60 + le.start.minute) + self.timeline_side_padding
-            stop_x = self.pixels_per_minute * (le.stop.hour * 60 + le.stop.minute) + self.timeline_side_padding
+            start_x = self._datetime_to_pixel(le.start)
+            stop_x = self._datetime_to_pixel(le.stop)
 
             i = idx + 1
             cr.set_source_rgb(colors[i % len(colors)], colors[i % len(colors)], colors[i % len(colors)])
@@ -241,9 +276,12 @@ class GtkSpy(Gtk.Window):
         cr.line_to(timeline_x, drawing_area_size.height - 10)
         cr.stroke()
 
+    def _datetime_to_pixel(self, dt: datetime) -> float:
+        return self.pixels_per_minute * (dt.hour * 60 + dt.minute) + self.timeline_side_padding
+
     def _draw_tagged_entry(self, tagged_entry: TaggedEntry, cr: cairo.Context):
-        start_x = self.pixels_per_minute * (tagged_entry.start.hour * 60 + tagged_entry.start.minute) + self.timeline_side_padding
-        stop_x = self.pixels_per_minute * (tagged_entry.stop.hour * 60 + tagged_entry.stop.minute) + self.timeline_side_padding
+        start_x = self._datetime_to_pixel(tagged_entry.start)
+        stop_x = self._datetime_to_pixel(tagged_entry.stop)
 
         cr.set_source_rgb(0, 1, 0)
         if tagged_entry.category is not None:

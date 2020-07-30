@@ -30,3 +30,6 @@ class TaggedEntry():
         else:
             self.start = self.initial_position
             self._stop = value
+
+    def contains_datetime(self, d: datetime):
+        return self.start <= d <= self._stop
