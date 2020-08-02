@@ -1,9 +1,7 @@
 import gi
 import cairo
-from entity.application import Application
-from entity.category import Category
-from entity.loggedentry import LoggedEntry
-from entity.taggedentry import TaggedEntry
+
+import entity
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -15,7 +13,7 @@ from random import randrange
 app_names = ["Word", "Outlook", "Emacs"]
 applications = []
 for idx, n in enumerate(app_names):
-    a = Application(n, idx)
+    a = entity.Application(n, idx)
     applications.append(a)
 
 logged_entries = []
@@ -25,14 +23,14 @@ for i in range(0, 5):
     minutes = randrange(30, 240)
     elapsed_time = datetime.timedelta(minutes=minutes)
     a = applications[i % len(applications)]
-    e = LoggedEntry(start = current_time, stop=current_time + elapsed_time, application = a, title=f"Window title {i}")
+    e = entity.LoggedEntry(start = current_time, stop=current_time + elapsed_time, application = a, title=f"Window title {i}")
     logged_entries.append(e)
     current_time += elapsed_time
 
 categories = []
 category_names = ["development", "support", "management"]
 for idx, name in enumerate(category_names):
-    c = Category(db_id=idx, name=name)
+    c = entity.Category(db_id=idx, name=name)
     categories.append(c)
 
 tagged_entries = []
@@ -131,7 +129,7 @@ class GtkSpy(Gtk.Window):
         self.current_mouse_pos = next_mouse_pos
         widget.queue_draw()
 
-    def _set_tagged_entry_stop_date(self, stop_date: datetime, tagged_entry: TaggedEntry, tagged_entries: list):
+    def _set_tagged_entry_stop_date(self, stop_date: datetime, tagged_entry: entity.TaggedEntry, tagged_entries: list):
         tagged_entry.stop = stop_date
 
         creation_is_right = stop_date == tagged_entry.stop
@@ -151,10 +149,10 @@ class GtkSpy(Gtk.Window):
         return date_to_use
 
     def _on_button_press(self, widget, event):
-        c = Category(name="Test")
+        c = entity.Category(name="Test")
         timeline_x = self._get_timeline_x(self.current_mouse_pos, self.drawing_area)
         start_date = self._pixel_to_datetime(timeline_x)
-        self.current_tagged_entry = TaggedEntry(category=c, start=start_date, stop=start_date)
+        self.current_tagged_entry = entity.TaggedEntry(category=c, start=start_date, stop=start_date)
 
     def _on_button_release(self, widget, event: Gdk.EventType):
         # Ensure that an entry is being created.
@@ -190,7 +188,7 @@ class GtkSpy(Gtk.Window):
             if len(chosen_category) == 1:
                 chosen_category = chosen_category[0]
             else:
-                new_category = Category(name=chosen_category_name, db_id=100)
+                new_category = entity.Category(name=chosen_category_name, db_id=100)
                 categories.append(new_category)
                 chosen_category = new_category
 
@@ -224,7 +222,6 @@ class GtkSpy(Gtk.Window):
         timeline_x = max(mouse_position, min_timeline_x)
         timeline_x = min(max_timeline_x, timeline_x)
         return timeline_x
-
 
     def _on_draw(self, w: Gtk.DrawingArea, cr: cairo.Context):
         # Get the size
@@ -279,7 +276,7 @@ class GtkSpy(Gtk.Window):
     def _datetime_to_pixel(self, dt: datetime) -> float:
         return self.pixels_per_minute * (dt.hour * 60 + dt.minute) + self.timeline_side_padding
 
-    def _draw_tagged_entry(self, tagged_entry: TaggedEntry, cr: cairo.Context):
+    def _draw_tagged_entry(self, tagged_entry: entity.TaggedEntry, cr: cairo.Context):
         start_x = self._datetime_to_pixel(tagged_entry.start)
         stop_x = self._datetime_to_pixel(tagged_entry.stop)
 
