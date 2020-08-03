@@ -42,6 +42,8 @@ application_name = active_window.get_class_group_name()
 print(application_pid)
 application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"], stdout=subprocess.PIPE, universal_newlines=True).stdout
 print(application_path)
+application_path = application_path.replace("\0", " ")
+application_path = application_path.strip()
 print(f"{application_name} -> {active_window.get_name()}")
 
 db_connection = sqlite3.connect("test.db")
