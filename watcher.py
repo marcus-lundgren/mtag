@@ -75,7 +75,13 @@ if last_logged_entry is None:
     print("No existing logged entry, creating a new one")
     db_cursor.execute("INSERT INTO logged_entry(application_id, title, start, end) VALUES (:application_id, :title, :start, :end)", {"application_id": application_id, "title": active_window.get_name(), "start": datetime_now, "end": datetime_now})
 else:
-    if last_logged_entry["application_id"] == application_id:
+    max_delta_period = datetime.timedelta(seconds=10)
+    print(last_logged_entry["end"])
+    old_end = datetime.datetime.strptime(last_logged_entry["end"], "%Y-%m-%d %H:%M:%S.%f")
+    if max_delta_period < datetime_now - old_end:
+        print("Too long since last update. Create a new entry.")
+        db_cursor.execute("INSERT INTO logged_entry(application_id, title, start, end) VALUES (:application_id, :title, :start, :end)", {"application_id": application_id, "title": active_window.get_name(), "start": last_logged_entry["end"], "end": datetime_now})
+    elif last_logged_entry["application_id"] == application_id and last_logged_entry["title"] == active_window.get_name():
         print("Still same window. Update existing logged entry")
         db_cursor.execute("UPDATE logged_entry SET end=:new_end WHERE id=:id", {"id": last_logged_entry["id"], "new_end": datetime_now})
     else:
