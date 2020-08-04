@@ -2,6 +2,7 @@ import gi
 import cairo
 
 import entity
+from helper import color_helper
 from widget import CategoryChoiceDialog
 
 gi.require_version("Gtk", "3.0")
@@ -234,7 +235,9 @@ class GtkSpy(Gtk.Window):
             stop_x = self._datetime_to_pixel(le.stop)
 
             i = idx + 1
-            cr.set_source_rgb(colors[i % len(colors)], colors[i % len(colors)], colors[i % len(colors)])
+            color_string = color_helper.to_color(le.application.name)
+            color = Gdk.color_parse(spec=color_string)
+            cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
             cr.rectangle(start_x, self.timeline_height + self.timeline_top_padding * 2, stop_x - start_x, self.timeline_height)
             cr.fill()
 

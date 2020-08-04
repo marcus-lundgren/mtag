@@ -1,5 +1,4 @@
-import hashlib
-
+from helper import color_helper
 
 class Category():
     def __init__(self, name: str, db_id: int = None):
@@ -16,10 +15,4 @@ class Category():
 
     @property
     def color_rgb(self):
-        #hash_as_int = int(hashlib.sha256(self._name.encode('utf-8')).hexdigest(), 16) % 101
-        #color_from_hash = hash_as_int / 100
-        #return color_from_hash, color_from_hash, color_from_hash
-        hex_hash = hashlib.sha256(self._name.encode('utf-8')).hexdigest()
-        return f"#{hex_hash[0:6]}"
-
-
+        return color_helper.to_color(self._name)
