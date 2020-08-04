@@ -2,6 +2,7 @@ import gi
 import cairo
 
 import entity
+from widget import CategoryChoiceDialog
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -164,26 +165,14 @@ class GtkSpy(Gtk.Window):
         self._set_tagged_entry_stop_date(stop_date, self.current_tagged_entry, tagged_entries)
 
         # Choose category
-        list_store = Gtk.ListStore(str)
-        for c in categories:
-            list_store.append([c.name])
-
-        combobox = Gtk.ComboBox.new_with_model_and_entry(list_store)
-        combobox.connect("changed", self._on_category_combobox_changed)
-        combobox.set_entry_text_column(0)
-
-        dialog = Gtk.Dialog(title="Choose category", parent=self, destroy_with_parent=True, modal=True)
-        dialog.set_default_size(100, 100)
-        dialog.vbox.pack_start(combobox, expand=True, fill=True, padding=50)
-        dialog.add_button(Gtk.STOCK_OK, Gtk.ResponseType.OK)
-        combobox.show()
+        dialog = CategoryChoiceDialog(window=self, categories=categories)
         r = dialog.run()
 
         print(r)
 
         if r == Gtk.ResponseType.OK:
             # Set chosen category
-            chosen_category_name = self._get_chosen_combobox_value(combobox)
+            chosen_category_name = dialog.get_chosen_category_value()
             chosen_category = [c for c in categories if c.name == chosen_category_name]
             if len(chosen_category) == 1:
                 chosen_category = chosen_category[0]
@@ -194,7 +183,7 @@ class GtkSpy(Gtk.Window):
 
             self.current_tagged_entry.category = chosen_category
 
-            print(self._get_chosen_combobox_value(combobox))
+            print(dialog.get_chosen_category_value())
             self._add_tagged_entry_to_list(self.current_tagged_entry)
             tagged_entries.append(self.current_tagged_entry)
             tagged_entries.sort(key=lambda t: t.start)
@@ -203,17 +192,6 @@ class GtkSpy(Gtk.Window):
         dialog.destroy()
 
         self.drawing_area.queue_draw()
-
-    def _on_category_combobox_changed(self, combo: Gtk.ComboBox):
-        print(f"Chosen combobox value: {self._get_chosen_combobox_value(combo)}")
-
-    def _get_chosen_combobox_value(self, combo: Gtk.ComboBox):
-        tree_iter = combo.get_active_iter()
-        if tree_iter is not None:
-            model = combo.get_model()
-            return model[tree_iter][0]
-
-        return combo.get_child().get_text()
 
     def _get_timeline_x(self, mouse_position: float, drawing_area: Gtk.DrawingArea):
         max_timeline_x = drawing_area.get_allocated_size()[0].width - self.timeline_side_padding - 0.00001
