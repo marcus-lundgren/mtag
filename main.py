@@ -94,7 +94,7 @@ class GtkSpy(Gtk.Window):
         self.timeline_side_padding = 13
         self.timeline_top_padding = 15
         self.timeline_height = 80
-        self.pixels_per_minute = 2
+        self.pixels_per_seconds = 2
 
         self.current_tagged_entry = None
 
@@ -229,7 +229,7 @@ class GtkSpy(Gtk.Window):
             cr.show_text(str(h))
 
         colors = [0.2, 0.5, 0.7]
-        self.pixels_per_minute = (drawing_area_size.width - self.timeline_side_padding * 2) / (24 * 60)
+        self.pixels_per_seconds = (drawing_area_size.width - self.timeline_side_padding * 2) / (24 * 60 * 60)
         for idx, le in enumerate(logged_entries):
             start_x = self._datetime_to_pixel(le.start)
             stop_x = self._datetime_to_pixel(le.stop)
@@ -255,7 +255,7 @@ class GtkSpy(Gtk.Window):
         cr.stroke()
 
     def _datetime_to_pixel(self, dt: datetime) -> float:
-        return self.pixels_per_minute * (dt.hour * 60 + dt.minute) + self.timeline_side_padding
+        return self.pixels_per_seconds * (dt.hour * 60 * 60 + dt.minute * 60 + dt.second) + self.timeline_side_padding
 
     def _draw_tagged_entry(self, tagged_entry: entity.TaggedEntry, cr: cairo.Context):
         start_x = self._datetime_to_pixel(tagged_entry.start)
@@ -270,11 +270,12 @@ class GtkSpy(Gtk.Window):
         cr.fill()
 
     def _pixel_to_datetime(self, x_position: int) -> datetime:
-        total_minutes = (x_position - self.timeline_side_padding) / self.pixels_per_minute
-        hours = total_minutes // 60
-        minutes = int(total_minutes % 60)
+        total_seconds = (x_position - self.timeline_side_padding) / self.pixels_per_seconds
+        hours = total_seconds // (60 * 60)
+        minutes = (total_seconds - hours * 60 * 60) // 60
+        seconds = int(total_seconds % 60)
         stop_date = datetime.datetime.fromisoformat("2020-07-14")
-        stop_date += datetime.timedelta(hours=hours, minutes=minutes)
+        stop_date += datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
         return stop_date
 
 
