@@ -33,18 +33,23 @@ default_screen.force_update()
 
 active_window = default_screen.get_active_window()
 if active_window is None:
+    print("No active window.")
     exit(0)
 
 application = active_window.get_application()
 application_pid = application.get_pid()
+
 application_name = active_window.get_class_group_name()
 
 print(application_pid)
-application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"], stdout=subprocess.PIPE, universal_newlines=True).stdout
-print(application_path)
-application_path = application_path.replace("\0", " ")
-application_path = application_path.strip()
-print(f"{application_name} -> {active_window.get_name()}")
+application_path = ""
+
+if application_pid != 0:
+    application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    print(application_path)
+    application_path = application_path.replace("\0", " ")
+    application_path = application_path.strip()
+    print(f"{application_name} -> {active_window.get_name()}")
 
 db_connection = sqlite3.connect("test.db")
 db_connection.row_factory = sqlite3.Row
