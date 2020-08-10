@@ -25,7 +25,7 @@ for i in range(0, 5):
     minutes = randrange(30, 240)
     elapsed_time = datetime.timedelta(minutes=minutes)
     a = applications[i % len(applications)]
-    e = entity.LoggedEntry(start = current_time, stop=current_time + elapsed_time, application = a, title=f"Window title {i}")
+    e = entity.LoggedEntry(start=current_time, stop=current_time + elapsed_time, application=a, title=f"Window title {i}")
     logged_entries.append(e)
     current_time += elapsed_time
 
@@ -40,7 +40,7 @@ tagged_entries = []
 
 class GtkSpy(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, title = "GtkSpy")
+        super().__init__(title="GtkSpy")
         self.set_default_size(720, 400)
         b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(b)
@@ -281,4 +281,3 @@ w = GtkSpy()
 w.show_all()
 w.connect("destroy", Gtk.main_quit)
 Gtk.main()
-
