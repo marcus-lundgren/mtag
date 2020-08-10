@@ -164,6 +164,9 @@ class GtkSpy(Gtk.Window):
         timeline_x = self._get_timeline_x(event.x, self.drawing_area)
         stop_date = self._pixel_to_datetime(timeline_x)
         self._set_tagged_entry_stop_date(stop_date, self.current_tagged_entry, tagged_entries)
+        if self.current_tagged_entry.start == self.current_tagged_entry.stop:
+            self.current_tagged_entry = None
+            return
 
         # Choose category
         dialog = CategoryChoiceDialog(window=self, categories=categories)
