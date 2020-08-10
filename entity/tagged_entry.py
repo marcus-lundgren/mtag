@@ -2,7 +2,7 @@ import datetime
 from entity.category import Category
 
 
-class TaggedEntry():
+class TaggedEntry:
     def __init__(self, start: datetime, stop: datetime, category: Category, db_id: int = None):
         self.db_id = db_id
         self.start = start

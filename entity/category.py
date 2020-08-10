@@ -1,6 +1,7 @@
 from helper import color_helper
 
-class Category():
+
+class Category:
     def __init__(self, name: str, db_id: int = None):
         self._db_id = db_id
         self._name = name

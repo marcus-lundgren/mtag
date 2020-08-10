@@ -228,13 +228,11 @@ class GtkSpy(Gtk.Window):
             cr.set_font_size(16)
             cr.show_text(str(h))
 
-        colors = [0.2, 0.5, 0.7]
         self.pixels_per_seconds = (drawing_area_size.width - self.timeline_side_padding * 2) / (24 * 60 * 60)
-        for idx, le in enumerate(logged_entries):
+        for le in logged_entries:
             start_x = self._datetime_to_pixel(le.start)
             stop_x = self._datetime_to_pixel(le.stop)
 
-            i = idx + 1
             color_string = color_helper.to_color(le.application.name)
             color = Gdk.color_parse(spec=color_string)
             cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
