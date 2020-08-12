@@ -24,8 +24,8 @@ class LoggedEntryRepository:
         return self._from_dbo(conn=conn, db_le=db_le)
 
     def get_all(self, conn: sqlite3.Connection):
-        conn.execute("SELECT * FROM logged_entry")
-        db_logged_entries = self.db_cursor.fetchall()
+        cursor = conn.execute("SELECT * FROM logged_entry")
+        db_logged_entries = cursor.fetchall()
 
         logged_entries = []
         for db_le in db_logged_entries:
