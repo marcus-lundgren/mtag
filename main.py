@@ -1,39 +1,24 @@
-import gi
-import cairo
+import datetime
 
 import entity
 from helper import color_helper
+from helper import database_helper
 from widget import CategoryChoiceDialog
+from repository.logged_entry_repository import LoggedEntryRepository
+from repository.category_repository import CategoryRepository
 
+import gi
+import cairo
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from gi.repository import Gdk
-import datetime
-from random import randrange
 
 
-app_names = ["Word", "Outlook", "Emacs"]
-applications = []
-for idx, n in enumerate(app_names):
-    a = entity.Application(n, idx)
-    applications.append(a)
+db_connection = database_helper.create_connection()
+logged_entry_repository = LoggedEntryRepository()
 
-logged_entries = []
-current_time = datetime.datetime.fromisoformat("2020-07-14")
-current_time += datetime.timedelta(hours=5)
-for i in range(0, 5):
-    minutes = randrange(30, 240)
-    elapsed_time = datetime.timedelta(minutes=minutes)
-    a = applications[i % len(applications)]
-    e = entity.LoggedEntry(start=current_time, stop=current_time + elapsed_time, application=a, title=f"Window title {i}")
-    logged_entries.append(e)
-    current_time += elapsed_time
-
-categories = []
-category_names = ["development", "support", "management"]
-for idx, name in enumerate(category_names):
-    c = entity.Category(db_id=idx, name=name)
-    categories.append(c)
+logged_entries = logged_entry_repository.get_all(db_connection)
+db_connection.close()
 
 tagged_entries = []
 
@@ -100,10 +85,14 @@ class GtkSpy(Gtk.Window):
 
         self.logged_entries_tree_view.set_headers_clickable(True)
 
-        lists_grid.attach(self.logged_entries_tree_view, 0, 0, 1, 1)
+        letw_container = Gtk.ScrolledWindow()
+        letw_container.add(self.logged_entries_tree_view)
+        lists_grid.attach(letw_container, 0, 0, 1, 1)
         lists_grid.attach(self.tagged_entries_tree_view, 1, 0, 1, 1)
 
         b.pack_end(lists_grid, expand=True, fill=True, padding=10)
+
+        self.category_repository = CategoryRepository
 
     def _add_tagged_entry_to_list(self, tagged_entry):
         print(f"Adding new tagged entry to list {tagged_entry.category.name}")
@@ -169,6 +158,9 @@ class GtkSpy(Gtk.Window):
             return
 
         # Choose category
+        conn = database_helper.create_connection()
+        categories = self.category_repository.get_all(conn=conn)
+        conn.close()
         dialog = CategoryChoiceDialog(window=self, categories=categories)
         r = dialog.run()
 
@@ -177,12 +169,14 @@ class GtkSpy(Gtk.Window):
         if r == Gtk.ResponseType.OK:
             # Set chosen category
             chosen_category_name = dialog.get_chosen_category_value()
-            chosen_category = [c for c in categories if c.name == chosen_category_name]
+            chosen_category = [c for c in categories if c.name.lower() == chosen_category_name.lower()]
             if len(chosen_category) == 1:
                 chosen_category = chosen_category[0]
             else:
-                new_category = entity.Category(name=chosen_category_name, db_id=100)
-                categories.append(new_category)
+                new_category = entity.Category(name=chosen_category_name)
+                conn = database_helper.create_connection()
+                self.category_repository.insert(conn=conn, category=new_category)
+                conn.close()
                 chosen_category = new_category
 
             self.current_tagged_entry.category = chosen_category
