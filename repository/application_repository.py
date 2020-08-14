@@ -9,7 +9,7 @@ class ApplicationRepository:
 
     def get_by_name_and_path_id(self, conn: sqlite3.Connection, name: str, path_id: int):
         cursor = conn.execute("SELECT * FROM application WHERE a_name=:name AND a_path_id=:path_id",
-                          {"name": name, "path_id": path_id})
+                              {"name": name, "path_id": path_id})
         db_a = cursor.fetchone()
         if db_a is None:
             return None

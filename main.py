@@ -35,7 +35,9 @@ class GtkSpy(Gtk.Window):
 
         self.drawing_area = Gtk.DrawingArea()
         self.drawing_area.connect("draw", self._on_draw)
-        self.drawing_area.add_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK)
+        self.drawing_area.add_events(Gdk.EventMask.POINTER_MOTION_MASK
+                                     | Gdk.EventMask.BUTTON_PRESS_MASK
+                                     | Gdk.EventMask.BUTTON_RELEASE_MASK)
         self.drawing_area.connect("motion_notify_event", self._on_motion_notify)
         self.drawing_area.connect("button_press_event", self._on_button_press)
         self.drawing_area.connect("button_release_event", self._on_button_release)
@@ -52,7 +54,10 @@ class GtkSpy(Gtk.Window):
         # Logged entries list
         logged_entries_list_store = Gtk.ListStore(str, str, str, str)
         for le in logged_entries:
-            logged_entries_list_store.append([le.application.name, le.title, le.start.strftime('%Y-%m-%d %H:%M:%S'), le.stop.strftime('%Y-%m-%d %H:%M:%S')])
+            logged_entries_list_store.append([le.application.name,
+                                              le.title,
+                                              le.start.strftime('%Y-%m-%d %H:%M:%S'),
+                                              le.stop.strftime('%Y-%m-%d %H:%M:%S')])
 
         self.logged_entries_tree_view = Gtk.TreeView.new_with_model(logged_entries_list_store)
 
@@ -96,7 +101,9 @@ class GtkSpy(Gtk.Window):
 
     def _add_tagged_entry_to_list(self, tagged_entry):
         print(f"Adding new tagged entry to list {tagged_entry.category.name}")
-        self.tagged_entries_list_store.append([tagged_entry.category.name, tagged_entry.start.strftime('%Y-%m-%d %H:%M:%S'), tagged_entry.stop.strftime('%Y-%m-%d %H:%M:%S')])
+        self.tagged_entries_list_store.append([tagged_entry.category.name,
+                                               tagged_entry.start.strftime('%Y-%m-%d %H:%M:%S'),
+                                               tagged_entry.stop.strftime('%Y-%m-%d %H:%M:%S')])
 
     def _on_motion_notify(self, widget: Gtk.DrawingArea, event):
         timeline_x = self._get_timeline_x(event.x, widget)
@@ -104,7 +111,9 @@ class GtkSpy(Gtk.Window):
 
         next_mouse_pos = event.x
         if self.current_tagged_entry is not None:
-            datetime_used = self._set_tagged_entry_stop_date(stop_date, self.current_tagged_entry, tagged_entries)
+            datetime_used = self._set_tagged_entry_stop_date(stop_date,
+                                                             self.current_tagged_entry,
+                                                             tagged_entries)
             if datetime_used is not None:
                 next_mouse_pos = self._datetime_to_pixel(datetime_used)
         else:
@@ -120,7 +129,9 @@ class GtkSpy(Gtk.Window):
         self.current_mouse_pos = next_mouse_pos
         widget.queue_draw()
 
-    def _set_tagged_entry_stop_date(self, stop_date: datetime, tagged_entry: entity.TaggedEntry, tagged_entries: list):
+    @staticmethod
+    def _set_tagged_entry_stop_date(stop_date: datetime,
+                                    tagged_entry: entity.TaggedEntry, tagged_entries: list):
         tagged_entry.stop = stop_date
 
         creation_is_right = stop_date == tagged_entry.stop
@@ -215,7 +226,7 @@ class GtkSpy(Gtk.Window):
             cr.set_source_rgb(0.5, 0.5, 0.5)
             cr.new_path()
             cr.move_to(hx, 10)
-            cr.line_to(hx, drawing_area_size.height - 50) # Make 50 a variable (hourlineLength)
+            cr.line_to(hx, drawing_area_size.height - 50)  # TODO: Make 50 a variable (hourlineLength)
             cr.stroke()
 
             # Hour text
@@ -233,7 +244,8 @@ class GtkSpy(Gtk.Window):
             color_string = color_helper.to_color(le.application.name)
             color = Gdk.color_parse(spec=color_string)
             cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
-            cr.rectangle(start_x, self.timeline_height + self.timeline_top_padding * 2, stop_x - start_x, self.timeline_height)
+            cr.rectangle(start_x, self.timeline_height + self.timeline_top_padding * 2,
+                         stop_x - start_x, self.timeline_height)
             cr.fill()
 
         for tagged_entry in tagged_entries:

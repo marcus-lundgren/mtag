@@ -50,13 +50,14 @@ application_name = active_window.get_class_group_name()
 print(application_pid)
 application_path = ""
 
+active_window_title = active_window.get_name()
 if application_pid != 0:
     application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"],
                                       stdout=subprocess.PIPE, universal_newlines=True).stdout
     print(application_path)
     application_path = application_path.replace("\0", " ")
     application_path = application_path.strip()
-    print(f"{application_name} -> {active_window.get_name()}")
+    print(f"{application_name} -> {active_window_title}")
 
 db_connection = sqlite3.connect("test.db", detect_types=sqlite3.PARSE_DECLTYPES)
 db_connection.row_factory = sqlite3.Row
@@ -90,7 +91,8 @@ datetime_now = datetime.datetime.now()
 if last_logged_entry is None:
     print("No existing logged entry, creating a new one")
     new_update = datetime_now + datetime.timedelta(seconds=1)
-    logged_entry = LoggedEntry(start=datetime_now, stop=new_update, title=active_window.get_name(), application=application)
+    logged_entry = LoggedEntry(start=datetime_now, stop=new_update,
+                               title=active_window_title, application=application)
     logged_entry_repository.insert(db_connection, logged_entry)
 else:
     max_delta_period = datetime.timedelta(seconds=10)
@@ -98,15 +100,17 @@ else:
     old_end = last_logged_entry.stop
     if max_delta_period < datetime_now - old_end:
         print("Too long since last update. Create a new entry.")
-        logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now, application=application, title=active_window.get_name())
+        logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now,
+                                   application=application, title=active_window_title)
         logged_entry_repository.insert(db_connection, logged_entry)
-    elif last_logged_entry.application.db_id == application.db_id and last_logged_entry.title == active_window.get_name():
+    elif last_logged_entry.application.db_id == application.db_id and last_logged_entry.title == active_window_title:
         print("Still same window. Update existing logged entry")
         db_cursor.execute("UPDATE logged_entry SET le_last_update=:new_update WHERE le_id=:id",
                           {"id": last_logged_entry.db_id, "new_update": datetime_now})
     else:
         print("Not the same window. Insert new logged entry")
-        logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now, application=application, title=active_window.get_name())
+        logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now,
+                                   application=application, title=active_window_title)
         logged_entry_repository.insert(db_connection, logged_entry)
 
 db_connection.commit()

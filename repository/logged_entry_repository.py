@@ -4,19 +4,20 @@ from repository.application_repository import ApplicationRepository
 
 
 class LoggedEntryRepository:
-    def __init__(self, connection: sqlite3.Connection = None):
+    def __init__(self):
         self.application_repository = ApplicationRepository()
 
-    def insert(self, conn: sqlite3.Connection, logged_entry: LoggedEntry):
+    @staticmethod
+    def insert(conn: sqlite3.Connection, logged_entry: LoggedEntry):
         conn.execute("INSERT INTO logged_entry(le_application_id, le_title, le_start, le_last_update)"
-                      " VALUES (:application_id, :title, :start, :last_update)",
-                      {"application_id": logged_entry.application.db_id, "title": logged_entry.title,
-                       "start": logged_entry.start, "last_update": logged_entry.stop})
+                     " VALUES (:application_id, :title, :start, :last_update)",
+                     {"application_id": logged_entry.application.db_id, "title": logged_entry.title,
+                      "start": logged_entry.start, "last_update": logged_entry.stop})
         conn.commit()
 
     def get_latest_entry(self, conn: sqlite3.Connection):
         cursor = conn.execute(
-            "SELECT * FROM logged_entry ORDER BY le_last_update DESC")
+                "SELECT * FROM logged_entry ORDER BY le_last_update DESC")
         db_le = cursor.fetchone()
         if db_le is None:
             return None
@@ -36,5 +37,5 @@ class LoggedEntryRepository:
 
     def _from_dbo(self, conn: sqlite3.Connection, db_le: dict):
         application = self.application_repository.get(conn, db_le["le_application_id"])
-        return LoggedEntry(start=db_le["le_start"], stop=db_le["le_last_update"], application=application, title=db_le["le_title"], db_id=db_le["le_id"])
-
+        return LoggedEntry(start=db_le["le_start"], stop=db_le["le_last_update"], application=application,
+                           title=db_le["le_title"], db_id=db_le["le_id"])
