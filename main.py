@@ -4,6 +4,7 @@ import entity
 from helper import color_helper
 from helper import database_helper
 from widget import CategoryChoiceDialog
+from widget import CalendarButton
 from repository.logged_entry_repository import LoggedEntryRepository
 from repository.category_repository import CategoryRepository
 
@@ -30,6 +31,14 @@ class GtkSpy(Gtk.Window):
         b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(b)
 
+        # Top bar
+        top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.calendar_button = CalendarButton()
+        self.calendar_button.connect("day-selected", lambda w, d: print(f"Main got: {d}"))
+        top_bar.add(self.calendar_button)
+        b.add(top_bar)
+
+        # Drawing area
         self.rect_start = None, None
         self.current_mouse_pos = 0
 
