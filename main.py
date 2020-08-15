@@ -35,7 +35,7 @@ class GtkSpy(Gtk.Window):
         top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.calendar_button = CalendarButton()
         self.calendar_button.connect("day-selected", lambda w, d: print(f"Main got: {d}"))
-        top_bar.add(self.calendar_button)
+        top_bar.pack_start(self.calendar_button, expand=True, fill=False, padding=0)
         b.add(top_bar)
 
         # Drawing area
