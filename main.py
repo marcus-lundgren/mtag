@@ -39,7 +39,6 @@ class GtkSpy(Gtk.Window):
         b.add(top_bar)
 
         # Drawing area
-        self.rect_start = None, None
         self.current_mouse_pos = 0
 
         self.drawing_area = Gtk.DrawingArea()
