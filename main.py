@@ -15,12 +15,6 @@ from gi.repository import Gtk
 from gi.repository import Gdk
 
 
-db_connection = database_helper.create_connection()
-logged_entry_repository = LoggedEntryRepository()
-
-logged_entries = logged_entry_repository.get_all(db_connection)
-db_connection.close()
-
 tagged_entries = []
 
 
@@ -34,7 +28,7 @@ class GtkSpy(Gtk.Window):
         # Top bar
         top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.calendar_button = CalendarButton()
-        self.calendar_button.connect("day-selected", lambda w, d: print(f"Main got: {d}"))
+        self.calendar_button.connect("day-selected", lambda w, d: self._reload_logged_entries_from_date(d))
         top_bar.pack_start(self.calendar_button, expand=True, fill=False, padding=0)
         b.add(top_bar)
 
@@ -60,20 +54,16 @@ class GtkSpy(Gtk.Window):
         self.tagged_entries_box = Gtk.ListBox()
 
         # Logged entries list
-        logged_entries_list_store = Gtk.ListStore(str, str, str, str)
-        for le in logged_entries:
-            logged_entries_list_store.append([le.application.name,
-                                              le.title,
-                                              le.start.strftime('%Y-%m-%d %H:%M:%S'),
-                                              le.stop.strftime('%Y-%m-%d %H:%M:%S')])
-
-        self.logged_entries_tree_view = Gtk.TreeView.new_with_model(logged_entries_list_store)
+        self.logged_entries_list_store = Gtk.ListStore(str, str, str, str)
+        self.logged_entries_tree_view = Gtk.TreeView.new_with_model(self.logged_entries_list_store)
 
         for i, title in enumerate(["Application", "Title", "Start", "Stop"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             column.set_sort_column_id(i)
             self.logged_entries_tree_view.append_column(column)
+
+        self._reload_logged_entries_from_date(datetime.datetime.now())
 
         # Tagged entries list
         self.tagged_entries_list_store = Gtk.ListStore(str, str, str)
@@ -106,6 +96,20 @@ class GtkSpy(Gtk.Window):
         b.pack_end(lists_grid, expand=True, fill=True, padding=10)
 
         self.category_repository = CategoryRepository
+
+    def _reload_logged_entries_from_date(self, date: datetime.datetime):
+        db_connection = database_helper.create_connection()
+        logged_entry_repository = LoggedEntryRepository()
+
+        self.logged_entries = logged_entry_repository.get_all_by_date(db_connection, date)
+        db_connection.close()
+
+        self.logged_entries_list_store.clear()
+        for le in self.logged_entries:
+            self.logged_entries_list_store.append([le.application.name,
+                                                   le.title,
+                                                   le.start.strftime('%Y-%m-%d %H:%M:%S'),
+                                                   le.stop.strftime('%Y-%m-%d %H:%M:%S')])
 
     def _add_tagged_entry_to_list(self, tagged_entry):
         print(f"Adding new tagged entry to list {tagged_entry.category.name}")
@@ -245,7 +249,7 @@ class GtkSpy(Gtk.Window):
             cr.show_text(str(h))
 
         self.pixels_per_seconds = (drawing_area_size.width - self.timeline_side_padding * 2) / (24 * 60 * 60)
-        for le in logged_entries:
+        for le in self.logged_entries:
             start_x = self._datetime_to_pixel(le.start)
             stop_x = self._datetime_to_pixel(le.stop)
 
