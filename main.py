@@ -22,15 +22,18 @@ class GtkSpy(Gtk.Window):
     def __init__(self):
         super().__init__(title="GtkSpy")
         self.set_default_size(720, 400)
+
         b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(b)
 
         # Top bar
         top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.calendar_button = CalendarButton()
-        self.calendar_button.connect("day-selected", lambda w, d: self._reload_logged_entries_from_date(d))
+        self.calendar_button.connect("day-selected", self._on_new_day_selected)
         top_bar.pack_start(self.calendar_button, expand=True, fill=False, padding=0)
         b.add(top_bar)
+
+        self._current_date = self.calendar_button.get_selected_date()
 
         # Drawing area
         self.current_mouse_pos = 0
@@ -64,7 +67,7 @@ class GtkSpy(Gtk.Window):
             column.set_expand(title == "Title")
             self.logged_entries_tree_view.append_column(column)
 
-        self._reload_logged_entries_from_date(datetime.datetime.now())
+        self._reload_logged_entries_from_date()
 
         # Tagged entries list
         self.tagged_entries_list_store = Gtk.ListStore(str, str, str)
@@ -98,11 +101,15 @@ class GtkSpy(Gtk.Window):
 
         self.category_repository = CategoryRepository
 
-    def _reload_logged_entries_from_date(self, date: datetime.datetime):
+    def _on_new_day_selected(self, _, date: datetime.datetime):
+        self._current_date = date
+        self._reload_logged_entries_from_date()
+
+    def _reload_logged_entries_from_date(self):
         db_connection = database_helper.create_connection()
         logged_entry_repository = LoggedEntryRepository()
 
-        self.logged_entries = logged_entry_repository.get_all_by_date(db_connection, date)
+        self.logged_entries = logged_entry_repository.get_all_by_date(db_connection, self._current_date)
         db_connection.close()
 
         self.logged_entries_list_store.clear()
@@ -276,7 +283,13 @@ class GtkSpy(Gtk.Window):
         cr.stroke()
 
     def _datetime_to_pixel(self, dt: datetime) -> float:
-        return self.pixels_per_seconds * (dt.hour * 60 * 60 + dt.minute * 60 + dt.second) + self.timeline_side_padding
+        hour, minute, second = dt.hour, dt.minute, dt.second
+        if dt < self._current_date:
+            hour, minute, second = 0, 0, 0
+        elif self._current_date + datetime.timedelta(days=1) <= dt:
+            hour, minute, second = 23, 59, 59
+
+        return self.pixels_per_seconds * (hour * 60 * 60 + minute * 60 + second) + self.timeline_side_padding
 
     def _draw_tagged_entry(self, tagged_entry: entity.TaggedEntry, cr: cairo.Context):
         start_x = self._datetime_to_pixel(tagged_entry.start)

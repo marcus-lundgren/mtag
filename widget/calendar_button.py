@@ -28,6 +28,9 @@ class CalendarButton(Gtk.Button):
 
         self._update_label()
 
+    def get_selected_date(self):
+        return self.calendar.get_date_as_datetime()
+
     def _show_popup(self, _):
         self.calendar_popover.show_all()
         self.calendar_popover.popup()
