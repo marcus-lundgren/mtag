@@ -308,9 +308,11 @@ class GtkSpy(Gtk.Window):
         hours = total_seconds // (60 * 60)
         minutes = (total_seconds - hours * 60 * 60) // 60
         seconds = int(total_seconds % 60)
-        stop_date = datetime.datetime.fromisoformat("2020-07-14")
-        stop_date += datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
-        return stop_date
+        d = datetime.datetime(year=self._current_date.year,
+                              month=self._current_date.month,
+                              day=self._current_date.day)
+        d += datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        return d
 
 
 w = GtkSpy()
