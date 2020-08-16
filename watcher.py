@@ -100,7 +100,7 @@ else:
     old_end = last_logged_entry.stop
     if max_delta_period < datetime_now - old_end:
         print("Too long since last update. Create a new entry.")
-        logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now,
+        logged_entry = LoggedEntry(start=datetime_now, stop=datetime_now,
                                    application=application, title=active_window_title)
         logged_entry_repository.insert(db_connection, logged_entry)
     elif last_logged_entry.application.db_id == application.db_id and last_logged_entry.title == active_window_title:
