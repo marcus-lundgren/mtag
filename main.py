@@ -57,10 +57,11 @@ class GtkSpy(Gtk.Window):
         self.logged_entries_list_store = Gtk.ListStore(str, str, str, str)
         self.logged_entries_tree_view = Gtk.TreeView.new_with_model(self.logged_entries_list_store)
 
-        for i, title in enumerate(["Application", "Title", "Start", "Stop"]):
+        for i, title in enumerate(["Start", "Stop", "Application", "Title"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             column.set_sort_column_id(i)
+            column.set_expand(title == "Title")
             self.logged_entries_tree_view.append_column(column)
 
         self._reload_logged_entries_from_date(datetime.datetime.now())
@@ -73,7 +74,7 @@ class GtkSpy(Gtk.Window):
         self.tagged_entries_tree_view = Gtk.TreeView.new_with_model(self.tagged_entries_list_store)
         self.tagged_entries_tree_view.set_headers_clickable(True)
 
-        for i, title in enumerate(["Category", "Start", "Stop"]):
+        for i, title in enumerate(["Start", "Stop", "Category"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             column.set_sort_column_id(i)
@@ -106,16 +107,17 @@ class GtkSpy(Gtk.Window):
 
         self.logged_entries_list_store.clear()
         for le in self.logged_entries:
-            self.logged_entries_list_store.append([le.application.name,
-                                                   le.title,
-                                                   le.start.strftime('%Y-%m-%d %H:%M:%S'),
-                                                   le.stop.strftime('%Y-%m-%d %H:%M:%S')])
+            self.logged_entries_list_store.append([le.start.strftime('%H:%M:%S'),
+                                                   le.stop.strftime('%H:%M:%S'),
+                                                   le.application.name,
+                                                   le.title])
+        self.logged_entries_tree_view.columns_autosize()
 
     def _add_tagged_entry_to_list(self, tagged_entry):
         print(f"Adding new tagged entry to list {tagged_entry.category.name}")
-        self.tagged_entries_list_store.append([tagged_entry.category.name,
-                                               tagged_entry.start.strftime('%Y-%m-%d %H:%M:%S'),
-                                               tagged_entry.stop.strftime('%Y-%m-%d %H:%M:%S')])
+        self.tagged_entries_list_store.append([tagged_entry.start.strftime('%H:%M:%S'),
+                                               tagged_entry.stop.strftime('%H:%M:%S'),
+                                               tagged_entry.category.name])
 
     def _on_motion_notify(self, widget: Gtk.DrawingArea, event):
         timeline_x = self._get_timeline_x(event.x, widget)
