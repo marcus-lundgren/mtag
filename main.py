@@ -3,7 +3,7 @@ import datetime
 import entity
 from helper import color_helper
 from helper import database_helper
-from widget import CategoryChoiceDialog
+from widget import CategoryChoiceDialog, TimelineDetailsPopover
 from widget import CalendarButton
 from repository.logged_entry_repository import LoggedEntryRepository
 from repository.category_repository import CategoryRepository
@@ -42,7 +42,9 @@ class GtkSpy(Gtk.Window):
         self.drawing_area.connect("draw", self._on_draw)
         self.drawing_area.add_events(Gdk.EventMask.POINTER_MOTION_MASK
                                      | Gdk.EventMask.BUTTON_PRESS_MASK
-                                     | Gdk.EventMask.BUTTON_RELEASE_MASK)
+                                     | Gdk.EventMask.BUTTON_RELEASE_MASK
+                                     | Gdk.EventMask.ENTER_NOTIFY_MASK
+                                     | Gdk.EventMask.LEAVE_NOTIFY_MASK)
         self.drawing_area.connect("motion_notify_event", self._on_motion_notify)
         self.drawing_area.connect("button_press_event", self._on_button_press)
         self.drawing_area.connect("button_release_event", self._on_button_release)
@@ -100,6 +102,7 @@ class GtkSpy(Gtk.Window):
         b.pack_end(lists_grid, expand=True, fill=True, padding=10)
 
         self.category_repository = CategoryRepository
+        self.info_popover = TimelineDetailsPopover(self.drawing_area)
 
     def _on_new_day_selected(self, _, date: datetime.datetime):
         self._current_date = date
@@ -146,6 +149,23 @@ class GtkSpy(Gtk.Window):
                     datetime_position = t.start if start_delta < stop_delta else t.stop
                     next_mouse_pos = self._datetime_to_pixel(datetime_position)
                     break
+
+        moused_over_le = None
+        for le in self.logged_entries:
+            if self._datetime_to_pixel(le.stop) < event.x:
+                continue
+            elif event.x < self._datetime_to_pixel(le.start):
+                break
+            else:
+                moused_over_le = le
+                break
+
+        if moused_over_le is not None:
+            self.info_popover.set_details(le.start, le.stop, le.title, le.application.name)
+            self.info_popover.set_pointing_to_coordinate(event.x, event.y)
+        else:
+            if self.info_popover.is_visible():
+                self.info_popover.hide()
 
         self.current_mouse_pos = next_mouse_pos
         widget.queue_draw()
