@@ -150,22 +150,22 @@ class GtkSpy(Gtk.Window):
                     next_mouse_pos = self._datetime_to_pixel(datetime_position)
                     break
 
-        moused_over_le = None
-        for le in self.logged_entries:
-            if self._datetime_to_pixel(le.stop) < event.x:
-                continue
-            elif event.x < self._datetime_to_pixel(le.start):
-                break
-            else:
-                moused_over_le = le
-                break
-
-        if moused_over_le is not None:
-            self.info_popover.set_details(le.start, le.stop, le.title, le.application.name)
-            self.info_popover.set_pointing_to_coordinate(event.x, event.y)
-        else:
-            if self.info_popover.is_visible():
-                self.info_popover.hide()
+        # moused_over_le = None
+        # for le in self.logged_entries:
+        #     if self._datetime_to_pixel(le.stop) < event.x:
+        #         continue
+        #     elif event.x < self._datetime_to_pixel(le.start):
+        #         break
+        #     else:
+        #         moused_over_le = le
+        #         break
+        #
+        # if moused_over_le is not None:
+        #     self.info_popover.set_details(le.start, le.stop, le.title, le.application.name)
+        #     self.info_popover.set_pointing_to_coordinate(event.x, event.y)
+        # else:
+        #     if self.info_popover.is_visible():
+        #         self.info_popover.hide()
 
         self.current_mouse_pos = next_mouse_pos
         widget.queue_draw()
@@ -301,6 +301,33 @@ class GtkSpy(Gtk.Window):
         cr.move_to(timeline_x, 10)
         cr.line_to(timeline_x, drawing_area_size.height - 10)
         cr.stroke()
+
+        moused_over_le = None
+        for le in self.logged_entries:
+            if self._datetime_to_pixel(le.stop) < self.current_mouse_pos:
+                continue
+            elif self.current_mouse_pos < self._datetime_to_pixel(le.start):
+                break
+            else:
+                moused_over_le = le
+                break
+
+        if moused_over_le is not None:
+            cr.set_font_size(16)
+            datetime_at_cursor = self._pixel_to_datetime(self._get_timeline_x(self.current_mouse_pos, drawing_area=w))
+            #time_text = f"{datetime_at_cursor.hour}:{datetime_at_cursor.minute}:{datetime_at_cursor.second}"
+            time_text = f"{moused_over_le.application.name} => {moused_over_le.title}"
+            (x, y, width, height, dx, dy) = cr.text_extents(time_text)
+            cr.set_source_rgba(0.8, 0.8, 0.8, 0.8)
+            width_to_use = width + 20
+            preliminary_x = self.current_mouse_pos - 10
+            x_to_use = min(preliminary_x, drawing_area_size.width - width_to_use)
+            cr.rectangle(x_to_use, (drawing_area_size.height / 2) - height - 10, width + 20, height + 20)
+            cr.fill()
+            cr.move_to(x_to_use + 10, (drawing_area_size.height / 2))
+            cr.set_source_rgb(0.0, 0.0, 0.0)
+            cr.show_text(time_text)
+
 
     def _datetime_to_pixel(self, dt: datetime) -> float:
         hour, minute, second = dt.hour, dt.minute, dt.second
