@@ -42,9 +42,7 @@ class GtkSpy(Gtk.Window):
         self.drawing_area.connect("draw", self._on_draw)
         self.drawing_area.add_events(Gdk.EventMask.POINTER_MOTION_MASK
                                      | Gdk.EventMask.BUTTON_PRESS_MASK
-                                     | Gdk.EventMask.BUTTON_RELEASE_MASK
-                                     | Gdk.EventMask.ENTER_NOTIFY_MASK
-                                     | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+                                     | Gdk.EventMask.BUTTON_RELEASE_MASK)
         self.drawing_area.connect("motion_notify_event", self._on_motion_notify)
         self.drawing_area.connect("button_press_event", self._on_button_press)
         self.drawing_area.connect("button_release_event", self._on_button_release)
