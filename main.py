@@ -3,7 +3,7 @@ import datetime
 import entity
 from helper import color_helper, datetime_helper
 from helper import database_helper
-from widget import CategoryChoiceDialog, TimelineDetailsPopover
+from widget import CategoryChoiceDialog
 from widget import CalendarButton
 from repository.logged_entry_repository import LoggedEntryRepository
 from repository.category_repository import CategoryRepository
@@ -37,6 +37,7 @@ class GtkSpy(Gtk.Window):
 
         # Drawing area
         self.current_mouse_pos = 0
+        self.actual_mouse_pos = {"x": 0, "y": 0}
 
         self.drawing_area = Gtk.DrawingArea()
         self.drawing_area.connect("draw", self._on_draw)
@@ -100,7 +101,6 @@ class GtkSpy(Gtk.Window):
         b.pack_end(lists_grid, expand=True, fill=True, padding=10)
 
         self.category_repository = CategoryRepository
-        self.info_popover = TimelineDetailsPopover(self.drawing_area)
 
     def _on_new_day_selected(self, _, date: datetime.datetime):
         self._current_date = date
@@ -115,16 +115,16 @@ class GtkSpy(Gtk.Window):
 
         self.logged_entries_list_store.clear()
         for le in self.logged_entries:
-            self.logged_entries_list_store.append([le.start.strftime('%H:%M:%S'),
-                                                   le.stop.strftime('%H:%M:%S'),
+            self.logged_entries_list_store.append([datetime_helper.to_time_str(le.start),
+                                                   datetime_helper.to_time_str(le.stop),
                                                    le.application.name,
                                                    le.title])
         self.logged_entries_tree_view.columns_autosize()
 
     def _add_tagged_entry_to_list(self, tagged_entry):
         print(f"Adding new tagged entry to list {tagged_entry.category.name}")
-        self.tagged_entries_list_store.append([tagged_entry.start.strftime('%H:%M:%S'),
-                                               tagged_entry.stop.strftime('%H:%M:%S'),
+        self.tagged_entries_list_store.append([datetime_helper.to_time_str(tagged_entry.start),
+                                               datetime_helper.to_time_str(tagged_entry.stop),
                                                tagged_entry.category.name])
 
     def _on_motion_notify(self, widget: Gtk.DrawingArea, event):
@@ -149,6 +149,7 @@ class GtkSpy(Gtk.Window):
                     break
 
         self.current_mouse_pos = next_mouse_pos
+        self.actual_mouse_pos["x"], self.actual_mouse_pos["y"] = event.x, event.y
         widget.queue_draw()
 
     @staticmethod
@@ -285,9 +286,9 @@ class GtkSpy(Gtk.Window):
 
         moused_over_le = None
         for le in self.logged_entries:
-            if self._datetime_to_pixel(le.stop) < self.current_mouse_pos:
+            if self._datetime_to_pixel(le.stop) < self.actual_mouse_pos["x"]:
                 continue
-            elif self.current_mouse_pos < self._datetime_to_pixel(le.start):
+            elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(le.start):
                 break
             else:
                 moused_over_le = le
@@ -302,13 +303,13 @@ class GtkSpy(Gtk.Window):
             (x, y, width, height, dx, dy) = cr.text_extents(time_interval_text)
             max_width = width
             height_to_use = height
-            time_interval_y = drawing_area_size.height / 2
+            time_interval_y = self.actual_mouse_pos["y"]
             time_interval_height = height
             title_y = time_interval_y + height + 5
             (x, y, width, height, dx, dy) = cr.text_extents(title_text)
             width_to_use = max(max_width, width) + (padding * 2)
             height_to_use += height
-            x_to_use = min(self.current_mouse_pos, drawing_area_size.width - width_to_use)
+            x_to_use = min(self.actual_mouse_pos["x"], drawing_area_size.width - width_to_use)
 
             # Draw rectangle
             cr.set_source_rgba(0.1, 0.1, 0.8, 0.8)

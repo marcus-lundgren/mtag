@@ -10,4 +10,4 @@ def _to_two_digit(number: int):
 
 
 def to_time_str(dt: datetime.datetime):
-    return f"{_to_two_digit(dt.hour)}:{_to_two_digit(dt.minute)}:{_to_two_digit(dt.second)}"
+    return dt.strftime('%H:%M:%S')
