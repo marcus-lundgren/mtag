@@ -1,7 +1,7 @@
 import datetime
 
 import entity
-from helper import color_helper
+from helper import color_helper, datetime_helper
 from helper import database_helper
 from widget import CategoryChoiceDialog, TimelineDetailsPopover
 from widget import CalendarButton
@@ -147,23 +147,6 @@ class GtkSpy(Gtk.Window):
                     datetime_position = t.start if start_delta < stop_delta else t.stop
                     next_mouse_pos = self._datetime_to_pixel(datetime_position)
                     break
-
-        # moused_over_le = None
-        # for le in self.logged_entries:
-        #     if self._datetime_to_pixel(le.stop) < event.x:
-        #         continue
-        #     elif event.x < self._datetime_to_pixel(le.start):
-        #         break
-        #     else:
-        #         moused_over_le = le
-        #         break
-        #
-        # if moused_over_le is not None:
-        #     self.info_popover.set_details(le.start, le.stop, le.title, le.application.name)
-        #     self.info_popover.set_pointing_to_coordinate(event.x, event.y)
-        # else:
-        #     if self.info_popover.is_visible():
-        #         self.info_popover.hide()
 
         self.current_mouse_pos = next_mouse_pos
         widget.queue_draw()
@@ -312,20 +295,38 @@ class GtkSpy(Gtk.Window):
 
         if moused_over_le is not None:
             cr.set_font_size(16)
-            datetime_at_cursor = self._pixel_to_datetime(self._get_timeline_x(self.current_mouse_pos, drawing_area=w))
-            #time_text = f"{datetime_at_cursor.hour}:{datetime_at_cursor.minute}:{datetime_at_cursor.second}"
-            time_text = f"{moused_over_le.application.name} => {moused_over_le.title}"
-            (x, y, width, height, dx, dy) = cr.text_extents(time_text)
-            cr.set_source_rgba(0.8, 0.8, 0.8, 0.8)
-            width_to_use = width + 20
-            preliminary_x = self.current_mouse_pos - 10
-            x_to_use = min(preliminary_x, drawing_area_size.width - width_to_use)
-            cr.rectangle(x_to_use, (drawing_area_size.height / 2) - height - 10, width + 20, height + 20)
-            cr.fill()
-            cr.move_to(x_to_use + 10, (drawing_area_size.height / 2))
-            cr.set_source_rgb(0.0, 0.0, 0.0)
-            cr.show_text(time_text)
+            padding = 10
+            time_interval_text = f"{datetime_helper.to_time_str(moused_over_le.start)} => {datetime_helper.to_time_str(moused_over_le.stop)}"
+            title_text = f"{moused_over_le.application.name} => {moused_over_le.title}"
 
+            (x, y, width, height, dx, dy) = cr.text_extents(time_interval_text)
+            max_width = width
+            height_to_use = height
+            time_interval_y = drawing_area_size.height / 2
+            time_interval_height = height
+            title_y = time_interval_y + height + 5
+            (x, y, width, height, dx, dy) = cr.text_extents(title_text)
+            width_to_use = max(max_width, width) + (padding * 2)
+            height_to_use += height
+            x_to_use = min(self.current_mouse_pos, drawing_area_size.width - width_to_use)
+
+            # Draw rectangle
+            cr.set_source_rgba(0.1, 0.1, 0.8, 0.8)
+            cr.rectangle(x_to_use,
+                         time_interval_y - time_interval_height - padding,
+                         width_to_use,
+                         height_to_use + (padding * 2))
+            cr.fill()
+
+            # Time interval text
+            cr.move_to(x_to_use + 10, time_interval_y)
+            cr.set_source_rgb(0.9, 0.9, 0.0)
+            cr.show_text(time_interval_text)
+
+            # Title text
+            cr.move_to(x_to_use + 10, title_y)
+            cr.set_source_rgb(0.0, 0.9, 0.9)
+            cr.show_text(title_text)
 
     def _datetime_to_pixel(self, dt: datetime) -> float:
         hour, minute, second = dt.hour, dt.minute, dt.second

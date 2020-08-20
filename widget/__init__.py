@@ -1,3 +1,2 @@
 from widget.category_choice_dialog import CategoryChoiceDialog
 from widget.calendar_button import CalendarButton
-from widget.timeline_details_popover import TimelineDetailsPopover
