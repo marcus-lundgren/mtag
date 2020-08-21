@@ -26,10 +26,7 @@ class LoggedEntryRepository:
         return self._from_dbo(conn=conn, db_le=db_le)
 
     def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime):
-        year = date.year
-        month = str(date.month).rjust(2, "0")
-        day = str(date.day).rjust(2, "0")
-        date_string = f"{year}-{month}-{day}"
+        date_string = date.strftime("%Y-%m-%d")
         from_datetime = datetime.datetime.fromisoformat(f"{date_string} 00:00:00")
         to_datetime = from_datetime + datetime.timedelta(days=1)
         cursor = conn.execute("SELECT * FROM logged_entry WHERE"
