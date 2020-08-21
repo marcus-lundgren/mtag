@@ -4,7 +4,6 @@ from helper import datetime_helper, database_helper
 from widget.timeline_canvas import TimelineCanvas
 from widget import CalendarButton
 from repository.logged_entry_repository import LoggedEntryRepository
-from repository.category_repository import CategoryRepository
 from repository.tagged_entry_repository import TaggedEntryRepository
 
 import gi
