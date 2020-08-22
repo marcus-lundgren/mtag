@@ -1,4 +1,5 @@
 import datetime
+from itertools import groupby
 
 from helper import datetime_helper, database_helper
 from widget.timeline_canvas import TimelineCanvas
@@ -25,6 +26,10 @@ class GtkSpy(Gtk.Window):
         self.calendar_button = CalendarButton()
         self.calendar_button.connect("day-selected", self._on_new_day_selected)
         top_bar.pack_start(self.calendar_button, expand=True, fill=False, padding=0)
+        self.scale_button = Gtk.SpinButton()
+        self.scale_button.set_adjustment(Gtk.Adjustment(value=1, lower=1, upper=100, step_increment=1))
+        self.scale_button.connect("value-changed", self._do_scale_value_changed)
+        top_bar.pack_start(self.scale_button, expand=True, fill=False, padding=0)
         b.add(top_bar)
 
         self._current_date = self.calendar_button.get_selected_date()
@@ -36,7 +41,9 @@ class GtkSpy(Gtk.Window):
         self.timeline_canvas = TimelineCanvas(parent=self)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
 
-        b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
+        tcsw = Gtk.ScrolledWindow()
+        tcsw.add(self.timeline_canvas)
+        b.pack_start(tcsw, expand=True, fill=True, padding=0)
 
         lists_grid = Gtk.Grid()
         lists_grid.set_column_homogeneous(True)
@@ -57,11 +64,11 @@ class GtkSpy(Gtk.Window):
             self.logged_entries_tree_view.append_column(column)
 
         # Tagged entries list
-        self.tagged_entries_list_store = Gtk.ListStore(str, str, str)
+        self.tagged_entries_list_store = Gtk.ListStore(str, str)
         self.tagged_entries_tree_view = Gtk.TreeView.new_with_model(self.tagged_entries_list_store)
         self.tagged_entries_tree_view.set_headers_clickable(True)
 
-        for i, title in enumerate(["Start", "Stop", "Category"]):
+        for i, title in enumerate(["Duration", "Category"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             column.set_sort_column_id(i)
@@ -77,6 +84,11 @@ class GtkSpy(Gtk.Window):
         b.pack_end(lists_grid, expand=True, fill=True, padding=10)
 
         self._reload_logged_entries_from_date()
+
+    def _do_scale_value_changed(self, spin_button: Gtk.SpinButton):
+        w_w = self.get_allocated_width()
+        tc_h = self.timeline_canvas.get_allocated_height()
+        self.timeline_canvas.set_size_request(w_w * spin_button.get_value(), tc_h)
 
     def _do_tagged_entry_created(self, _, te):
         tagged_entry_repository = TaggedEntryRepository()
@@ -109,10 +121,19 @@ class GtkSpy(Gtk.Window):
         self.logged_entries_tree_view.columns_autosize()
 
         self.tagged_entries_list_store.clear()
-        for te in tagged_entries:
-            self.tagged_entries_list_store.append([datetime_helper.to_time_str(te.start),
-                                                   datetime_helper.to_time_str(te.stop),
-                                                   te.category.name])
+        for te_category, te_group in groupby(sorted(tagged_entries, key=lambda x: x.category.db_id),
+                                             key=lambda x: x.category.name):
+            duration = datetime.timedelta()
+            for te in te_group:
+                duration += te.stop - te.start
+
+            total_seconds = duration.seconds
+            hours = total_seconds // 3600
+            total_seconds -= hours * 3600
+            mins = total_seconds // 60
+            secs = total_seconds % 60
+            self.tagged_entries_list_store.append([f"{str(hours).rjust(2, '0')}:{str(mins).rjust(2, '0')}:{str(secs).rjust(2, '0')}",
+                                                   te_category])
         self.tagged_entries_tree_view.columns_autosize()
 
 
