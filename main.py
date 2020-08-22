@@ -17,6 +17,9 @@ class GtkSpy(Gtk.Window):
     def __init__(self):
         super().__init__(title="GtkSpy")
         self.set_default_size(720, 400)
+        it = Gtk.IconTheme()
+        icon = it.load_icon(Gtk.STOCK_FIND, 256, Gtk.IconLookupFlags.USE_BUILTIN)
+        self.set_icon(icon)
 
         b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(b)
