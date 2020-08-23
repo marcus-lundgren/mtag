@@ -19,7 +19,8 @@ class Calendar(Gtk.Calendar):
         self._last_signal_was_not_single_click = False
 
         self.set_display_options(Gtk.CalendarDisplayOptions.SHOW_WEEK_NUMBERS
-                                 | Gtk.CalendarDisplayOptions.SHOW_HEADING)
+                                 | Gtk.CalendarDisplayOptions.SHOW_HEADING
+                                 | Gtk.CalendarDisplayOptions.SHOW_DAY_NAMES)
         self.connect("day-selected", self._on_date_selected)
 
         self.connect("month-changed", self._register_not_single_click_select)

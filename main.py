@@ -2,8 +2,8 @@ import datetime
 from itertools import groupby
 
 from helper import datetime_helper, database_helper
+from widget.calendar_panel import CalendarPanel
 from widget.timeline_canvas import TimelineCanvas
-from widget import CalendarButton
 from repository.logged_entry_repository import LoggedEntryRepository
 from repository.tagged_entry_repository import TaggedEntryRepository
 
@@ -26,16 +26,16 @@ class GtkSpy(Gtk.Window):
 
         # Top bar
         top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.calendar_button = CalendarButton()
-        self.calendar_button.connect("day-selected", self._on_new_day_selected)
-        top_bar.pack_start(self.calendar_button, expand=True, fill=False, padding=0)
+        self.calendar_panel = CalendarPanel()
+        self.calendar_panel.connect("day-selected", self._on_new_day_selected)
+        top_bar.pack_start(self.calendar_panel, expand=True, fill=False, padding=0)
         self.scale_button = Gtk.SpinButton()
         self.scale_button.set_adjustment(Gtk.Adjustment(value=1, lower=1, upper=100, step_increment=1))
         self.scale_button.connect("value-changed", self._do_scale_value_changed)
         top_bar.pack_start(self.scale_button, expand=True, fill=False, padding=0)
         b.add(top_bar)
 
-        self._current_date = self.calendar_button.get_selected_date()
+        self._current_date = self.calendar_panel.get_selected_date()
 
         # Drawing area
         self.current_mouse_pos = 0
@@ -44,9 +44,9 @@ class GtkSpy(Gtk.Window):
         self.timeline_canvas = TimelineCanvas(parent=self)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
 
-        tcsw = Gtk.ScrolledWindow()
-        tcsw.add(self.timeline_canvas)
-        b.pack_start(tcsw, expand=True, fill=True, padding=0)
+        self.tcsw = Gtk.ScrolledWindow()
+        self.tcsw.add(self.timeline_canvas)
+        b.pack_start(self.tcsw, expand=True, fill=True, padding=0)
 
         lists_grid = Gtk.Grid()
         lists_grid.set_column_homogeneous(True)
@@ -89,9 +89,9 @@ class GtkSpy(Gtk.Window):
         self._reload_logged_entries_from_date()
 
     def _do_scale_value_changed(self, spin_button: Gtk.SpinButton):
-        w_w = self.get_allocated_width()
-        tc_h = self.timeline_canvas.get_allocated_height()
-        self.timeline_canvas.set_size_request(w_w * spin_button.get_value(), tc_h)
+        tc_w = self.tcsw.get_allocated_width()
+        scale = pow(1.50, spin_button.get_value() - 1)
+        self.timeline_canvas.set_size_request(tc_w * scale, -1)
 
     def _do_tagged_entry_created(self, _, te):
         tagged_entry_repository = TaggedEntryRepository()
