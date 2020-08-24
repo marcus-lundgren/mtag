@@ -116,39 +116,66 @@ class TimelineCanvas(Gtk.DrawingArea):
                 break
 
         if moused_over_le is not None:
+            time_text = f"{datetime_helper.to_time_str(moused_over_le.start)} - {datetime_helper.to_time_str(moused_over_le.stop)} (00:00:00)"
+            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
+                                       mouse_y=self.actual_mouse_pos["y"],
+                                       canvas_width=drawing_area_size.width,
+                                       canvas_height=drawing_area_size.height,
+                                       cr=cr,
+                                       time_text=time_text,
+                                       description_text_list=[moused_over_le.title, moused_over_le.application.name])
+        else:
+            time_text = datetime_helper.to_time_str(self._pixel_to_datetime(self._get_timeline_x(self.actual_mouse_pos["x"], self)))
+            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
+                                       mouse_y=self.actual_mouse_pos["y"],
+                                       canvas_width=drawing_area_size.width,
+                                       canvas_height=drawing_area_size.height,
+                                       cr=cr,
+                                       time_text=time_text,
+                                       description_text_list=[])
+
+    def _show_details_tooltip(self, mouse_x: float, mouse_y: float,
+                              canvas_width, canvas_height, cr: cairo.Context,
+                              time_text: str, description_text_list: list):
             cr.set_font_size(16)
             padding = 10
-            time_interval_text = f"{datetime_helper.to_time_str(moused_over_le.start)} => {datetime_helper.to_time_str(moused_over_le.stop)}"
-            title_text = f"{moused_over_le.application.name} => {moused_over_le.title}"
+            line_padding = padding / 2
 
-            (x, y, width, height, dx, dy) = cr.text_extents(time_interval_text)
-            max_width = width
-            height_to_use = height
-            time_interval_y = self.actual_mouse_pos["y"] + height + padding
-            time_interval_height = height
-            title_y = time_interval_y + height + 5
-            (x, y, width, height, dx, dy) = cr.text_extents(title_text)
-            width_to_use = max(max_width, width) + (padding * 2)
-            height_to_use += height
-            x_to_use = min(self.actual_mouse_pos["x"], drawing_area_size.width - width_to_use)
+            widths = []
+            heights = []
+            texts = [time_text]
+
+            for dt in description_text_list:
+                texts.append(dt)
+
+            for t in texts:
+                (_, _, width, height, _, _) = cr.text_extents(t)
+                widths.append(width)
+                heights.append(height)
+
+            width_to_use = max(widths) + (padding * 2)
+            height_to_use = sum(heights) + (padding * 2) + line_padding * (len(heights) - 1)
+
+            x_to_use = min(mouse_x, canvas_width - width_to_use)
 
             # Draw rectangle
             cr.set_source_rgba(0.1, 0.1, 0.8, 0.8)
             cr.rectangle(x_to_use,
-                         time_interval_y - time_interval_height - padding,
+                         mouse_y,
                          width_to_use,
-                         height_to_use + (padding * 2))
+                         height_to_use)
             cr.fill()
 
-            # Time interval text
-            cr.move_to(x_to_use + 10, time_interval_y)
-            cr.set_source_rgb(0.9, 0.9, 0.0)
-            cr.show_text(time_interval_text)
-
-            # Title text
-            cr.move_to(x_to_use + 10, title_y)
-            cr.set_source_rgb(0.0, 0.9, 0.9)
-            cr.show_text(title_text)
+            # The texts
+            current_y = mouse_y + heights[0] + padding
+            for i, t in enumerate(texts):
+                if 0 < i:
+                    cr.set_source_rgb(0.0, 0.9, 0.9)
+                    current_y += heights[i - 1] + line_padding
+                else:
+                    cr.set_source_rgb(0.9, 0.9, 0.0)
+                cr.move_to(x_to_use + padding, current_y)
+                cr.show_text(t)
 
     @staticmethod
     def _set_tagged_entry_stop_date(stop_date: datetime,
