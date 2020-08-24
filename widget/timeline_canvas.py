@@ -156,18 +156,19 @@ class TimelineCanvas(Gtk.DrawingArea):
             width_to_use = max(widths) + (padding * 2)
             height_to_use = sum(heights) + (padding * 2) + line_padding * (len(heights) - 1)
 
+            rect_y = min(canvas_height - height_to_use, mouse_y)
             x_to_use = min(mouse_x, canvas_width - width_to_use)
 
             # Draw rectangle
-            cr.set_source_rgba(0.1, 0.1, 0.8, 0.8)
+            cr.set_source_rgba(0.1, 0.1, 0.8, 0.6)
             cr.rectangle(x_to_use,
-                         mouse_y,
+                         rect_y,
                          width_to_use,
                          height_to_use)
             cr.fill()
 
             # The texts
-            current_y = mouse_y + heights[0] + padding
+            current_y = rect_y + heights[0] + padding
             for i, t in enumerate(texts):
                 if 0 < i:
                     cr.set_source_rgb(0.0, 0.9, 0.9)
