@@ -205,6 +205,13 @@ class TimelineCanvas(Gtk.DrawingArea):
                          height_to_use)
             cr.fill()
 
+            cr.set_source_rgba(0.8, 0.6, 0.2, 0.6)
+            cr.rectangle(x_to_use,
+                         rect_y,
+                         width_to_use,
+                         height_to_use)
+            cr.stroke()
+
             # The texts
             number_of_time_texts = len(time_text_list)
             current_y = rect_y + heights[0] + padding
