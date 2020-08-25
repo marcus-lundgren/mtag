@@ -57,8 +57,16 @@ class TimelineCanvas(Gtk.DrawingArea):
     def _do_draw(self, w: Gtk.DrawingArea, cr: cairo.Context):
         # Get the size
         drawing_area_size, _ = w.get_allocated_size()
-        self.timeline_height = drawing_area_size.height * 0.25
-        self.timeline_top_padding = drawing_area_size.height * 0.08
+        self.timeline_top_padding = 10
+        (_, _, _, hour_text_height, _, _) = cr.text_extents("1")
+        hour_text_and_line_gap = 10
+        self.timeline_height = (drawing_area_size.height - self.timeline_top_padding * 3 - hour_text_height - hour_text_and_line_gap) / 2
+
+        self.te_start_y = self.timeline_top_padding
+        self.te_end_y = self.te_start_y + self.timeline_height
+
+        self.le_start_y = self.te_end_y + self.timeline_top_padding
+        self.le_end_y = self.le_start_y + self.timeline_height
 
         timeline_x = self._get_timeline_x(self.current_mouse_pos, w)
 
@@ -69,16 +77,16 @@ class TimelineCanvas(Gtk.DrawingArea):
             hx = self.timeline_side_padding + hour_x_offset * h
             cr.set_source_rgb(0.5, 0.5, 0.5)
             cr.new_path()
-            cr.move_to(hx, 10)
-            cr.line_to(hx, drawing_area_size.height - 50)  # TODO: Make 50 a variable (hourlineLength)
+            cr.move_to(hx, self.timeline_top_padding / 2)
+            cr.line_to(hx, drawing_area_size.height - hour_text_height - hour_text_and_line_gap)
             cr.stroke()
 
             # Hour text
-            hour_string = str(h)
-            text_offset = 5 if len(hour_string) == 1 else 10
-            cr.move_to(hx - text_offset, drawing_area_size.height - 30)
             cr.set_font_size(16)
-            cr.show_text(str(h))
+            hour_string = str(h)
+            (tx, _, hour_text_width, _, dx, _) = cr.text_extents(hour_string)
+            cr.move_to(hx - tx - (hour_text_width / 2), drawing_area_size.height)
+            cr.show_text(hour_string)
 
         self.pixels_per_seconds = (drawing_area_size.width - self.timeline_side_padding * 2) / (24 * 60 * 60)
         for le in self.logged_entries:
@@ -88,7 +96,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             color_string = color_helper.to_color(le.application.name)
             color = Gdk.color_parse(spec=color_string)
             cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
-            cr.rectangle(start_x, self.timeline_height + self.timeline_top_padding * 2,
+            cr.rectangle(start_x, self.le_start_y,
                          stop_x - start_x, self.timeline_height)
             cr.fill()
 
@@ -106,44 +114,74 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.stroke()
 
         moused_over_le = None
-        for le in self.logged_entries:
-            if self._datetime_to_pixel(le.stop) < self.actual_mouse_pos["x"]:
-                continue
-            elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(le.start):
-                break
-            else:
-                moused_over_le = le
-                break
+        if self.le_start_y <= self.actual_mouse_pos["y"] <= self.le_end_y:
+            for le in self.logged_entries:
+                if self._datetime_to_pixel(le.stop) < self.actual_mouse_pos["x"]:
+                    continue
+                elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(le.start):
+                    break
+                else:
+                    moused_over_le = le
+                    break
 
-        if moused_over_le is not None:
+        moused_over_te = None
+        if self.te_start_y <= self.actual_mouse_pos["y"] <= self.te_end_y:
+            for te in self.tagged_entries:
+                if self._datetime_to_pixel(te.stop) < self.actual_mouse_pos["x"]:
+                    continue
+                elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(te.start):
+                    break
+                else:
+                    moused_over_te = te
+                    break
+
+        moused_over_time_string = datetime_helper.to_time_str(self._pixel_to_datetime(self._get_timeline_x(self.actual_mouse_pos["x"], self)))
+        if self.current_tagged_entry is not None:
+            time_text = f"{datetime_helper.to_time_str(self.current_tagged_entry.start)} - {datetime_helper.to_time_str(self.current_tagged_entry.stop)} (00:00:00)"
+            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
+                                       mouse_y=self.actual_mouse_pos["y"],
+                                       canvas_width=drawing_area_size.width,
+                                       canvas_height=drawing_area_size.height,
+                                       cr=cr,
+                                       time_text_list=[time_text],
+                                       description_text_list=[])
+        elif moused_over_te is not None:
+            time_text = f"{datetime_helper.to_time_str(moused_over_te.start)} - {datetime_helper.to_time_str(moused_over_te.stop)} (00:00:00)"
+            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
+                                       mouse_y=self.actual_mouse_pos["y"],
+                                       canvas_width=drawing_area_size.width,
+                                       canvas_height=drawing_area_size.height,
+                                       cr=cr,
+                                       time_text_list=[moused_over_time_string, time_text],
+                                       description_text_list=[moused_over_te.category.name])
+        elif moused_over_le is not None:
             time_text = f"{datetime_helper.to_time_str(moused_over_le.start)} - {datetime_helper.to_time_str(moused_over_le.stop)} (00:00:00)"
             self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
                                        mouse_y=self.actual_mouse_pos["y"],
                                        canvas_width=drawing_area_size.width,
                                        canvas_height=drawing_area_size.height,
                                        cr=cr,
-                                       time_text=time_text,
+                                       time_text_list=[moused_over_time_string, time_text],
                                        description_text_list=[moused_over_le.title, moused_over_le.application.name])
         else:
-            time_text = datetime_helper.to_time_str(self._pixel_to_datetime(self._get_timeline_x(self.actual_mouse_pos["x"], self)))
             self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
                                        mouse_y=self.actual_mouse_pos["y"],
                                        canvas_width=drawing_area_size.width,
                                        canvas_height=drawing_area_size.height,
                                        cr=cr,
-                                       time_text=time_text,
+                                       time_text_list=[moused_over_time_string],
                                        description_text_list=[])
 
     def _show_details_tooltip(self, mouse_x: float, mouse_y: float,
                               canvas_width, canvas_height, cr: cairo.Context,
-                              time_text: str, description_text_list: list):
+                              time_text_list: list, description_text_list: list):
             cr.set_font_size(16)
             padding = 10
             line_padding = padding / 2
 
             widths = []
             heights = []
-            texts = [time_text]
+            texts = time_text_list.copy()
 
             for dt in description_text_list:
                 texts.append(dt)
@@ -168,13 +206,17 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.fill()
 
             # The texts
+            number_of_time_texts = len(time_text_list)
             current_y = rect_y + heights[0] + padding
             for i, t in enumerate(texts):
                 if 0 < i:
-                    cr.set_source_rgb(0.0, 0.9, 0.9)
                     current_y += heights[i - 1] + line_padding
+
+                if number_of_time_texts <= i:
+                    cr.set_source_rgb(0.0, 0.9, 0.9)
                 else:
                     cr.set_source_rgb(0.9, 0.9, 0.0)
+
                 cr.move_to(x_to_use + padding, current_y)
                 cr.show_text(t)
 
@@ -298,7 +340,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             color_string = tagged_entry.category.color_rgb
             color = Gdk.color_parse(spec=color_string)
             cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
-        cr.rectangle(start_x, self.timeline_top_padding, stop_x - start_x, self.timeline_height)
+        cr.rectangle(start_x, self.te_start_y, stop_x - start_x, self.timeline_height)
         cr.fill()
 
     def _pixel_to_datetime(self, x_position: int) -> datetime:
