@@ -9,6 +9,7 @@ class TaggedEntry:
         self._stop = stop
         self.initial_position = self.start
         self._category = category
+        self.duration = stop - start
 
     @property
     def category(self):

@@ -11,3 +11,15 @@ def _to_two_digit(number: int):
 
 def to_time_str(dt: datetime.datetime):
     return dt.strftime('%H:%M:%S')
+
+
+def to_duration_str(td: datetime.timedelta):
+    hours, minutes, seconds = seconds_to_hour_minute_second(td.seconds)
+    return f"{_to_two_digit(hours)}:{_to_two_digit(minutes)}:{_to_two_digit(seconds)}"
+
+
+def seconds_to_hour_minute_second(total_seconds: int) -> tuple:
+    hours = total_seconds // (60 * 60)
+    minutes = (total_seconds - hours * 60 * 60) // 60
+    seconds = int(total_seconds % 60)
+    return hours, minutes, seconds

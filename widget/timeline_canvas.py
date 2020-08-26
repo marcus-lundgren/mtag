@@ -146,7 +146,7 @@ class TimelineCanvas(Gtk.DrawingArea):
                                        time_text_list=[time_text],
                                        description_text_list=[])
         elif moused_over_te is not None:
-            time_text = f"{datetime_helper.to_time_str(moused_over_te.start)} - {datetime_helper.to_time_str(moused_over_te.stop)} (00:00:00)"
+            time_text = f"{datetime_helper.to_time_str(moused_over_te.start)} - {datetime_helper.to_time_str(moused_over_te.stop)} ({datetime_helper.to_duration_str(moused_over_te.duration)})"
             self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
                                        mouse_y=self.actual_mouse_pos["y"],
                                        canvas_width=drawing_area_size.width,
@@ -155,7 +155,7 @@ class TimelineCanvas(Gtk.DrawingArea):
                                        time_text_list=[moused_over_time_string, time_text],
                                        description_text_list=[moused_over_te.category.name])
         elif moused_over_le is not None:
-            time_text = f"{datetime_helper.to_time_str(moused_over_le.start)} - {datetime_helper.to_time_str(moused_over_le.stop)} (00:00:00)"
+            time_text = f"{datetime_helper.to_time_str(moused_over_le.start)} - {datetime_helper.to_time_str(moused_over_le.stop)} ({datetime_helper.to_duration_str(moused_over_le.duration)})"
             self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
                                        mouse_y=self.actual_mouse_pos["y"],
                                        canvas_width=drawing_area_size.width,
@@ -352,9 +352,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     def _pixel_to_datetime(self, x_position: int) -> datetime:
         total_seconds = (x_position - self.timeline_side_padding) / self.pixels_per_seconds
-        hours = total_seconds // (60 * 60)
-        minutes = (total_seconds - hours * 60 * 60) // 60
-        seconds = int(total_seconds % 60)
+        hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_seconds)
         d = datetime.datetime(year=self._current_date.year,
                               month=self._current_date.month,
                               day=self._current_date.day)

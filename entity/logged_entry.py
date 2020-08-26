@@ -9,3 +9,4 @@ class LoggedEntry:
         self.stop = stop
         self.application = application
         self.title = title
+        self.duration = stop - start
