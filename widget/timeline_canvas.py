@@ -104,7 +104,12 @@ class TimelineCanvas(Gtk.DrawingArea):
             self._draw_tagged_entry(tagged_entry, cr)
 
         if self.current_tagged_entry is not None:
-            self._draw_tagged_entry(self.current_tagged_entry, cr)
+            start_x = self._datetime_to_pixel(self.current_tagged_entry.start)
+            stop_x = self._datetime_to_pixel(self.current_tagged_entry.stop)
+            cr.set_source_rgba(0.2, 0.2, 0.2, 0.4)
+            cr.rectangle(start_x, 0,
+                         stop_x - start_x, drawing_area_size.height)
+            cr.fill()
 
         # Show a guiding line under the mouse cursor
         cr.new_path()
@@ -118,20 +123,10 @@ class TimelineCanvas(Gtk.DrawingArea):
         desc_texts = []
 
         if self.current_tagged_entry is not None:
-            time_details = f"{datetime_helper.to_time_str(self.current_tagged_entry.start)} - {datetime_helper.to_time_str(self.current_tagged_entry.stop)} ({datetime_helper.to_duration_str(self.current_tagged_entry.duration)})"
+            time_details = datetime_helper.to_time_text(self.current_tagged_entry.start,
+                                                        self.current_tagged_entry.stop,
+                                                        self.current_tagged_entry.duration)
             time_texts = [time_details]
-            pass
-        elif self.le_start_y <= self.actual_mouse_pos["y"] <= self.le_end_y:
-            for le in self.logged_entries:
-                if self._datetime_to_pixel(le.stop) < self.actual_mouse_pos["x"]:
-                    continue
-                elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(le.start):
-                    break
-                else:
-                    time_details = f"{datetime_helper.to_time_str(le.start)} - {datetime_helper.to_time_str(le.stop)} ({datetime_helper.to_duration_str(le.duration)})"
-                    time_texts.append(time_details)
-                    desc_texts.append(le.application.name)
-                    break
         elif self.te_start_y <= self.actual_mouse_pos["y"] <= self.te_end_y:
             for te in self.tagged_entries:
                 if self._datetime_to_pixel(te.stop) < self.actual_mouse_pos["x"]:
@@ -139,9 +134,23 @@ class TimelineCanvas(Gtk.DrawingArea):
                 elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(te.start):
                     break
                 else:
-                    time_details = f"{datetime_helper.to_time_str(te.start)} - {datetime_helper.to_time_str(te.stop)} ({datetime_helper.to_duration_str(te.duration)})"
+                    time_details = datetime_helper.to_time_text(te.start, te.stop, te.duration)
                     time_texts.append(time_details)
                     desc_texts.append(te.category.name)
+                    break
+
+        if self.le_start_y <= self.actual_mouse_pos["y"] <= self.le_end_y:
+            for le in self.logged_entries:
+                if self._datetime_to_pixel(le.stop) < self.actual_mouse_pos["x"]:
+                    continue
+                elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(le.start):
+                    break
+                else:
+                    if self.current_tagged_entry is None:
+                        time_details = datetime_helper.to_time_text(le.start, le.stop, le.duration)
+                        time_texts.append(time_details)
+                    desc_texts.append(le.application.name)
+                    desc_texts.append(le.title)
                     break
 
         self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
@@ -232,7 +241,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         c = entity.Category(name="Test")
         timeline_x = self._get_timeline_x(self.current_mouse_pos, self)
         start_date = self._pixel_to_datetime(timeline_x)
-        self.current_tagged_entry = entity.TaggedEntry(category=c, start=start_date, stop=start_date)
+        self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_date, stop=start_date)
 
     def _on_button_release(self, widget, event: Gdk.EventType):
         # Ensure that an entry is being created.

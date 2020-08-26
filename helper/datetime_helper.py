@@ -25,5 +25,7 @@ def seconds_to_hour_minute_second(total_seconds: int) -> tuple:
     return hours, minutes, seconds
 
 def to_time_text(start: datetime.datetime, stop: datetime.datetime, duration: datetime.timedelta):
-    start_str = to_time_text(start)
+    start_str = to_time_str(start)
     stop_str = to_time_str(stop)
+    duration_str = to_duration_str(duration)
+    return f"{start_str} - {stop_str} ({duration_str})"
