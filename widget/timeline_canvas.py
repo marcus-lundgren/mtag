@@ -113,64 +113,44 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.line_to(timeline_x, drawing_area_size.height - 10)
         cr.stroke()
 
-        moused_over_le = None
-        if self.le_start_y <= self.actual_mouse_pos["y"] <= self.le_end_y:
+        moused_over_time_string = datetime_helper.to_time_str(self._pixel_to_datetime(self._get_timeline_x(self.actual_mouse_pos["x"], self)))
+        time_texts = [moused_over_time_string]
+        desc_texts = []
+
+        if self.current_tagged_entry is not None:
+            time_details = f"{datetime_helper.to_time_str(self.current_tagged_entry.start)} - {datetime_helper.to_time_str(self.current_tagged_entry.stop)} ({datetime_helper.to_duration_str(self.current_tagged_entry.duration)})"
+            time_texts = [time_details]
+            pass
+        elif self.le_start_y <= self.actual_mouse_pos["y"] <= self.le_end_y:
             for le in self.logged_entries:
                 if self._datetime_to_pixel(le.stop) < self.actual_mouse_pos["x"]:
                     continue
                 elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(le.start):
                     break
                 else:
-                    moused_over_le = le
+                    time_details = f"{datetime_helper.to_time_str(le.start)} - {datetime_helper.to_time_str(le.stop)} ({datetime_helper.to_duration_str(le.duration)})"
+                    time_texts.append(time_details)
+                    desc_texts.append(le.application.name)
                     break
-
-        moused_over_te = None
-        if self.te_start_y <= self.actual_mouse_pos["y"] <= self.te_end_y:
+        elif self.te_start_y <= self.actual_mouse_pos["y"] <= self.te_end_y:
             for te in self.tagged_entries:
                 if self._datetime_to_pixel(te.stop) < self.actual_mouse_pos["x"]:
                     continue
                 elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(te.start):
                     break
                 else:
-                    moused_over_te = te
+                    time_details = f"{datetime_helper.to_time_str(te.start)} - {datetime_helper.to_time_str(te.stop)} ({datetime_helper.to_duration_str(te.duration)})"
+                    time_texts.append(time_details)
+                    desc_texts.append(te.category.name)
                     break
 
-        moused_over_time_string = datetime_helper.to_time_str(self._pixel_to_datetime(self._get_timeline_x(self.actual_mouse_pos["x"], self)))
-        if self.current_tagged_entry is not None:
-            time_text = f"{datetime_helper.to_time_str(self.current_tagged_entry.start)} - {datetime_helper.to_time_str(self.current_tagged_entry.stop)} (00:00:00)"
-            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
-                                       mouse_y=self.actual_mouse_pos["y"],
-                                       canvas_width=drawing_area_size.width,
-                                       canvas_height=drawing_area_size.height,
-                                       cr=cr,
-                                       time_text_list=[time_text],
-                                       description_text_list=[])
-        elif moused_over_te is not None:
-            time_text = f"{datetime_helper.to_time_str(moused_over_te.start)} - {datetime_helper.to_time_str(moused_over_te.stop)} ({datetime_helper.to_duration_str(moused_over_te.duration)})"
-            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
-                                       mouse_y=self.actual_mouse_pos["y"],
-                                       canvas_width=drawing_area_size.width,
-                                       canvas_height=drawing_area_size.height,
-                                       cr=cr,
-                                       time_text_list=[moused_over_time_string, time_text],
-                                       description_text_list=[moused_over_te.category.name])
-        elif moused_over_le is not None:
-            time_text = f"{datetime_helper.to_time_str(moused_over_le.start)} - {datetime_helper.to_time_str(moused_over_le.stop)} ({datetime_helper.to_duration_str(moused_over_le.duration)})"
-            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
-                                       mouse_y=self.actual_mouse_pos["y"],
-                                       canvas_width=drawing_area_size.width,
-                                       canvas_height=drawing_area_size.height,
-                                       cr=cr,
-                                       time_text_list=[moused_over_time_string, time_text],
-                                       description_text_list=[moused_over_le.title, moused_over_le.application.name])
-        else:
-            self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
-                                       mouse_y=self.actual_mouse_pos["y"],
-                                       canvas_width=drawing_area_size.width,
-                                       canvas_height=drawing_area_size.height,
-                                       cr=cr,
-                                       time_text_list=[moused_over_time_string],
-                                       description_text_list=[])
+        self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
+                                   mouse_y=self.actual_mouse_pos["y"],
+                                   canvas_width=drawing_area_size.width,
+                                   canvas_height=drawing_area_size.height,
+                                   cr=cr,
+                                   time_text_list=time_texts,
+                                   description_text_list=desc_texts)
 
     def _show_details_tooltip(self, mouse_x: float, mouse_y: float,
                               canvas_width, canvas_height, cr: cairo.Context,
