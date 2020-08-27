@@ -126,16 +126,8 @@ class GtkSpy(Gtk.Window):
         self.tagged_entries_list_store.clear()
         for te_category, te_group in groupby(sorted(tagged_entries, key=lambda x: x.category.db_id),
                                              key=lambda x: x.category.name):
-            duration = datetime.timedelta()
-            for te in te_group:
-                duration += te.stop - te.start
-
-            total_seconds = duration.seconds
-            hours = total_seconds // 3600
-            total_seconds -= hours * 3600
-            mins = total_seconds // 60
-            secs = total_seconds % 60
-            self.tagged_entries_list_store.append([f"{str(hours).rjust(2, '0')}:{str(mins).rjust(2, '0')}:{str(secs).rjust(2, '0')}",
+            duration = sum([te.duration for te in te_group], start=datetime.timedelta())
+            self.tagged_entries_list_store.append([datetime_helper.to_duration_str(duration),
                                                    te_category])
         self.tagged_entries_tree_view.columns_autosize()
 
