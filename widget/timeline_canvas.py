@@ -1,7 +1,7 @@
 import datetime
 
 import entity
-from helper import color_helper, datetime_helper, database_helper
+from helper import color_helper, datetime_helper, database_helper, timeline_helper
 from widget.category_choice_dialog import CategoryChoiceDialog
 from repository.category_repository import CategoryRepository
 
@@ -37,7 +37,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.actual_mouse_pos = {"x": 0, "y": 0}
 
         self.timeline_side_padding = 13
-        self.timeline_top_padding = 15
+        self.timeline_top_padding = 10
         self.timeline_height = 80
         self.pixels_per_seconds = 2
 
@@ -54,10 +54,9 @@ class TimelineCanvas(Gtk.DrawingArea):
         self._current_date = dt
         self.queue_draw()
 
-    def _do_draw(self, w: Gtk.DrawingArea, cr: cairo.Context):
+    def _do_draw(self, _, cr: cairo.Context):
         # Get the size
-        drawing_area_size, _ = w.get_allocated_size()
-        self.timeline_top_padding = 10
+        drawing_area_size, _ = self.get_allocated_size()
         (_, _, _, hour_text_height, _, _) = cr.text_extents("1")
         hour_text_and_line_gap = 10
         self.timeline_height = (drawing_area_size.height - self.timeline_top_padding * 3 - hour_text_height - hour_text_and_line_gap) / 2
@@ -68,7 +67,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.le_start_y = self.te_end_y + self.timeline_top_padding
         self.le_end_y = self.le_start_y + self.timeline_height
 
-        timeline_x = self._get_timeline_x(self.current_mouse_pos, w)
+        timeline_x = self._get_timeline_x(self.current_mouse_pos)
 
         # Draw the hour lines
         hour_x_offset = (drawing_area_size.width - self.timeline_side_padding * 2) / 24
@@ -118,7 +117,11 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.line_to(timeline_x, drawing_area_size.height - 10)
         cr.stroke()
 
-        moused_over_time_string = datetime_helper.to_time_str(self._pixel_to_datetime(self._get_timeline_x(self.actual_mouse_pos["x"], self)))
+        pixel_as_datetime = timeline_helper.pixel_to_datetime(x_position=self.actual_mouse_pos["x"],
+                                                              timeline_side_padding=self.timeline_side_padding,
+                                                              pixels_per_second=self.pixels_per_seconds,
+                                                              current_date=self._current_date)
+        moused_over_time_string = datetime_helper.to_time_str(pixel_as_datetime)
         time_texts = [moused_over_time_string]
         desc_texts = []
 
@@ -237,10 +240,8 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         return date_to_use
 
-    def _on_button_press(self, widget, event):
-        c = entity.Category(name="Test")
-        timeline_x = self._get_timeline_x(self.current_mouse_pos, self)
-        start_date = self._pixel_to_datetime(timeline_x)
+    def _on_button_press(self, widget, event: Gdk.EventButton):
+        start_date = self._pixel_to_datetime(self.current_mouse_pos)
         self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_date, stop=start_date)
 
     def _on_button_release(self, widget, event: Gdk.EventType):
@@ -251,8 +252,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         tagged_entry_to_create = self.current_tagged_entry
         self.current_tagged_entry = None
 
-        timeline_x = self._get_timeline_x(event.x, self)
-        stop_date = self._pixel_to_datetime(timeline_x)
+        stop_date = self._pixel_to_datetime(event.x)
         self._set_tagged_entry_stop_date(stop_date, tagged_entry_to_create, self.tagged_entries)
         if tagged_entry_to_create.start == tagged_entry_to_create.stop:
             return
@@ -261,7 +261,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         conn = database_helper.create_connection()
         categories = self.category_repository.get_all(conn=conn)
         conn.close()
-        dialog = CategoryChoiceDialog(window=self.parent, categories=categories)
+        dialog = CategoryChoiceDialog(window=self.parent, categories=categories, tagged_entry=tagged_entry_to_create)
         r = dialog.run()
         chosen_category_name = dialog.get_chosen_category_value()
         dialog.destroy()
@@ -285,9 +285,8 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.queue_draw()
 
-    def _on_motion_notify(self, widget: Gtk.DrawingArea, event):
-        timeline_x = self._get_timeline_x(event.x, widget)
-        stop_date = self._pixel_to_datetime(timeline_x)
+    def _on_motion_notify(self, _: Gtk.DrawingArea, event):
+        stop_date = self._pixel_to_datetime(event.x)
 
         next_mouse_pos = event.x
         if self.current_tagged_entry is not None:
@@ -310,22 +309,16 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.actual_mouse_pos["x"], self.actual_mouse_pos["y"] = event.x, event.y
         self.queue_draw()
 
-    def _get_timeline_x(self, mouse_position: float, drawing_area: Gtk.DrawingArea):
-        max_timeline_x = drawing_area.get_allocated_size()[0].width - self.timeline_side_padding - 0.00001
-        min_timeline_x = self.timeline_side_padding
-
-        timeline_x = max(mouse_position, min_timeline_x)
-        timeline_x = min(max_timeline_x, timeline_x)
-        return timeline_x
+    def _get_timeline_x(self, mouse_position: float):
+        return timeline_helper.to_timeline_x(x_position=mouse_position,
+                                             canvas_width=self.get_allocated_width(),
+                                             canvas_side_padding=self.timeline_side_padding)
 
     def _datetime_to_pixel(self, dt: datetime) -> float:
-        hour, minute, second = dt.hour, dt.minute, dt.second
-        if dt < self._current_date:
-            hour, minute, second = 0, 0, 0
-        elif self._current_date + datetime.timedelta(days=1) <= dt:
-            hour, minute, second = 23, 59, 59
-
-        return self.pixels_per_seconds * (hour * 60 * 60 + minute * 60 + second) + self.timeline_side_padding
+        return timeline_helper.datetime_to_pixel(dt=dt,
+                                                 current_date=self._current_date,
+                                                 pixels_per_second=self.pixels_per_seconds,
+                                                 timeline_side_padding=self.timeline_side_padding)
 
     def _draw_tagged_entry(self, tagged_entry: entity.TaggedEntry, cr: cairo.Context):
         start_x = self._datetime_to_pixel(tagged_entry.start)
@@ -339,11 +332,9 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.rectangle(start_x, self.te_start_y, stop_x - start_x, self.timeline_height)
         cr.fill()
 
-    def _pixel_to_datetime(self, x_position: int) -> datetime:
-        total_seconds = (x_position - self.timeline_side_padding) / self.pixels_per_seconds
-        hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_seconds)
-        d = datetime.datetime(year=self._current_date.year,
-                              month=self._current_date.month,
-                              day=self._current_date.day)
-        d += datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
-        return d
+    def _pixel_to_datetime(self, x_position: float) -> datetime:
+        timeline_x = self._get_timeline_x(mouse_position=x_position)
+        return timeline_helper.pixel_to_datetime(x_position=timeline_x,
+                                                 timeline_side_padding=self.timeline_side_padding,
+                                                 pixels_per_second=self.pixels_per_seconds,
+                                                 current_date=self._current_date)
