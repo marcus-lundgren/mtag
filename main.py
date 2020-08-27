@@ -44,9 +44,7 @@ class GtkSpy(Gtk.Window):
         self.timeline_canvas = TimelineCanvas(parent=self)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
 
-        self.tcsw = Gtk.ScrolledWindow()
-        self.tcsw.add(self.timeline_canvas)
-        b.pack_start(self.tcsw, expand=True, fill=True, padding=0)
+        b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
 
         lists_grid = Gtk.Grid()
         lists_grid.set_column_homogeneous(True)
