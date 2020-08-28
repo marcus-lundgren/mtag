@@ -99,13 +99,13 @@ class TimelineCanvas(Gtk.DrawingArea):
                     self.timeline_start = self._current_date + datetime.timedelta(days=1) - self.timeline_delta
         # Move right
         elif e.direction == Gdk.ScrollDirection.RIGHT:
-            self.timeline_start += datetime.timedelta(minutes=10)
+            self.timeline_start += datetime.timedelta(minutes=8)
             # Ensure that we don't get too far to the right
             if (self.timeline_start + self.timeline_delta).day != self._current_date.day:
                 self.timeline_start = self._current_date + datetime.timedelta(hours=23, minutes=59, seconds=59) - self.timeline_delta
         # Move left
         elif e.direction == Gdk.ScrollDirection.LEFT:
-            self.timeline_start -= datetime.timedelta(minutes=10)
+            self.timeline_start -= datetime.timedelta(minutes=8)
             # Ensure that we don't get too far to the left
             if self.timeline_start < self._current_date:
                 self.timeline_start = self._current_date
