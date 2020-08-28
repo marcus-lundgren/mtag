@@ -60,30 +60,55 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.menu.show_all()
 
     def _do_scroll_event(self, _, e: Gdk.EventScroll):
+        mouse_datetime = self._pixel_to_datetime(self.actual_mouse_pos["x"])
+        mouse_delta = mouse_datetime - self.timeline_start
+        mouse_relative_position = mouse_delta.total_seconds() / self.timeline_delta.total_seconds()
+
         # Zoom in
         if e.direction == Gdk.ScrollDirection.UP:
             if self.timeline_delta.total_seconds() >= (30 * 60):
+                old_relative_mouse_pos_in_seconds = mouse_relative_position * self.timeline_delta.total_seconds()
                 self.timeline_delta -= datetime.timedelta(minutes=15)
+                new_relative_mouse_pos_in_seconds = int(self.timeline_delta.total_seconds() * mouse_relative_position)
+
+                seconds_to_add_to_start = old_relative_mouse_pos_in_seconds - new_relative_mouse_pos_in_seconds
+                hour, minute, second = datetime_helper.seconds_to_hour_minute_second(seconds_to_add_to_start)
+                delta_to_add = datetime.timedelta(hours=hour, minutes=minute, seconds=second)
+                self.timeline_start += delta_to_add
         # Zoom out
         elif e.direction == Gdk.ScrollDirection.DOWN:
-            if self.timeline_delta.total_seconds() != (24 * 60 * 60 - 1):
+            if self.timeline_delta.total_seconds() < (24 * 60 * 60 - 1):
+                old_relative_mouse_pos_in_seconds = mouse_relative_position * self.timeline_delta.total_seconds()
                 self.timeline_delta += datetime.timedelta(minutes=15)
+                if 24 * 60 * 60 - 1 <= self.timeline_delta.total_seconds():
+                    self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
+                    self.timeline_start = self._current_date
+                else:
+                    new_relative_mouse_pos_in_seconds = int(self.timeline_delta.total_seconds() * mouse_relative_position)
+                    seconds_to_add_to_start = old_relative_mouse_pos_in_seconds - new_relative_mouse_pos_in_seconds
+                    hour, minute, second = datetime_helper.seconds_to_hour_minute_second(seconds_to_add_to_start)
+                    delta_to_add = datetime.timedelta(hours=hour, minutes=minute, seconds=second)
+                    self.timeline_start += delta_to_add
+
+                # Ensure that we don't get too far to the left
+                if self.timeline_start < self._current_date:
+                    self.timeline_start = self._current_date
+
                 # Ensure that we don't get too far to the right
                 if (self.timeline_start + self.timeline_delta).day != self._current_date.day:
                     self.timeline_start = self._current_date + datetime.timedelta(days=1) - self.timeline_delta
         # Move right
         elif e.direction == Gdk.ScrollDirection.RIGHT:
-            self.timeline_start += datetime.timedelta(minutes=15)
+            self.timeline_start += datetime.timedelta(minutes=10)
             # Ensure that we don't get too far to the right
             if (self.timeline_start + self.timeline_delta).day != self._current_date.day:
-                self.timeline_start = self._current_date + datetime.timedelta(days=1) - self.timeline_delta
+                self.timeline_start = self._current_date + datetime.timedelta(hours=23, minutes=59, seconds=59) - self.timeline_delta
         # Move left
         elif e.direction == Gdk.ScrollDirection.LEFT:
-            self.timeline_start -= datetime.timedelta(minutes=15)
+            self.timeline_start -= datetime.timedelta(minutes=10)
             # Ensure that we don't get too far to the left
             if self.timeline_start < self._current_date:
-                diff = self._current_date - self.timeline_start
-                self.timeline_start += diff
+                self.timeline_start = self._current_date
         self.queue_draw()
 
     def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries):
