@@ -60,17 +60,27 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.menu.show_all()
 
     def _do_scroll_event(self, _, e: Gdk.EventScroll):
-        print(e.direction)
+        # Zoom in
         if e.direction == Gdk.ScrollDirection.UP:
             if self.timeline_delta.total_seconds() >= (30 * 60):
                 self.timeline_delta -= datetime.timedelta(minutes=15)
+        # Zoom out
         elif e.direction == Gdk.ScrollDirection.DOWN:
             if self.timeline_delta.total_seconds() != (24 * 60 * 60 - 1):
                 self.timeline_delta += datetime.timedelta(minutes=15)
+                # Ensure that we don't get too far to the right
+                if (self.timeline_start + self.timeline_delta).day != self._current_date.day:
+                    self.timeline_start = self._current_date + datetime.timedelta(days=1) - self.timeline_delta
+        # Move right
         elif e.direction == Gdk.ScrollDirection.RIGHT:
             self.timeline_start += datetime.timedelta(minutes=15)
+            # Ensure that we don't get too far to the right
+            if (self.timeline_start + self.timeline_delta).day != self._current_date.day:
+                self.timeline_start = self._current_date + datetime.timedelta(days=1) - self.timeline_delta
+        # Move left
         elif e.direction == Gdk.ScrollDirection.LEFT:
             self.timeline_start -= datetime.timedelta(minutes=15)
+            # Ensure that we don't get too far to the left
             if self.timeline_start < self._current_date:
                 diff = self._current_date - self.timeline_start
                 self.timeline_start += diff
@@ -104,8 +114,6 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.le_start_y = self.te_end_y + self.timeline_top_padding
         self.le_end_y = self.le_start_y + self.timeline_height
-
-        timeline_x = self._get_timeline_x(self.current_mouse_pos)
 
         # Draw the hour lines
         for h in range(0, 24):
@@ -151,18 +159,14 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.fill()
 
         # Show a guiding line under the mouse cursor
+        timeline_x = self._get_timeline_x(self.current_mouse_pos)
         cr.new_path()
         cr.set_source_rgb(0.7, 0.7, 0.7)
         cr.move_to(timeline_x, 10)
         cr.line_to(timeline_x, drawing_area_size.height - 10)
         cr.stroke()
 
-        pixel_as_datetime = timeline_helper.pixel_to_datetime(x_position=timeline_x,
-                                                              timeline_side_padding=self.timeline_side_padding,
-                                                              pixels_per_second=self.pixels_per_seconds,
-                                                              current_date=self._current_date,
-                                                              timeline_start_datetime=self.timeline_start,
-                                                              timeline_stop_datetime=self.timeline_end)
+        pixel_as_datetime = self._pixel_to_datetime(self.actual_mouse_pos["x"])
         moused_over_time_string = datetime_helper.to_time_str(pixel_as_datetime)
         time_texts = [moused_over_time_string]
         desc_texts = []
