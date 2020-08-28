@@ -117,12 +117,13 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         # Draw the hour lines
         for h in range(0, 24):
-            if h < self.timeline_start.hour:
-                continue
-
             # Hour line
             current_date_with_current_hour = self._current_date + datetime.timedelta(hours=h)
+            if current_date_with_current_hour < self.timeline_start or self.timeline_end < current_date_with_current_hour:
+                continue
+
             hx = self._datetime_to_pixel(current_date_with_current_hour)
+
             cr.set_source_rgb(0.5, 0.5, 0.5)
             cr.new_path()
             cr.move_to(hx, self.timeline_top_padding / 2)
@@ -137,6 +138,9 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.show_text(hour_string)
 
         for le in self.logged_entries:
+            if le.stop < self.timeline_start or self.timeline_end < le.start:
+                continue
+
             start_x = self._datetime_to_pixel(le.start)
             stop_x = self._datetime_to_pixel(le.stop)
 
@@ -148,6 +152,9 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.fill()
 
         for tagged_entry in self.tagged_entries:
+            if tagged_entry.stop < self.timeline_start or self.timeline_end < tagged_entry.start:
+                continue
+
             self._draw_tagged_entry(tagged_entry, cr)
 
         if self.current_tagged_entry is not None:
