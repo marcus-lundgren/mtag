@@ -17,28 +17,22 @@ def pixel_to_datetime(x_position: float, timeline_side_padding: int,
                       timeline_stop_datetime: datetime.datetime) -> datetime.datetime:
     total_seconds = (x_position - timeline_side_padding) / pixels_per_second
     hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_seconds)
+    actual_time = datetime.time(hour=hours, minute=minutes, second=seconds)
 
     is_stop_on_same_day_as_current = timeline_stop_datetime.day == current_date.day
-    max_hour = timeline_stop_datetime.hour if is_stop_on_same_day_as_current else 23
+    if is_stop_on_same_day_as_current:
+        boundary_time = datetime.time(hour=timeline_stop_datetime.hour,
+                                      minute=timeline_stop_datetime.minute,
+                                      second=timeline_stop_datetime.second)
+    else:
+        boundary_time = datetime.time(hour=23, minute=59, second=59)
 
-    hour_to_use = hours + timeline_start_datetime.hour
-    hour_to_use = min(hour_to_use, max_hour)
-
-    minute_to_use = minutes + timeline_start_datetime.minute
-    second_to_use = seconds + timeline_start_datetime.second
-
-    if hour_to_use == max_hour:
-        max_minute = timeline_stop_datetime.minute if is_stop_on_same_day_as_current else 59
-        minute_to_use = min(minute_to_use, max_minute)
-
-        if minute_to_use == max_minute:
-            max_second = timeline_stop_datetime.second if is_stop_on_same_day_as_current else 59
-            second_to_use = min(second_to_use, max_second)
+    time_to_use = actual_time if actual_time < boundary_time else boundary_time
 
     d = datetime.datetime(year=current_date.year,
                           month=current_date.month,
                           day=current_date.day)
-    d += datetime.timedelta(hours=hour_to_use, minutes=minute_to_use, seconds=second_to_use)
+    d += datetime.timedelta(hours=time_to_use.hour, minutes=time_to_use.minute, seconds=time_to_use.second)
     return d
 
 

@@ -22,7 +22,7 @@ def seconds_to_hour_minute_second(total_seconds: int) -> tuple:
     hours = total_seconds // (60 * 60)
     minutes = (total_seconds - hours * 60 * 60) // 60
     seconds = int(total_seconds % 60)
-    return hours, minutes, seconds
+    return int(hours), int(minutes), seconds
 
 def to_time_text(start: datetime.datetime, stop: datetime.datetime, duration: datetime.timedelta):
     start_str = to_time_str(start)
