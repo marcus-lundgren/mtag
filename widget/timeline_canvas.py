@@ -218,6 +218,13 @@ class TimelineCanvas(Gtk.DrawingArea):
                     time_details = datetime_helper.to_time_text(te.start, te.stop, te.duration)
                     time_texts.append(time_details)
                     desc_texts.append(te.category.name)
+
+                    te_start_x = self._datetime_to_pixel(te.start)
+                    te_stop_x = self._datetime_to_pixel(te.stop)
+                    cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
+                    cr.rectangle(te_start_x, self.te_start_y,
+                                 te_stop_x - te_start_x, self.te_end_y - self.te_start_y)
+                    cr.fill()
                     break
 
         if self.le_start_y <= self.actual_mouse_pos["y"] <= self.le_end_y:
@@ -232,6 +239,13 @@ class TimelineCanvas(Gtk.DrawingArea):
                         time_texts.append(time_details)
                     desc_texts.append(le.application.name)
                     desc_texts.append(le.title)
+
+                    le_start_x = self._datetime_to_pixel(le.start)
+                    le_stop_x = self._datetime_to_pixel(le.stop)
+                    cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
+                    cr.rectangle(le_start_x, self.le_start_y,
+                                 le_stop_x - le_start_x, self.le_end_y - self.le_start_y)
+                    cr.fill()
                     break
 
         self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
