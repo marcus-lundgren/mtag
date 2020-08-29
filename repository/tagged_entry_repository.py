@@ -9,11 +9,47 @@ class TaggedEntryRepository:
         self.category_repository = CategoryRepository()
 
     def insert(self, conn: sqlite3.Connection, tagged_entry: TaggedEntry):
-        conn.execute("INSERT INTO tagged_entry (te_category_id, te_start, te_end)"
-                     " VALUES (:category_id, :start, :end)",
-                     {"category_id": tagged_entry.category.db_id,
-                      "start": tagged_entry.start,
-                      "end": tagged_entry.stop})
+        cursor = conn.execute("SELECT te_id, te_start"
+                              " FROM tagged_entry"
+                              " WHERE te_end==:new_te_start"
+                              " AND te_category_id==:new_te_category_id",
+                              {"new_te_start": tagged_entry.start,
+                               "new_te_category_id": tagged_entry.category.db_id})
+        te_to_the_left_dbo = cursor.fetchone()
+        cursor.execute("SELECT te_id, te_end"
+                       " FROM tagged_entry"
+                       " WHERE te_start==:new_te_end"
+                       " AND te_category_id==:new_te_category_id",
+                       {"new_te_end": tagged_entry.stop,
+                        "new_te_category_id": tagged_entry.category.db_id})
+        te_to_the_right_dbo = cursor.fetchone()
+
+        # We have neighbours to the left and right. Update the one to the left
+        # and delete the one to the right.
+        if te_to_the_left_dbo is not None and te_to_the_right_dbo is not None:
+            cursor.execute("DELETE FROM tagged_entry WHERE te_id=:te_right_id",
+                           {"te_right_id": te_to_the_right_dbo["te_id"]})
+            cursor.execute("UPDATE tagged_entry SET te_end=:right_te_end WHERE te_id==:te_left_id",
+                           {"right_te_end": te_to_the_right_dbo["te_end"],
+                            "te_left_id": te_to_the_left_dbo["te_id"]})
+        # Update the entry to the left instead of creating a new one
+        elif te_to_the_left_dbo is not None:
+            cursor.execute("UPDATE tagged_entry SET te_end=:new_te_end WHERE te_id==:te_left_id",
+                           {"new_te_end": tagged_entry.stop,
+                            "te_left_id": te_to_the_left_dbo["te_id"]})
+        # Update the entry to the right instead of creating a new one
+        elif te_to_the_right_dbo is not None:
+            cursor.execute("UPDATE tagged_entry SET te_start=:new_te_start WHERE te_id==:te_right_id",
+                           {"new_te_start": tagged_entry.start,
+                            "te_right_id": te_to_the_right_dbo["te_id"]})
+        # No relevant neighbour. Create a new entry
+        else:
+            cursor.execute("INSERT INTO tagged_entry (te_category_id, te_start, te_end)"
+                           " VALUES (:category_id, :start, :end)",
+                           {"category_id": tagged_entry.category.db_id,
+                            "start": tagged_entry.start,
+                            "end": tagged_entry.stop})
+
         conn.commit()
 
     def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime):
