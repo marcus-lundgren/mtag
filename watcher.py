@@ -4,9 +4,12 @@ import datetime
 import subprocess
 
 from entity import LoggedEntry
+from entity.application_window import ApplicationWindow
+from helper import database_helper
 from repository import application_repository
 from repository.application_path_repository import ApplicationPathRepository
 from repository.application_repository import ApplicationRepository
+from repository.application_window_repository import ApplicationWindowRepository
 from repository.logged_entry_repository import LoggedEntryRepository
 
 gi.require_version('Wnck', '3.0')
@@ -59,8 +62,7 @@ if application_pid != 0:
     application_path = application_path.strip()
     print(f"{application_name} -> {active_window_title}")
 
-db_connection = sqlite3.connect("test.db", detect_types=sqlite3.PARSE_DECLTYPES)
-db_connection.row_factory = sqlite3.Row
+db_connection = database_helper.create_connection()
 db_cursor = db_connection.cursor()
 
 # Application path
@@ -84,6 +86,17 @@ if application is None:
 
 print(f"application_id = {application.db_id}")
 
+# Application window
+application_window_repository = ApplicationWindowRepository()
+application_window = application_window_repository.get_by_title_and_application_id(conn=db_connection,
+                                                                                   title=active_window_title,
+                                                                                   application_id=application.db_id)
+if application_window is None:
+    print("Adding new application window")
+    application_window = ApplicationWindow(title=active_window_title, application=application)
+    db_id = application_window_repository.insert(conn=db_connection, application_window=application_window)
+    application_window.db_id = db_id
+
 # Logged entry
 logged_entry_repository = LoggedEntryRepository()
 last_logged_entry = logged_entry_repository.get_latest_entry(db_connection)
@@ -92,7 +105,7 @@ if last_logged_entry is None:
     print("No existing logged entry, creating a new one")
     new_update = datetime_now + datetime.timedelta(seconds=1)
     logged_entry = LoggedEntry(start=datetime_now, stop=new_update,
-                               title=active_window_title, application=application)
+                               application_window=application_window)
     logged_entry_repository.insert(db_connection, logged_entry)
 else:
     max_delta_period = datetime.timedelta(seconds=10)
@@ -100,17 +113,16 @@ else:
     old_end = last_logged_entry.stop
     if max_delta_period < datetime_now - old_end:
         print("Too long since last update. Create a new entry.")
-        logged_entry = LoggedEntry(start=datetime_now, stop=datetime_now,
-                                   application=application, title=active_window_title)
+        logged_entry = LoggedEntry(start=datetime_now, stop=datetime_now, application_window=application_window)
         logged_entry_repository.insert(db_connection, logged_entry)
-    elif last_logged_entry.application.db_id == application.db_id and last_logged_entry.title == active_window_title:
+    elif last_logged_entry.application_window.db_id == application_window.db_id:
         print("Still same window. Update existing logged entry")
         db_cursor.execute("UPDATE logged_entry SET le_last_update=:new_update WHERE le_id=:id",
                           {"id": last_logged_entry.db_id, "new_update": datetime_now})
     else:
         print("Not the same window. Insert new logged entry")
         logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now,
-                                   application=application, title=active_window_title)
+                                   application_window=application_window)
         logged_entry_repository.insert(db_connection, logged_entry)
 
 db_connection.commit()

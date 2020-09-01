@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS logged_entry;
+DROP TABLE IF EXISTS application_window;
 DROP TABLE IF EXISTS application;
 DROP TABLE IF EXISTS application_path;
 DROP TABLE IF EXISTS tagged_entry;
@@ -17,13 +18,20 @@ CREATE TABLE application (
     UNIQUE (a_name, a_path_id)
 );
 
+CREATE TABLE application_window (
+    aw_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    aw_title TEXT NOT NULL,
+    aw_application_id INTEGER NOT NULL,
+    FOREIGN KEY (aw_application_id) REFERENCES application(a_id),
+    UNIQUE (aw_application_id, aw_title)
+);
+
 CREATE TABLE logged_entry (
     le_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    le_application_id INTEGER NOT NULL,
-    le_title TEXT NOT NULL,
+    le_application_window_id INTEGER NOT NULL,
     le_start TIMESTAMP NOT NULL UNIQUE,
     le_last_update TIMESTAMP NOT NULL UNIQUE,
-    FOREIGN KEY (le_application_id) REFERENCES application(a_id)
+    FOREIGN KEY (le_application_window_id) REFERENCES application_window(aw_id)
 );
 
 CREATE TABLE category (

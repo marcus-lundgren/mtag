@@ -1,18 +1,18 @@
 import sqlite3
 import datetime
 from entity import LoggedEntry
-from repository.application_repository import ApplicationRepository
+from repository.application_window_repository import ApplicationWindowRepository
 
 
 class LoggedEntryRepository:
     def __init__(self):
-        self.application_repository = ApplicationRepository()
+        self.application_window_repository = ApplicationWindowRepository()
 
     @staticmethod
     def insert(conn: sqlite3.Connection, logged_entry: LoggedEntry):
-        conn.execute("INSERT INTO logged_entry(le_application_id, le_title, le_start, le_last_update)"
-                     " VALUES (:application_id, :title, :start, :last_update)",
-                     {"application_id": logged_entry.application.db_id, "title": logged_entry.title,
+        conn.execute("INSERT INTO logged_entry(le_application_window_id, le_start, le_last_update)"
+                     " VALUES (:application_window_id, :start, :last_update)",
+                     {"application_window_id": logged_entry.application_window.db_id,
                       "start": logged_entry.start, "last_update": logged_entry.stop})
         conn.commit()
 
@@ -44,6 +44,6 @@ class LoggedEntryRepository:
         return logged_entries
 
     def _from_dbo(self, conn: sqlite3.Connection, db_le: dict):
-        application = self.application_repository.get(conn, db_le["le_application_id"])
-        return LoggedEntry(start=db_le["le_start"], stop=db_le["le_last_update"], application=application,
-                           title=db_le["le_title"], db_id=db_le["le_id"])
+        application_window = self.application_window_repository.get(conn, db_le["le_application_window_id"])
+        return LoggedEntry(start=db_le["le_start"], stop=db_le["le_last_update"],
+                           application_window=application_window, db_id=db_le["le_id"])

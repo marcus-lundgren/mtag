@@ -117,8 +117,8 @@ class GtkSpy(Gtk.Window):
         for le in logged_entries:
             self.logged_entries_list_store.append([datetime_helper.to_time_str(le.start),
                                                    datetime_helper.to_time_str(le.stop),
-                                                   le.application.name,
-                                                   le.title])
+                                                   le.application_window.application.name,
+                                                   le.application_window.title])
         self.logged_entries_tree_view.columns_autosize()
 
         self.tagged_entries_list_store.clear()

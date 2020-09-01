@@ -169,7 +169,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             start_x = self._datetime_to_pixel(le.start)
             stop_x = self._datetime_to_pixel(le.stop)
 
-            color_string = color_helper.to_color(le.application.name)
+            color_string = color_helper.to_color(le.application_window.application.name)
             color = Gdk.color_parse(spec=color_string)
             cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
             cr.rectangle(start_x, self.le_start_y,
@@ -237,8 +237,8 @@ class TimelineCanvas(Gtk.DrawingArea):
                     if self.current_tagged_entry is None:
                         time_details = datetime_helper.to_time_text(le.start, le.stop, le.duration)
                         time_texts.append(time_details)
-                    desc_texts.append(le.application.name)
-                    desc_texts.append(le.title)
+                    desc_texts.append(le.application_window.application.name)
+                    desc_texts.append(le.application_window.title)
 
                     le_start_x = self._datetime_to_pixel(le.start)
                     le_stop_x = self._datetime_to_pixel(le.stop)
