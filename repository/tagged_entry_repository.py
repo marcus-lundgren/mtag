@@ -77,6 +77,8 @@ class TaggedEntryRepository:
                               " WHERE c_name=:c_name",
                               { "c_name": category_name })
         total_seconds = cursor.fetchone()
+        if total_seconds["total_time"] is None:
+            return 0
         return total_seconds["total_time"]
 
     def _from_dbo(self, conn: sqlite3.Connection, db_te: dict):

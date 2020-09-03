@@ -4,8 +4,9 @@ from entity.category import Category
 
 class CategoryRepository:
     def insert(self, conn: sqlite3.Connection, category: Category):
-        conn.execute("INSERT INTO category (c_name) VALUES (:name)", {"name": category.name})
+        cursor = conn.execute("INSERT INTO category (c_name) VALUES (:name)", {"name": category.name})
         conn.commit()
+        return cursor.lastrowid
 
     def get_all(self, conn: sqlite3.Connection):
         cursor = conn.execute("SELECT * FROM category")

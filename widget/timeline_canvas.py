@@ -35,9 +35,6 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.parent = parent
 
-        self.current_mouse_pos = 0
-        self.actual_mouse_pos = {"x": 0, "y": 0}
-
         self.timeline_side_padding = 13
         self.timeline_top_padding = 10
         self.timeline_height = 80
@@ -45,6 +42,9 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.timeline_start = datetime.datetime.now()
         self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
+
+        self.current_moused_datetime = self.timeline_start
+        self.actual_mouse_pos = {"x": 0, "y": 0}
 
         self.category_repository = CategoryRepository()
 
@@ -191,7 +191,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.fill()
 
         # Show a guiding line under the mouse cursor
-        timeline_x = self._get_timeline_x(self.current_mouse_pos)
+        timeline_x = self._datetime_to_pixel(self.current_moused_datetime)
         cr.new_path()
         cr.set_source_rgb(0.7, 0.7, 0.7)
         cr.move_to(timeline_x, 10)
@@ -333,7 +333,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         return date_to_use
 
     def _on_button_press(self, widget, event: Gdk.EventButton):
-        start_date = self._pixel_to_datetime(self.current_mouse_pos)
+        start_date = self.current_moused_datetime
         self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_date, stop=start_date)
 
     def _on_button_release(self, widget, event: Gdk.EventType):
@@ -368,7 +368,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             else:
                 new_category = entity.Category(name=chosen_category_name)
                 conn = database_helper.create_connection()
-                self.category_repository.insert(conn=conn, category=new_category)
+                new_category.db_id = self.category_repository.insert(conn=conn, category=new_category)
                 conn.close()
                 chosen_category = new_category
 
@@ -379,25 +379,24 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     def _on_motion_notify(self, _: Gtk.DrawingArea, event):
         stop_date = self._pixel_to_datetime(event.x)
+        next_moused_datetime = stop_date
 
-        next_mouse_pos = event.x
         if self.current_tagged_entry is not None:
             datetime_used = self._set_tagged_entry_stop_date(stop_date,
                                                              self.current_tagged_entry,
                                                              self.tagged_entries)
             if datetime_used is not None:
-                next_mouse_pos = self._datetime_to_pixel(datetime_used)
+                next_moused_datetime = datetime_used
         else:
             for t in self.tagged_entries:
                 if t.contains_datetime(stop_date):
                     start_delta = stop_date - t.start
                     stop_delta = t.stop - stop_date
 
-                    datetime_position = t.start if start_delta < stop_delta else t.stop
-                    next_mouse_pos = self._datetime_to_pixel(datetime_position)
+                    next_moused_datetime = t.start if start_delta < stop_delta else t.stop
                     break
 
-        self.current_mouse_pos = next_mouse_pos
+        self.current_moused_datetime = next_moused_datetime
         self.actual_mouse_pos["x"], self.actual_mouse_pos["y"] = event.x, event.y
         self.queue_draw()
 

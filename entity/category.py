@@ -3,12 +3,8 @@ from helper import color_helper
 
 class Category:
     def __init__(self, name: str, db_id: int = None):
-        self._db_id = db_id
+        self.db_id = db_id
         self._name = name
-
-    @property
-    def db_id(self):
-        return self._db_id
 
     @property
     def name(self):
