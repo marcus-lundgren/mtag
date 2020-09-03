@@ -29,10 +29,6 @@ class GtkSpy(Gtk.Window):
         self.calendar_panel = CalendarPanel()
         self.calendar_panel.connect("day-selected", self._on_new_day_selected)
         top_bar.pack_start(self.calendar_panel, expand=True, fill=False, padding=0)
-        self.scale_button = Gtk.SpinButton()
-        self.scale_button.set_adjustment(Gtk.Adjustment(value=1, lower=1, upper=100, step_increment=1))
-        self.scale_button.connect("value-changed", self._do_scale_value_changed)
-        top_bar.pack_start(self.scale_button, expand=True, fill=False, padding=0)
         b.add(top_bar)
 
         self._current_date = self.calendar_panel.get_selected_date()
@@ -85,11 +81,6 @@ class GtkSpy(Gtk.Window):
         b.pack_end(lists_grid, expand=True, fill=True, padding=10)
 
         self._reload_logged_entries_from_date()
-
-    def _do_scale_value_changed(self, spin_button: Gtk.SpinButton):
-        tc_w = self.tcsw.get_allocated_width()
-        scale = pow(1.50, spin_button.get_value() - 1)
-        self.timeline_canvas.set_size_request(tc_w * scale, -1)
 
     def _do_tagged_entry_created(self, _, te):
         tagged_entry_repository = TaggedEntryRepository()
