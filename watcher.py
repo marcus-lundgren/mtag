@@ -1,19 +1,17 @@
-import gi
-import sqlite3
 import datetime
 import subprocess
 
-from entity import LoggedEntry
-from entity.application_window import ApplicationWindow
-from helper import database_helper
-from repository import application_repository
-from repository.application_path_repository import ApplicationPathRepository
-from repository.application_repository import ApplicationRepository
-from repository.application_window_repository import ApplicationWindowRepository
-from repository.logged_entry_repository import LoggedEntryRepository
+import mtag
+from mtag.entity import LoggedEntry
+from mtag.entity.application_window import ApplicationWindow
+from mtag.helper import database_helper
+from mtag.repository.application_path_repository import ApplicationPathRepository
+from mtag.repository.application_repository import ApplicationRepository
+from mtag.repository.application_window_repository import ApplicationWindowRepository
+from mtag.repository.logged_entry_repository import LoggedEntryRepository
 
+import gi
 gi.require_version('Wnck', '3.0')
-
 from gi.repository import Wnck
 
 print("== STARTED ==")
