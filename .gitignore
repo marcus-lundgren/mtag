@@ -2,3 +2,6 @@
 /venv
 .idea/
 *.snap
+build/
+dist/
+mtag.egg-info/
