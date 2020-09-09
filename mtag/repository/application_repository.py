@@ -1,11 +1,16 @@
 import sqlite3
-from mtag.entity.application import Application
+from mtag.entity.application import Application, ApplicationPath
 from mtag.repository.application_path_repository import ApplicationPathRepository
 
 
 class ApplicationRepository:
     def __init__(self):
         self.application_path_repository = ApplicationPathRepository()
+
+    def insert(self, conn: sqlite3.Connection, name: str, application_path: ApplicationPath):
+        cursor = conn.execute("INSERT INTO application(a_name, a_path_id) VALUES (:name, :path_id)",
+                              {"name": name, "path_id": application_path.db_id})
+        return cursor.lastrowid
 
     def get_by_name_and_path_id(self, conn: sqlite3.Connection, name: str, path_id: int):
         cursor = conn.execute("SELECT * FROM application WHERE a_name=:name AND a_path_id=:path_id",
