@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+from mtag.helper import datetime_helper
 from mtag.entity import LoggedEntry
 from mtag.repository.application_window_repository import ApplicationWindowRepository
 
@@ -13,7 +14,8 @@ class LoggedEntryRepository:
         conn.execute("INSERT INTO logged_entry(le_application_window_id, le_start, le_last_update)"
                      " VALUES (:application_window_id, :start, :last_update)",
                      {"application_window_id": logged_entry.application_window.db_id,
-                      "start": logged_entry.start, "last_update": logged_entry.stop})
+                      "start": datetime_helper.datetime_to_timestamp(logged_entry.start),
+                      "last_update": datetime_helper.datetime_to_timestamp(logged_entry.stop)})
         conn.commit()
 
     def get_latest_entry(self, conn: sqlite3.Connection):
@@ -33,7 +35,8 @@ class LoggedEntryRepository:
                               " (:from_date <= le_last_update AND le_last_update < :to_date)"
                               " OR"
                               " (:from_date <= le_start AND le_start < :to_date)",
-                              {"from_date": from_datetime, "to_date": to_datetime})
+                              {"from_date": datetime_helper.datetime_to_timestamp(from_datetime),
+                               "to_date": datetime_helper.datetime_to_timestamp(to_datetime)})
         db_logged_entries = cursor.fetchall()
 
         logged_entries = []
@@ -45,5 +48,6 @@ class LoggedEntryRepository:
 
     def _from_dbo(self, conn: sqlite3.Connection, db_le: dict):
         application_window = self.application_window_repository.get(conn, db_le["le_application_window_id"])
-        return LoggedEntry(start=db_le["le_start"], stop=db_le["le_last_update"],
+        return LoggedEntry(start=datetime_helper.timestamp_to_datetime(db_le["le_start"]),
+                           stop=datetime_helper.timestamp_to_datetime(db_le["le_last_update"]),
                            application_window=application_window, db_id=db_le["le_id"])

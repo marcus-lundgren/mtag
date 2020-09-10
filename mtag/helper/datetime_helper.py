@@ -29,3 +29,9 @@ def to_time_text(start: datetime.datetime, stop: datetime.datetime, duration: da
     stop_str = to_time_str(stop)
     duration_str = to_duration_str(duration)
     return f"{start_str} - {stop_str} ({duration_str})"
+
+def datetime_to_timestamp(dt: datetime.datetime):
+    return int(dt.timestamp())
+
+def timestamp_to_datetime(ts: int):
+    return datetime.datetime.fromtimestamp(ts)

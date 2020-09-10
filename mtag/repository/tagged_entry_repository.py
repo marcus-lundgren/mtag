@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+from mtag.helper import datetime_helper
 from mtag.entity import TaggedEntry
 from mtag.repository.category_repository import CategoryRepository
 
@@ -13,14 +14,14 @@ class TaggedEntryRepository:
                               " FROM tagged_entry"
                               " WHERE te_end==:new_te_start"
                               " AND te_category_id==:new_te_category_id",
-                              {"new_te_start": tagged_entry.start,
+                              {"new_te_start": datetime_helper.datetime_to_timestamp(tagged_entry.start),
                                "new_te_category_id": tagged_entry.category.db_id})
         te_to_the_left_dbo = cursor.fetchone()
         cursor.execute("SELECT te_id, te_end"
                        " FROM tagged_entry"
                        " WHERE te_start==:new_te_end"
                        " AND te_category_id==:new_te_category_id",
-                       {"new_te_end": tagged_entry.stop,
+                       {"new_te_end": datetime_helper.datetime_to_timestamp(tagged_entry.stop),
                         "new_te_category_id": tagged_entry.category.db_id})
         te_to_the_right_dbo = cursor.fetchone()
 
@@ -30,25 +31,25 @@ class TaggedEntryRepository:
             cursor.execute("DELETE FROM tagged_entry WHERE te_id=:te_right_id",
                            {"te_right_id": te_to_the_right_dbo["te_id"]})
             cursor.execute("UPDATE tagged_entry SET te_end=:right_te_end WHERE te_id==:te_left_id",
-                           {"right_te_end": te_to_the_right_dbo["te_end"],
+                           {"right_te_end": datetime_helper.datetime_to_timestamp(te_to_the_right_dbo["te_end"]),
                             "te_left_id": te_to_the_left_dbo["te_id"]})
         # Update the entry to the left instead of creating a new one
         elif te_to_the_left_dbo is not None:
             cursor.execute("UPDATE tagged_entry SET te_end=:new_te_end WHERE te_id==:te_left_id",
-                           {"new_te_end": tagged_entry.stop,
+                           {"new_te_end": datetime_helper.datetime_to_timestamp(tagged_entry.stop),
                             "te_left_id": te_to_the_left_dbo["te_id"]})
         # Update the entry to the right instead of creating a new one
         elif te_to_the_right_dbo is not None:
             cursor.execute("UPDATE tagged_entry SET te_start=:new_te_start WHERE te_id==:te_right_id",
-                           {"new_te_start": tagged_entry.start,
+                           {"new_te_start": datetime_helper.datetime_to_timestamp(tagged_entry.start),
                             "te_right_id": te_to_the_right_dbo["te_id"]})
         # No relevant neighbour. Create a new entry
         else:
             cursor.execute("INSERT INTO tagged_entry (te_category_id, te_start, te_end)"
                            " VALUES (:category_id, :start, :end)",
                            {"category_id": tagged_entry.category.db_id,
-                            "start": tagged_entry.start,
-                            "end": tagged_entry.stop})
+                            "start": datetime_helper.datetime_to_timestamp(tagged_entry.start),
+                            "end": datetime_helper.datetime_to_timestamp(tagged_entry.stop)})
 
         conn.commit()
 
@@ -60,7 +61,8 @@ class TaggedEntryRepository:
                               " (:from_date <= te_start AND te_start < :to_date)"
                               " OR"
                               " (:from_date <= te_end AND te_end < :to_date)",
-                              {"from_date": from_datetime, "to_date": to_datetime})
+                              {"from_date": datetime_helper.datetime_to_timestamp(from_datetime),
+                               "to_date": datetime_helper.datetime_to_timestamp(to_datetime)})
         db_tagged_entries = cursor.fetchall()
 
         tagged_entries = []
@@ -71,16 +73,17 @@ class TaggedEntryRepository:
         return tagged_entries
 
     def total_time_by_category(self, conn: sqlite3.Connection, category_name: str):
-        cursor = conn.execute("SELECT (SUM(strftime('%s', te_end) - strftime('%s', te_start))) AS total_time"
+        cursor = conn.execute("SELECT te_end - te_start AS total_time"
                               " FROM tagged_entry"
                               " INNER JOIN category ON tagged_entry.te_category_id == category.c_id"
                               " WHERE c_name=:c_name",
                               { "c_name": category_name })
         total_seconds = cursor.fetchone()
-        if total_seconds["total_time"] is None:
-            return 0
-        return total_seconds["total_time"]
+        return 0 if total_seconds is None else total_seconds["total_time"]
 
     def _from_dbo(self, conn: sqlite3.Connection, db_te: dict):
         category = self.category_repository.get(conn=conn, db_id=db_te["te_category_id"])
-        return TaggedEntry(start=db_te["te_start"], stop=db_te["te_end"], category=category, db_id=db_te["te_id"])
+        return TaggedEntry(start=datetime_helper.timestamp_to_datetime(db_te["te_start"]),
+                           stop=datetime_helper.timestamp_to_datetime(db_te["te_end"]),
+                           category=category,
+                           db_id=db_te["te_id"])

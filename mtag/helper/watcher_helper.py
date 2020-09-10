@@ -3,7 +3,7 @@ import sqlite3
 
 from mtag.entity import LoggedEntry
 from mtag.entity.application_window import ApplicationWindow
-from mtag.helper import database_helper
+from mtag.helper import database_helper, datetime_helper
 from mtag.repository.application_path_repository import ApplicationPathRepository
 from mtag.repository.application_repository import ApplicationRepository
 from mtag.repository.application_window_repository import ApplicationWindowRepository
@@ -51,7 +51,7 @@ def register(window_title: str, application_name: str, application_path: str) ->
         elif last_logged_entry.application_window.db_id == application_window.db_id:
             print("Still same window. Update existing logged entry")
             db_cursor.execute("UPDATE logged_entry SET le_last_update=:new_update WHERE le_id=:id",
-                              {"id": last_logged_entry.db_id, "new_update": datetime_now})
+                              {"id": last_logged_entry.db_id, "new_update": datetime_helper.datetime_to_timestamp(datetime_now)})
         else:
             print("Not the same window. Insert new logged entry")
             logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now,

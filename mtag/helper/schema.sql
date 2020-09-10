@@ -29,8 +29,8 @@ CREATE TABLE application_window (
 CREATE TABLE logged_entry (
     le_id INTEGER PRIMARY KEY AUTOINCREMENT,
     le_application_window_id INTEGER NOT NULL,
-    le_start TIMESTAMP NOT NULL UNIQUE,
-    le_last_update TIMESTAMP NOT NULL UNIQUE,
+    le_start INTEGER NOT NULL UNIQUE,
+    le_last_update INTEGER NOT NULL UNIQUE,
     FOREIGN KEY (le_application_window_id) REFERENCES application_window(aw_id)
 );
 
@@ -42,7 +42,7 @@ CREATE TABLE category (
 CREATE TABLE tagged_entry (
     te_id INTEGER PRIMARY KEY AUTOINCREMENT,
     te_category_id INTEGER NOT NULL,
-    te_start TIMESTAMP NOT NULL UNIQUE,
-    te_end TIMESTAMP NOT NULL UNIQUE,
+    te_start INTEGER NOT NULL UNIQUE,
+    te_end INTEGER NOT NULL UNIQUE,
     FOREIGN KEY (te_category_id) REFERENCES category(c_id)
 );
