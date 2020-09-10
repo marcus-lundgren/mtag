@@ -2,9 +2,9 @@ from mtag.entity.tagged_entry import TaggedEntry
 from mtag.helper import statistics_helper, datetime_helper
 
 import gi
-
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from gi.repository import Gdk
 
 
 class CategoryChoiceDialog(Gtk.Dialog):
@@ -23,6 +23,7 @@ class CategoryChoiceDialog(Gtk.Dialog):
 
         self.combobox = Gtk.ComboBox.new_with_model_and_entry(list_store)
         self.combobox.connect("changed", self._on_category_combobox_changed)
+        self.combobox.connect("key_release_event", self._do_key_pressed)
         self.combobox.set_entry_text_column(0)
 
         self.vbox.pack_start(self.combobox, expand=False, fill=False, padding=10)
@@ -39,6 +40,10 @@ class CategoryChoiceDialog(Gtk.Dialog):
         hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_time)
         self.total_tagged_time_label.set_label(f"{hours} hours, {minutes} minutes, {seconds} seconds")
         print(f"Chosen combobox value: {self.get_chosen_category_value()}")
+
+    def _do_key_pressed(self, _, e: Gdk.EventKey):
+        if e.keyval == Gdk.KEY_Return and len(self.get_chosen_category_value()) > 0:
+            self.response(Gtk.ResponseType.OK)
 
     def get_chosen_category_value(self):
         tree_iter = self.combobox.get_active_iter()
