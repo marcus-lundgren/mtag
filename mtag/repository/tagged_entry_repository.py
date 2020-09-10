@@ -31,7 +31,7 @@ class TaggedEntryRepository:
             cursor.execute("DELETE FROM tagged_entry WHERE te_id=:te_right_id",
                            {"te_right_id": te_to_the_right_dbo["te_id"]})
             cursor.execute("UPDATE tagged_entry SET te_end=:right_te_end WHERE te_id==:te_left_id",
-                           {"right_te_end": datetime_helper.datetime_to_timestamp(te_to_the_right_dbo["te_end"]),
+                           {"right_te_end": te_to_the_right_dbo["te_end"],
                             "te_left_id": te_to_the_left_dbo["te_id"]})
         # Update the entry to the left instead of creating a new one
         elif te_to_the_left_dbo is not None:
