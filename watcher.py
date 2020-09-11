@@ -1,56 +1,60 @@
 import subprocess
-
 from mtag.helper import watcher_helper
-
-import gi
-gi.require_version('Wnck', '3.0')
-from gi.repository import Wnck
-
 
 print("== STARTED ==")
 
-# xprop_root_output = subprocess.run(["xprop", "-root"], stdout=subprocess.PIPE, universal_newlines=True).stdout
-# print(xprop_root_output)
-# window_id = None
-# for line in xprop_root_output.splitlines():
-#     print(line)
-#     if line.startswith("_NET_ACTIVE_WINDOW"):
-#         line_split = line.split(" ")
-#         window_id = line_split[len(line_split) - 1]
-#         print(f"Active window ID: {window_id}")
-#         break
-#
-# if window_id is None:
-#     exit(0)
-#
-# xprop_id_output = subprocess.run(["xprop", "-id", window_id], stdout=subprocess.PIPE, universal_newlines=True).stdout
-# print(xprop_id_output)
-#
-# exit(0)
+active_window_id_information = subprocess.run(["xprop", "-root", "_NET_ACTIVE_WINDOW"],
+                                              stdout=subprocess.PIPE, universal_newlines=True).stdout
+# print(active_window_id_information)
 
-default_screen = Wnck.Screen.get_default()
-default_screen.force_update()
-
-active_window = default_screen.get_active_window()
-if active_window is None:
+active_window_id = active_window_id_information[active_window_id_information.rfind(" ") + 1:].strip()
+# print(active_window_id)
+if active_window_id == "0x0":
     print("No active window.")
     exit(0)
 
-application = active_window.get_application()
-application_pid = application.get_pid()
+active_window_x11_information = subprocess.run(["xprop", "-id", active_window_id,
+                                                "_NET_WM_PID", "WM_CLASS", "WM_NAME", "_NET_WM_NAME"],
+                                               stdout=subprocess.PIPE, universal_newlines=True).stdout.strip()
+# print(active_window_x11_information)
 
-application_name = active_window.get_class_group_name()
+application_pid = ""
+application_name = ""
+active_window_title = ""
+for line in active_window_x11_information.splitlines():
+    if line.startswith("_NET_WM_PID"):
+        application_pid = line[line.find("=") + 2:]
+        # print(application_pid)
+    elif line.startswith("_NET_WM_NAME"):
+        active_window_title = line[line.find("=") + 2:].strip('"')
+        # print(active_window_title)
+    elif line.startswith("WM_NAME"):
+        # Do not parse this if we already got a value
+        if len(active_window_title) > 0:
+            print("Application window title already set")
+            continue
+        application_window_title = line[line.find("=") + 2:].strip('"')
+        # print(application_window_title)
+    elif line.startswith("WM_CLASS"):
+        wm_class_information = line[line.find("=", 2) + 2:]
+        # print(wm_class_information)
+        wm_class_information_split = wm_class_information.split('", "')
+        wm_class_name = wm_class_information_split[1].strip(' "')
+        application_name = wm_class_name
 
-print(application_pid)
+# print(application_pid)
 application_path = ""
 
-active_window_title = active_window.get_name()
-if application_pid != 0:
+if application_pid.isdigit() and application_pid != 0:
     application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"],
                                       stdout=subprocess.PIPE, universal_newlines=True).stdout
-    print(application_path)
     application_path = application_path.replace("\0", " ")
     application_path = application_path.strip()
-    print(f"{application_name} -> {active_window_title}")
+else:
+    application_path = "N/A"
 
-watcher_helper.register(window_title=active_window_title, application_name=application_name, application_path=application_path)
+print(application_path)
+print(f"{application_name} -> {active_window_title}")
+watcher_helper.register(window_title=active_window_title,
+                        application_name=application_name,
+                        application_path=application_path)
