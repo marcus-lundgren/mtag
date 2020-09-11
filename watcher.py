@@ -43,15 +43,13 @@ for line in active_window_x11_information.splitlines():
         application_name = wm_class_name
 
 # print(application_pid)
-application_path = ""
+application_path = None
 
 if application_pid.isdigit() and application_pid != 0:
     application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"],
                                       stdout=subprocess.PIPE, universal_newlines=True).stdout
     application_path = application_path.replace("\0", " ")
     application_path = application_path.strip()
-else:
-    application_path = "N/A"
 
 print(application_path)
 print(f"{application_name} -> {active_window_title}")

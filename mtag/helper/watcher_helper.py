@@ -13,9 +13,11 @@ def register(window_title: str, application_name: str, application_path: str) ->
     db_connection = database_helper.create_connection()
     db_cursor = db_connection.cursor()
 
+    application_path_to_use = application_path if application_path is not None else "N/A"
+
     application = get_and_create_if_needed_application(conn=db_connection,
                                                        application_name=application_name,
-                                                       application_path=application_path)
+                                                       application_path=application_path_to_use)
 
     # Application window
     application_window_repository = ApplicationWindowRepository()
