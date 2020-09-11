@@ -164,6 +164,14 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.move_to(hx - tx - (hour_text_width / 2), drawing_area_size.height)
             cr.show_text(hour_string)
 
+        # Show guiding current actual time line
+        if datetime.datetime.now().date() == self._current_date.date():
+            current_time_guiding_line_x = self._datetime_to_pixel(datetime.datetime.now())
+            cr.set_source_rgb(0.3, 0.3, 0.3)
+            cr.move_to(current_time_guiding_line_x, self.timeline_top_padding)
+            cr.line_to(current_time_guiding_line_x, drawing_area_size.height - hour_text_and_line_gap)
+            cr.stroke()
+
         for le in self.logged_entries:
             if le.stop < self.timeline_start:
                 continue
