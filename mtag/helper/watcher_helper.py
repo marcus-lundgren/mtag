@@ -9,6 +9,7 @@ from mtag.repository.application_repository import ApplicationRepository
 from mtag.repository.application_window_repository import ApplicationWindowRepository
 from mtag.repository.logged_entry_repository import LoggedEntryRepository
 
+
 def register(window_title: str, application_name: str, application_path: str) -> None:
     db_connection = database_helper.create_connection()
     db_cursor = db_connection.cursor()
@@ -39,7 +40,8 @@ def register(window_title: str, application_name: str, application_path: str) ->
     if last_logged_entry is None:
         print("No existing logged entry, creating a new one")
         new_update = datetime_now + datetime.timedelta(seconds=1)
-        logged_entry = LoggedEntry(start=datetime_now, stop=new_update,
+        logged_entry = LoggedEntry(start=datetime_now,
+                                   stop=new_update,
                                    application_window=application_window)
         logged_entry_repository.insert(db_connection, logged_entry)
     else:
@@ -53,7 +55,8 @@ def register(window_title: str, application_name: str, application_path: str) ->
         elif last_logged_entry.application_window.db_id == application_window.db_id:
             print("Still same window. Update existing logged entry")
             db_cursor.execute("UPDATE logged_entry SET le_last_update=:new_update WHERE le_id=:id",
-                              {"id": last_logged_entry.db_id, "new_update": datetime_helper.datetime_to_timestamp(datetime_now)})
+                              {"id": last_logged_entry.db_id,
+                               "new_update": datetime_helper.datetime_to_timestamp(datetime_now)})
         else:
             print("Not the same window. Insert new logged entry")
             logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now,
