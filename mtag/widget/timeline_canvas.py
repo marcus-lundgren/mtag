@@ -40,15 +40,16 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.timeline_height = 80
         self.pixels_per_seconds = 2
 
-        self.timeline_start = datetime.datetime.now()
+        self.timeline_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
+        self._update_timeline_stop()
 
         self.current_moused_datetime = self.timeline_start
         self.actual_mouse_pos = {"x": 0, "y": 0}
 
         self.category_repository = CategoryRepository()
 
-        self._current_date = None
+        self._current_date = self.timeline_start
         self.current_tagged_entry = None
         self.tagged_entries = []
         self.logged_entries = []
@@ -109,6 +110,8 @@ class TimelineCanvas(Gtk.DrawingArea):
             # Ensure that we don't get too far to the left
             if self.timeline_start < self._current_date:
                 self.timeline_start = self._current_date
+
+        self._update_timeline_stop()
         self.queue_draw()
 
     def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries):
@@ -116,8 +119,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.tagged_entries = tagged_entries
         self._current_date = dt
 
-        self.timeline_start = self._current_date
-        self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
+        self.timeline_start = self.timeline_start.replace(year=dt.year, month=dt.month, day=dt.day)
         self._update_timeline_stop()
 
         self.queue_draw()
