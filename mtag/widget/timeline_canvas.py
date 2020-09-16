@@ -42,6 +42,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.timeline_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
+        self.minute_increment = 60
         self._update_timeline_stop()
 
         self.current_moused_datetime = self.timeline_start
@@ -125,6 +126,17 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.queue_draw()
 
     def _update_timeline_stop(self):
+        hour_in_seconds = 60*60
+        delta_seconds = self.timeline_delta.total_seconds()
+        if delta_seconds < 2 * hour_in_seconds:
+            self.minute_increment = 10
+        elif delta_seconds < 4 * hour_in_seconds:
+            self.minute_increment = 15
+        elif delta_seconds < 9 * hour_in_seconds:
+            self.minute_increment = 30
+        else:
+            self.minute_increment = 60
+
         self.timeline_end = self.timeline_start + self.timeline_delta
 
     def _do_draw(self, _, cr: cairo.Context):
@@ -143,28 +155,29 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.le_end_y = self.le_start_y + self.timeline_height
 
         # Draw the hour lines
-        for h in range(0, 24):
-            # Hour line
-            current_date_with_current_hour = self._current_date + datetime.timedelta(hours=h)
-            if current_date_with_current_hour < self.timeline_start:
-                continue
-            elif  self.timeline_end < current_date_with_current_hour:
-                break
+        for h in range(self.timeline_start.hour, 24):
+            for m in range(0, 60, self.minute_increment):
+                # Hour line
+                current_date_with_current_hour = self._current_date + datetime.timedelta(hours=h, minutes=m)
+                if current_date_with_current_hour < self.timeline_start:
+                    continue
+                elif  self.timeline_end < current_date_with_current_hour:
+                    break
 
-            hx = self._datetime_to_pixel(current_date_with_current_hour)
+                hx = self._datetime_to_pixel(current_date_with_current_hour)
 
-            cr.set_source_rgb(0.5, 0.5, 0.5)
-            cr.new_path()
-            cr.move_to(hx, self.timeline_top_padding / 2)
-            cr.line_to(hx, drawing_area_size.height - hour_text_height - hour_text_and_line_gap)
-            cr.stroke()
+                cr.set_source_rgb(0.5, 0.5, 0.5)
+                cr.new_path()
+                cr.move_to(hx, self.timeline_top_padding / 2)
+                cr.line_to(hx, drawing_area_size.height - hour_text_height - hour_text_and_line_gap)
+                cr.stroke()
 
-            # Hour text
-            cr.set_font_size(16)
-            hour_string = str(h)
-            (tx, _, hour_text_width, _, dx, _) = cr.text_extents(hour_string)
-            cr.move_to(hx - tx - (hour_text_width / 2), drawing_area_size.height)
-            cr.show_text(hour_string)
+                # Hour text
+                cr.set_font_size(16)
+                hour_minute_string = f"{str(h).rjust(2, '0')}:{str(m).rjust(2, '0')}"
+                (tx, _, hour_text_width, _, dx, _) = cr.text_extents(hour_minute_string)
+                cr.move_to(hx - tx - (hour_text_width / 2), drawing_area_size.height)
+                cr.show_text(hour_minute_string)
 
         # Show guiding current actual time line
         if datetime.datetime.now().date() == self._current_date.date():
