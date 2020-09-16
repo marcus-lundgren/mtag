@@ -77,7 +77,7 @@ class TaggedEntryRepository:
         return tagged_entries
 
     def total_time_by_category(self, conn: sqlite3.Connection, category_name: str):
-        cursor = conn.execute("SELECT te_end - te_start AS total_time"
+        cursor = conn.execute("SELECT SUM(te_end - te_start) AS total_time"
                               " FROM tagged_entry"
                               " INNER JOIN category ON tagged_entry.te_category_id == category.c_id"
                               " WHERE c_name=:c_name",
