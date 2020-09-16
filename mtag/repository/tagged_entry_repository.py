@@ -53,6 +53,10 @@ class TaggedEntryRepository:
 
         conn.commit()
 
+    def delete(self, conn:sqlite3.Connection, db_id: int):
+        conn.execute("DELETE FROM tagged_entry WHERE te_id=:db_id", {"db_id": db_id})
+        conn.commit()
+
     def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime):
         date_string = date.strftime("%Y-%m-%d")
         from_datetime = datetime.datetime.fromisoformat(f"{date_string} 00:00:00")

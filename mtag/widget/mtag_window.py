@@ -4,6 +4,7 @@ from itertools import groupby
 from mtag.helper import datetime_helper, database_helper
 from mtag.widget.calendar_panel import CalendarPanel
 from mtag.widget.timeline_canvas import TimelineCanvas
+from mtag.entity import TaggedEntry
 from mtag.repository.logged_entry_repository import LoggedEntryRepository
 from mtag.repository.tagged_entry_repository import TaggedEntryRepository
 
@@ -40,6 +41,7 @@ class MTagWindow(Gtk.Window):
 
         self.timeline_canvas = TimelineCanvas(parent=self)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
+        self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
         self.connect("configure-event", self._do_configure_event)
 
         b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
@@ -81,14 +83,20 @@ class MTagWindow(Gtk.Window):
         lists_grid.attach(self.tagged_entries_tree_view, 1, 0, 1, 1)
 
         b.pack_end(lists_grid, expand=True, fill=True, padding=10)
-
         self._reload_logged_entries_from_date()
         self.show_all()
 
-    def _do_tagged_entry_created(self, _, te):
+    def _do_tagged_entry_created(self, _, te: TaggedEntry):
         tagged_entry_repository = TaggedEntryRepository()
         conn = database_helper.create_connection()
         tagged_entry_repository.insert(conn=conn, tagged_entry=te)
+        conn.close()
+        self._reload_logged_entries_from_date()
+
+    def _do_tagged_entry_deleted(self, _, te: TaggedEntry):
+        tagged_entry_repository = TaggedEntryRepository()
+        conn = database_helper.create_connection()
+        tagged_entry_repository.delete(conn=conn, db_id=te.db_id)
         conn.close()
         self._reload_logged_entries_from_date()
 

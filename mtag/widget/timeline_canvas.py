@@ -3,14 +3,13 @@ import datetime
 from mtag import entity
 from mtag.helper import color_helper, datetime_helper, database_helper, timeline_helper
 from mtag.widget.category_choice_dialog import CategoryChoiceDialog
+from mtag.widget.timeline_context_popover import TimelineContextPopover
 from mtag.repository.category_repository import CategoryRepository
 
 import cairo
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from gi.repository import Gdk
-from gi.repository import GObject
+from gi.repository import Gtk, Gdk, GObject
 
 
 class TimelineCanvas(Gtk.DrawingArea):
@@ -19,6 +18,13 @@ class TimelineCanvas(Gtk.DrawingArea):
                     return_type=GObject.TYPE_BOOLEAN,
                     arg_types=(object,))
     def tagged_entry_created(self, *args):
+        pass
+
+    @GObject.Signal(name="tagged-entry-deleted",
+                    flags=GObject.SignalFlags.RUN_LAST,
+                    return_type=GObject.TYPE_BOOLEAN,
+                    arg_types=(object,))
+    def tagged_entry_deleted(self, *args):
         pass
 
     def __init__(self, parent: Gtk.Window):
@@ -55,11 +61,11 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.tagged_entries = []
         self.logged_entries = []
 
-        self.menu = Gtk.Menu()
-        self.menu.attach_to_widget(self)
-        menu_delete_item = Gtk.ImageMenuItem(Gtk.STOCK_DELETE)
-        self.menu.append(menu_delete_item)
-        self.menu.show_all()
+        self.context_menu = TimelineContextPopover(relative_to=self)
+        self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
+
+    def _do_context_menu_delete(self, widget: TimelineContextPopover, te: entity.TaggedEntry):
+        self.emit("tagged-entry-deleted", te)
 
     def _do_scroll_event(self, _, e: Gdk.EventScroll):
         mouse_datetime = self._pixel_to_datetime(self.actual_mouse_pos["x"])
@@ -362,8 +368,15 @@ class TimelineCanvas(Gtk.DrawingArea):
         return date_to_use
 
     def _on_button_press(self, widget, event: Gdk.EventButton):
+        # Right click
         if event.button == 3:
-            self.menu.popup(None, None, None, None, event.button, event.time)
+            # Ensure that we are on the tagged entry timeline
+            if self.te_start_y <= event.y <= self.te_end_y:
+                moused_dt = self._pixel_to_datetime(event.x)
+                for te in self.tagged_entries:
+                    if te.contains_datetime(moused_dt):
+                        self.context_menu.popup_at_coordinate(x=event.x, y=event.y, te=te)
+                        break
             return
 
         start_date = self.current_moused_datetime
