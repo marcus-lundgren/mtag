@@ -54,10 +54,10 @@ class MTagWindow(Gtk.Window):
         self.tagged_entries_box = Gtk.ListBox()
 
         # Logged entries list
-        self.logged_entries_list_store = Gtk.ListStore(str, str, str, str)
+        self.logged_entries_list_store = Gtk.ListStore(str, str, str, str, str)
         self.logged_entries_tree_view = Gtk.TreeView.new_with_model(self.logged_entries_list_store)
 
-        for i, title in enumerate(["Start", "Stop", "Application", "Title"]):
+        for i, title in enumerate(["Start", "Stop", "Duration", "Application", "Title"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             column.set_sort_column_id(i)
@@ -122,6 +122,7 @@ class MTagWindow(Gtk.Window):
         for le in logged_entries:
             self.logged_entries_list_store.append([datetime_helper.to_time_str(le.start),
                                                    datetime_helper.to_time_str(le.stop),
+                                                   datetime_helper.to_duration_str(le.duration),
                                                    le.application_window.application.name,
                                                    le.application_window.title])
         self.logged_entries_tree_view.columns_autosize()
