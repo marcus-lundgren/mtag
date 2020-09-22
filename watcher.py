@@ -1,4 +1,5 @@
 import subprocess
+import re
 from mtag.helper import watcher_helper
 
 print("== STARTED ==")
@@ -36,11 +37,14 @@ for line in active_window_x11_information.splitlines():
         application_window_title = line[line.find("=") + 2:].strip('"')
         # print(application_window_title)
     elif line.startswith("WM_CLASS"):
-        wm_class_information = line[line.find("=", 2) + 2:]
-        # print(wm_class_information)
-        wm_class_information_split = wm_class_information.split('", "')
-        wm_class_name = wm_class_information_split[1].strip(' "')
-        application_name = wm_class_name
+        # Ensure that we get the value on the right. As a double quote might be escaped
+        # inside of the left hand side, ensure that we match the correct double quote characters.
+        wm_class_name_pattern = re.compile(r'[^\\]",\s*"\s*(.*)\s*"$')
+        pattern_matches = wm_class_name_pattern.findall(line)
+        if len(pattern_matches) > 0:
+            application_name = pattern_matches[0]
+        else:
+            print("Unable to extract the right hand side WM_CLASS value.")
 
 # print(application_pid)
 application_path = None
