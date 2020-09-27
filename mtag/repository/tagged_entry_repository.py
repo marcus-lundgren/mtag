@@ -53,7 +53,7 @@ class TaggedEntryRepository:
 
         conn.commit()
 
-    def delete(self, conn:sqlite3.Connection, db_id: int):
+    def delete(self, conn: sqlite3.Connection, db_id: int):
         conn.execute("DELETE FROM tagged_entry WHERE te_id=:db_id", {"db_id": db_id})
         conn.commit()
 
@@ -81,7 +81,7 @@ class TaggedEntryRepository:
                               " FROM tagged_entry"
                               " INNER JOIN category ON tagged_entry.te_category_id == category.c_id"
                               " WHERE c_name=:c_name",
-                              { "c_name": category_name })
+                              {"c_name": category_name})
         total_seconds = cursor.fetchone()
         return 0 if total_seconds is None else total_seconds["total_time"]
 

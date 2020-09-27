@@ -35,8 +35,8 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.show_all()
 
     def _on_category_combobox_changed(self, _: Gtk.ComboBox):
-        chosed_category_name = self.get_chosen_category_value()
-        total_time = statistics_helper.get_total_category_tagged_time(chosed_category_name)
+        chosen_category_name = self.get_chosen_category_value()
+        total_time = statistics_helper.get_total_category_tagged_time(chosen_category_name)
         hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_time)
         self.total_tagged_time_label.set_label(f"{hours} hours, {minutes} minutes, {seconds} seconds")
         print(f"Chosen combobox value: {self.get_chosen_category_value()}")

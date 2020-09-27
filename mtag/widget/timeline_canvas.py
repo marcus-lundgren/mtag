@@ -153,7 +153,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.set_font_size(16)
         _, _, text_width, *_ = cr.text_extents("88:88")
 
-        minute_increment = int((text_width * 1.5 / self.pixels_per_seconds) / 60)
+        minute_increment = int((text_width * 1.2 / self.pixels_per_seconds) / 60)
         if minute_increment > 59:
             minute_increment = int((minute_increment / 60) + 1) * 60
         elif minute_increment > 29:
@@ -300,57 +300,57 @@ class TimelineCanvas(Gtk.DrawingArea):
     def _show_details_tooltip(self, mouse_x: float, mouse_y: float,
                               canvas_width, canvas_height, cr: cairo.Context,
                               time_text_list: list, description_text_list: list):
-            cr.set_font_size(16)
-            padding = 10
-            line_padding = padding / 2
+        cr.set_font_size(16)
+        padding = 10
+        line_padding = padding / 2
 
-            widths = []
-            heights = []
-            texts = time_text_list.copy()
+        widths = []
+        heights = []
+        texts = time_text_list.copy()
 
-            for dt in description_text_list:
-                texts.append(dt)
+        for dt in description_text_list:
+            texts.append(dt)
 
-            for t in texts:
-                (_, _, width, height, _, _) = cr.text_extents(t)
-                widths.append(width)
-                heights.append(height)
+        for t in texts:
+            (_, _, width, height, _, _) = cr.text_extents(t)
+            widths.append(width)
+            heights.append(height)
 
-            width_to_use = max(widths) + (padding * 2)
-            height_to_use = sum(heights) + (padding * 2) + line_padding * (len(heights) - 1)
+        width_to_use = max(widths) + (padding * 2)
+        height_to_use = sum(heights) + (padding * 2) + line_padding * (len(heights) - 1)
 
-            rect_y = min(canvas_height - height_to_use, mouse_y)
-            x_to_use = min(mouse_x, canvas_width - width_to_use)
+        rect_y = min(canvas_height - height_to_use, mouse_y)
+        x_to_use = min(mouse_x, canvas_width - width_to_use)
 
-            # Draw rectangle
-            cr.set_source_rgba(0.1, 0.1, 0.8, 0.6)
-            cr.rectangle(x_to_use,
-                         rect_y,
-                         width_to_use,
-                         height_to_use)
-            cr.fill()
+        # Draw rectangle
+        cr.set_source_rgba(0.1, 0.1, 0.8, 0.6)
+        cr.rectangle(x_to_use,
+                     rect_y,
+                     width_to_use,
+                     height_to_use)
+        cr.fill()
 
-            cr.set_source_rgba(0.8, 0.6, 0.2, 0.6)
-            cr.rectangle(x_to_use,
-                         rect_y,
-                         width_to_use,
-                         height_to_use)
-            cr.stroke()
+        cr.set_source_rgba(0.8, 0.6, 0.2, 0.6)
+        cr.rectangle(x_to_use,
+                     rect_y,
+                     width_to_use,
+                     height_to_use)
+        cr.stroke()
 
-            # The texts
-            number_of_time_texts = len(time_text_list)
-            current_y = rect_y + heights[0] + padding
-            for i, t in enumerate(texts):
-                if 0 < i:
-                    current_y += heights[i - 1] + line_padding
+        # The texts
+        number_of_time_texts = len(time_text_list)
+        current_y = rect_y + heights[0] + padding
+        for i, t in enumerate(texts):
+            if 0 < i:
+                current_y += heights[i - 1] + line_padding
 
-                if number_of_time_texts <= i:
-                    cr.set_source_rgb(0.0, 0.9, 0.9)
-                else:
-                    cr.set_source_rgb(0.9, 0.9, 0.0)
+            if number_of_time_texts <= i:
+                cr.set_source_rgb(0.0, 0.9, 0.9)
+            else:
+                cr.set_source_rgb(0.9, 0.9, 0.0)
 
-                cr.move_to(x_to_use + padding, current_y)
-                cr.show_text(t)
+            cr.move_to(x_to_use + padding, current_y)
+            cr.show_text(t)
 
     @staticmethod
     def _set_tagged_entry_stop_date(stop_date: datetime,

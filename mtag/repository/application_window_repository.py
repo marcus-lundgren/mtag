@@ -9,9 +9,9 @@ class ApplicationWindowRepository:
 
     def insert(self, conn: sqlite3.Connection, application_window: ApplicationWindow):
         cursor = conn.execute("INSERT INTO application_window(aw_application_id, aw_title)"
-                     " VALUES (:application_id, :title)",
-                     {"application_id": application_window.application.db_id,
-                      "title": application_window.title})
+                              + " VALUES (:application_id, :title)",
+                              {"application_id": application_window.application.db_id,
+                               "title": application_window.title})
         conn.commit()
         return cursor.lastrowid
 

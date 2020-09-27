@@ -16,7 +16,7 @@ def pixel_to_datetime(x_position: float, timeline_side_padding: int,
                       timeline_start_datetime: datetime.datetime,
                       timeline_stop_datetime: datetime.datetime) -> datetime.datetime:
     total_seconds = (x_position - timeline_side_padding) / pixels_per_second
-    hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_seconds)
+    hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=int(total_seconds))
     actual_timedelta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
     start_timedelta = datetime.timedelta(hours=timeline_start_datetime.hour,
                                          minutes=timeline_start_datetime.minute,

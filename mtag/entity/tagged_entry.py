@@ -1,9 +1,10 @@
 import datetime
+from typing import Optional
 from mtag.entity.category import Category
 
 
 class TaggedEntry:
-    def __init__(self, start: datetime, stop: datetime, category: Category, db_id: int = None):
+    def __init__(self, start: datetime, stop: datetime, category: Optional[Category], db_id: int = None):
         self.db_id = db_id
         self.start = start
         self._stop = stop

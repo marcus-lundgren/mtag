@@ -3,7 +3,7 @@ import sqlite3
 
 from mtag.entity import LoggedEntry
 from mtag.entity.application_window import ApplicationWindow
-from mtag.helper import database_helper, datetime_helper
+from mtag.helper import database_helper, datetime_helper, configuration_helper
 from mtag.repository.application_path_repository import ApplicationPathRepository
 from mtag.repository.application_repository import ApplicationRepository
 from mtag.repository.application_window_repository import ApplicationWindowRepository
@@ -37,6 +37,7 @@ def register(window_title: str, application_name: str, application_path: str) ->
     logged_entry_repository = LoggedEntryRepository()
     last_logged_entry = logged_entry_repository.get_latest_entry(db_connection)
     datetime_now = datetime.datetime.now()
+    configuration = configuration_helper.get_configuration()
     if last_logged_entry is None:
         print("No existing logged entry, creating a new one")
         new_update = datetime_now + datetime.timedelta(seconds=1)
@@ -45,8 +46,10 @@ def register(window_title: str, application_name: str, application_path: str) ->
                                    application_window=application_window)
         logged_entry_repository.insert(db_connection, logged_entry)
     else:
-        max_delta_period = datetime.timedelta(seconds=10)
-        print(last_logged_entry.stop)
+        seconds = configuration[configuration_helper.WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW]
+        max_delta_period = datetime.timedelta(seconds=seconds)
+
+        print("Last logged stop:", last_logged_entry.stop)
         old_end = last_logged_entry.stop
         if max_delta_period < datetime_now - old_end:
             print("Too long since last update. Create a new entry.")

@@ -1,10 +1,6 @@
 import datetime
 
 
-def is_within(to_check: datetime.datetime, start: datetime.datetime, stop: datetime.datetime):
-    pass
-
-
 def _to_two_digit(number: int):
     return str(number).rjust(2, "0")
 
@@ -24,14 +20,17 @@ def seconds_to_hour_minute_second(total_seconds: int) -> tuple:
     seconds = int(total_seconds % 60)
     return int(hours), int(minutes), seconds
 
+
 def to_time_text(start: datetime.datetime, stop: datetime.datetime, duration: datetime.timedelta):
     start_str = to_time_str(start)
     stop_str = to_time_str(stop)
     duration_str = to_duration_str(duration)
     return f"{start_str} - {stop_str} ({duration_str})"
 
+
 def datetime_to_timestamp(dt: datetime.datetime):
     return int(dt.timestamp())
+
 
 def timestamp_to_datetime(ts: int):
     return datetime.datetime.fromtimestamp(ts)
