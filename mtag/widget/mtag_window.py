@@ -5,8 +5,7 @@ from mtag.helper import datetime_helper, database_helper
 from mtag.widget.calendar_panel import CalendarPanel
 from mtag.widget.timeline_canvas import TimelineCanvas
 from mtag.entity import TaggedEntry
-from mtag.repository.logged_entry_repository import LoggedEntryRepository
-from mtag.repository.tagged_entry_repository import TaggedEntryRepository
+from mtag.repository import LoggedEntryRepository, TaggedEntryRepository
 
 import gi
 gi.require_version("Gtk", "3.0")
