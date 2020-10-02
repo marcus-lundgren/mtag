@@ -1,4 +1,4 @@
-from mtag.widget.mtag_window import MTagWindow
+from mtag.widget import MTagWindow
 import gi
 from gi.repository import Gtk
 

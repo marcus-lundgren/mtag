@@ -2,9 +2,8 @@ import datetime
 
 from mtag import entity
 from mtag.helper import color_helper, datetime_helper, database_helper, timeline_helper
-from mtag.widget.category_choice_dialog import CategoryChoiceDialog
-from mtag.widget.timeline_context_popover import TimelineContextPopover
-from mtag.repository.category_repository import CategoryRepository
+from mtag.widget import CategoryChoiceDialog, TimelineContextPopover
+from mtag.repository import CategoryRepository
 
 import cairo
 import gi

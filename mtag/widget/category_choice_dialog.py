@@ -1,4 +1,4 @@
-from mtag.entity.tagged_entry import TaggedEntry
+from mtag.entity import TaggedEntry
 from mtag.helper import statistics_helper, datetime_helper
 
 import gi
