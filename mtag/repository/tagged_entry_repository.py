@@ -58,8 +58,7 @@ class TaggedEntryRepository:
         conn.commit()
 
     def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime):
-        date_string = date.strftime("%Y-%m-%d")
-        from_datetime = datetime.datetime.fromisoformat(f"{date_string} 00:00:00")
+        from_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
         to_datetime = from_datetime + datetime.timedelta(days=1)
         cursor = conn.execute("SELECT * FROM tagged_entry WHERE"
                               " (:from_date <= te_start AND te_start < :to_date)"

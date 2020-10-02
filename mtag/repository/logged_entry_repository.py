@@ -28,8 +28,7 @@ class LoggedEntryRepository:
         return self._from_dbo(conn=conn, db_le=db_le)
 
     def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime):
-        date_string = date.strftime("%Y-%m-%d")
-        from_datetime = datetime.datetime.fromisoformat(f"{date_string} 00:00:00")
+        from_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
         to_datetime = from_datetime + datetime.timedelta(days=1)
         cursor = conn.execute("SELECT * FROM logged_entry WHERE"
                               " (:from_date <= le_last_update AND le_last_update < :to_date)"
