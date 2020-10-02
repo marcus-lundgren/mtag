@@ -1,5 +1,5 @@
 import sqlite3
-from mtag.entity.category import Category
+from mtag.entity import Category
 
 
 class CategoryRepository:

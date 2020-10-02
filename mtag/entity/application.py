@@ -1,4 +1,4 @@
-from mtag.entity.application_path import ApplicationPath
+from mtag.entity import ApplicationPath
 
 
 class Application:

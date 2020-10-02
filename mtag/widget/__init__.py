@@ -1,2 +1,4 @@
-from mtag.widget.category_choice_dialog import CategoryChoiceDialog
-from mtag.widget.calendar_button import CalendarButton
+from .category_choice_dialog import CategoryChoiceDialog
+from .calendar_button import CalendarButton
+from .calendar_panel import CalendarPanel
+from .timeline_canvas import TimelineCanvas

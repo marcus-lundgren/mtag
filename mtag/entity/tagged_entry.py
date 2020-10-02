@@ -1,6 +1,6 @@
 import datetime
 from typing import Optional
-from mtag.entity.category import Category
+from mtag.entity import Category
 
 
 class TaggedEntry:

@@ -1,5 +1,5 @@
 import sqlite3
-from mtag.entity.application_path import ApplicationPath
+from mtag.entity import ApplicationPath
 
 
 class ApplicationPathRepository:

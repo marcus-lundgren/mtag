@@ -2,7 +2,7 @@ import sqlite3
 import datetime
 from mtag.helper import datetime_helper
 from mtag.entity import TaggedEntry
-from mtag.repository.category_repository import CategoryRepository
+from mtag.repository import CategoryRepository
 
 
 class TaggedEntryRepository:

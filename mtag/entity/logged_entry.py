@@ -1,5 +1,5 @@
 import datetime
-from mtag.entity.application_window import ApplicationWindow
+from mtag.entity import ApplicationWindow
 
 
 class LoggedEntry:

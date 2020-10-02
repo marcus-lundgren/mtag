@@ -1,6 +1,6 @@
 import sqlite3
-from mtag.entity.application import Application, ApplicationPath
-from mtag.repository.application_path_repository import ApplicationPathRepository
+from mtag.entity import Application, ApplicationPath
+from mtag.repository import ApplicationPathRepository
 
 
 class ApplicationRepository:

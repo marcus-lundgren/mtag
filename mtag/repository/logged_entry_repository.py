@@ -2,7 +2,7 @@ import sqlite3
 import datetime
 from mtag.helper import datetime_helper
 from mtag.entity import LoggedEntry
-from mtag.repository.application_window_repository import ApplicationWindowRepository
+from mtag.repository import ApplicationWindowRepository
 
 
 class LoggedEntryRepository:

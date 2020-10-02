@@ -1,6 +1,6 @@
 import sqlite3
-from mtag.entity.application_window import ApplicationWindow
-from mtag.repository.application_repository import ApplicationRepository
+from mtag.entity import ApplicationWindow
+from mtag.repository import ApplicationRepository
 
 
 class ApplicationWindowRepository:

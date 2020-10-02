@@ -2,8 +2,7 @@ import datetime
 from itertools import groupby
 
 from mtag.helper import datetime_helper, database_helper
-from mtag.widget.calendar_panel import CalendarPanel
-from mtag.widget.timeline_canvas import TimelineCanvas
+from mtag.widget import CalendarPanel, TimelineCanvas
 from mtag.entity import TaggedEntry
 from mtag.repository import LoggedEntryRepository, TaggedEntryRepository
 
