@@ -17,9 +17,13 @@ class MTagWindow(Gtk.Window):
     def __init__(self):
         super().__init__(title="MTag")
         self.set_default_size(720, 500)
-        it = Gtk.IconTheme()
-        icon = it.load_icon(Gtk.STOCK_FIND, 256, Gtk.IconLookupFlags.USE_BUILTIN)
-        self.set_icon(icon)
+        try:
+            it = Gtk.IconTheme()
+            icon = it.load_icon(Gtk.STOCK_FIND, 256, Gtk.IconLookupFlags.GENERIC_FALLBACK)
+            self.set_icon(icon)
+        except:
+            print("Unable to load window icon")
+
         self.connect("destroy", Gtk.main_quit)
 
         b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
