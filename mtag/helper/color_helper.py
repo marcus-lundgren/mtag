@@ -1,6 +1,7 @@
 import hashlib
 from functools import lru_cache
 
+
 @lru_cache
 def to_color(text: str) -> str:
     hex_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
