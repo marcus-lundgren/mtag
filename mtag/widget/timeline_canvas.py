@@ -320,6 +320,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         rect_y = min(canvas_height - height_to_use, mouse_y)
         x_to_use = min(mouse_x, canvas_width - width_to_use)
+        x_to_use = max(x_to_use, 0.0)
 
         # Draw rectangle
         cr.set_source_rgba(0.1, 0.1, 0.8, 0.6)
