@@ -1,9 +1,11 @@
 import sqlite3
+from typing import Dict
+
 from mtag.entity import Category
 
 
 class CategoryRepository:
-    def insert(self, conn: sqlite3.Connection, category: Category):
+    def insert(self, conn: sqlite3.Connection, category: Category) -> int:
         cursor = conn.execute("INSERT INTO category (c_name) VALUES (:name)", {"name": category.name})
         conn.commit()
         return cursor.lastrowid
@@ -19,10 +21,10 @@ class CategoryRepository:
 
         return categories
 
-    def get(self, conn: sqlite3.Connection, db_id: int):
+    def get(self, conn: sqlite3.Connection, db_id: int) -> Category:
         cursor = conn.execute("SELECT * FROM category WHERE c_id=:db_id", {"db_id": db_id})
         db_c = cursor.fetchone()
         return self._from_dbo(db_c)
 
-    def _from_dbo(self, db_c: dict) -> Category:
+    def _from_dbo(self, db_c: Dict) -> Category:
         return Category(name=db_c["c_name"], db_id=db_c["c_id"])

@@ -3,7 +3,7 @@ import os
 from mtag.helper import filesystem_helper
 
 
-def create_connection():
+def create_connection() -> sqlite3.Connection:
     userdata_path = filesystem_helper.get_userdata_path()
     database_file_path = os.path.join(userdata_path, "mtag.db")
     schema_script_needed = not os.path.exists(database_file_path)

@@ -1,11 +1,13 @@
 import json
 import os
+from typing import Dict
+
 from mtag.helper import filesystem_helper
 
 WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW = "watcher_max_delta_seconds_before_new"
 
 
-def get_configuration():
+def get_configuration() -> Dict:
     default_configuration = {
         WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW: 10
     }

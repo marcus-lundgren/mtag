@@ -9,7 +9,7 @@ class TaggedEntryRepository:
     def __init__(self):
         self.category_repository = CategoryRepository()
 
-    def insert(self, conn: sqlite3.Connection, tagged_entry: TaggedEntry):
+    def insert(self, conn: sqlite3.Connection, tagged_entry: TaggedEntry) -> None:
         cursor = conn.execute("SELECT te_id, te_start"
                               " FROM tagged_entry"
                               " WHERE te_end==:new_te_start"
@@ -53,7 +53,7 @@ class TaggedEntryRepository:
 
         conn.commit()
 
-    def delete(self, conn: sqlite3.Connection, db_id: int):
+    def delete(self, conn: sqlite3.Connection, db_id: int) -> None:
         conn.execute("DELETE FROM tagged_entry WHERE te_id=:db_id", {"db_id": db_id})
         conn.commit()
 
@@ -75,7 +75,7 @@ class TaggedEntryRepository:
 
         return tagged_entries
 
-    def total_time_by_category(self, conn: sqlite3.Connection, category_name: str):
+    def total_time_by_category(self, conn: sqlite3.Connection, category_name: str) -> int:
         cursor = conn.execute("SELECT SUM(te_end - te_start) AS total_time"
                               " FROM tagged_entry"
                               " INNER JOIN category ON tagged_entry.te_category_id == category.c_id"
@@ -84,7 +84,7 @@ class TaggedEntryRepository:
         total_seconds = cursor.fetchone()
         return 0 if total_seconds is None else total_seconds["total_time"]
 
-    def _from_dbo(self, conn: sqlite3.Connection, db_te: dict):
+    def _from_dbo(self, conn: sqlite3.Connection, db_te: dict) -> TaggedEntry:
         category = self.category_repository.get(conn=conn, db_id=db_te["te_category_id"])
         return TaggedEntry(start=datetime_helper.timestamp_to_datetime(db_te["te_start"]),
                            stop=datetime_helper.timestamp_to_datetime(db_te["te_end"]),

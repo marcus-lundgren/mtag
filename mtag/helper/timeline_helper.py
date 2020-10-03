@@ -2,7 +2,7 @@ import datetime
 from mtag.helper import datetime_helper
 
 
-def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: int):
+def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: float):
     max_timeline_x = canvas_width - canvas_side_padding
     min_timeline_x = canvas_side_padding
 
