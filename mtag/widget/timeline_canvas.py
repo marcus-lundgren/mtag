@@ -42,9 +42,11 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.parent = parent
 
-        self.timeline_side_padding = 13
+        self.timeline_side_padding = 28.6
         self.timeline_top_padding = 10
         self.timeline_height = 80
+        self.time_guidingline_height = 12
+        self.time_guidingline_width = 44
         self.pixels_per_seconds = 2
 
         self.timeline_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -138,10 +140,10 @@ class TimelineCanvas(Gtk.DrawingArea):
     def _do_draw(self, _, cr: cairo.Context):
         # Get the size
         drawing_area_size, _ = self.get_allocated_size()
-        (_, _, _, hour_text_height, _, _) = cr.text_extents("1")
+
         hour_text_and_line_gap = 10
 
-        self.timeline_height = (drawing_area_size.height - self.timeline_top_padding * 3 - hour_text_height - hour_text_and_line_gap) / 2
+        self.timeline_height = (drawing_area_size.height - self.timeline_top_padding * 3 - self.time_guidingline_height - hour_text_and_line_gap) / 2
         self.pixels_per_seconds = (drawing_area_size.width - self.timeline_side_padding * 2) / (self.timeline_delta.total_seconds())
 
         self.te_start_y = self.timeline_top_padding
@@ -151,10 +153,8 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.le_end_y = self.le_start_y + self.timeline_height
 
         # Draw the hour lines
-        cr.set_font_size(16)
-        _, _, text_width, *_ = cr.text_extents("88:88")
 
-        minute_increment = int((text_width * 1.2 / self.pixels_per_seconds) / 60)
+        minute_increment = int((self.time_guidingline_width * 1.2 / self.pixels_per_seconds) / 60)
         if minute_increment > 59:
             minute_increment = int((minute_increment / 60) + 1) * 60
         elif minute_increment > 29:
@@ -180,7 +180,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.set_source_rgb(0.5, 0.5, 0.5)
             cr.new_path()
             cr.move_to(hx, self.timeline_top_padding / 2)
-            cr.line_to(hx, drawing_area_size.height - hour_text_height - hour_text_and_line_gap)
+            cr.line_to(hx, drawing_area_size.height - self.time_guidingline_height - hour_text_and_line_gap)
             cr.stroke()
 
             # Hour text
