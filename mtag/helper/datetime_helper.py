@@ -14,7 +14,7 @@ def to_duration_str(td: datetime.timedelta):
     return f"{_to_two_digit(hours)}:{_to_two_digit(minutes)}:{_to_two_digit(seconds)}"
 
 
-def seconds_to_hour_minute_second(total_seconds: int) -> tuple:
+def seconds_to_hour_minute_second(total_seconds: float) -> tuple:
     hours = total_seconds // (60 * 60)
     minutes = (total_seconds - hours * 60 * 60) // 60
     seconds = int(total_seconds % 60)

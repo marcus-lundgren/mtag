@@ -11,7 +11,7 @@ def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: flo
     return timeline_x
 
 
-def pixel_to_datetime(x_position: float, timeline_side_padding: int,
+def pixel_to_datetime(x_position: float, timeline_side_padding: float,
                       pixels_per_second: float, current_date: datetime.datetime,
                       timeline_start_datetime: datetime.datetime,
                       timeline_stop_datetime: datetime.datetime) -> datetime.datetime:
@@ -34,20 +34,21 @@ def pixel_to_datetime(x_position: float, timeline_side_padding: int,
 
 
 def datetime_to_pixel(dt: datetime.datetime, current_date: datetime.datetime,
-                      pixels_per_second: float, timeline_side_padding: int,
-                      timeline_start_datetime: datetime.datetime,
-                      timeline_stop_datetime: datetime.datetime) -> float:
+                      pixels_per_second: float, timeline_side_padding: float,
+                      timeline_start_dt: datetime.datetime,
+                      timeline_stop_dt: datetime.datetime) -> float:
     hour, minute, second = dt.hour, dt.minute, dt.second
-    if dt < timeline_start_datetime:
-        hour, minute, second = timeline_start_datetime.hour, timeline_start_datetime.minute, timeline_start_datetime.second
-    elif timeline_stop_datetime <= dt:
-        hour, minute, second = timeline_stop_datetime.hour, timeline_stop_datetime.minute, timeline_stop_datetime.second
+    if dt < timeline_start_dt:
+        hour, minute, second = timeline_start_dt.hour, timeline_start_dt.minute, timeline_start_dt.second
+    elif timeline_stop_dt <= dt:
+        hour, minute, second = timeline_stop_dt.hour, timeline_stop_dt.minute, timeline_stop_dt.second
 
     current_time = current_date + datetime.timedelta(hours=hour, minutes=minute, seconds=second)
-    timeline_start_as_delta = datetime.timedelta(hours=timeline_start_datetime.hour,
-                                                 minutes=timeline_start_datetime.minute,
-                                                 seconds=timeline_start_datetime.second)
+    timeline_start_as_delta = datetime.timedelta(hours=timeline_start_dt.hour,
+                                                 minutes=timeline_start_dt.minute,
+                                                 seconds=timeline_start_dt.second)
 
     time_to_use = current_time - timeline_start_as_delta
 
-    return pixels_per_second * (time_to_use.hour * 60 * 60 + time_to_use.minute * 60 + time_to_use.second) + timeline_side_padding
+    total_seconds = (time_to_use.hour * 60 * 60 + time_to_use.minute * 60 + time_to_use.second)
+    return pixels_per_second * total_seconds + timeline_side_padding

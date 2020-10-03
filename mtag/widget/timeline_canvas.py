@@ -1,12 +1,14 @@
 import datetime
+from typing import List
 
 from mtag import entity
 from mtag.helper import color_helper, datetime_helper, database_helper, timeline_helper
-from mtag.widget import CategoryChoiceDialog, TimelineContextPopover
 from mtag.repository import CategoryRepository
+from mtag.widget import CategoryChoiceDialog, TimelineContextPopover
 
 import cairo
 import gi
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 
@@ -15,14 +17,14 @@ class TimelineCanvas(Gtk.DrawingArea):
     @GObject.Signal(name="tagged-entry-created",
                     flags=GObject.SignalFlags.RUN_LAST,
                     return_type=GObject.TYPE_BOOLEAN,
-                    arg_types=(object,))
+                    arg_types=[object])
     def tagged_entry_created(self, *args):
         pass
 
     @GObject.Signal(name="tagged-entry-deleted",
                     flags=GObject.SignalFlags.RUN_LAST,
                     return_type=GObject.TYPE_BOOLEAN,
-                    arg_types=(object,))
+                    arg_types=[object])
     def tagged_entry_deleted(self, *args):
         pass
 
@@ -63,7 +65,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.context_menu = TimelineContextPopover(relative_to=self)
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
 
-    def _do_context_menu_delete(self, widget: TimelineContextPopover, te: entity.TaggedEntry):
+    def _do_context_menu_delete(self, _: TimelineContextPopover, te: entity.TaggedEntry) -> None:
         self.emit("tagged-entry-deleted", te)
 
     def _do_scroll_event(self, _, e: Gdk.EventScroll):
@@ -120,7 +122,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self._update_timeline_stop()
         self.queue_draw()
 
-    def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries):
+    def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries) -> None:
         self.logged_entries = logged_entries
         self.tagged_entries = tagged_entries
         self._current_date = dt
@@ -130,7 +132,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.queue_draw()
 
-    def _update_timeline_stop(self):
+    def _update_timeline_stop(self) -> None:
         self.timeline_end = self.timeline_start + self.timeline_delta
 
     def _do_draw(self, _, cr: cairo.Context):
@@ -298,7 +300,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     def _show_details_tooltip(self, mouse_x: float, mouse_y: float,
                               canvas_width, canvas_height, cr: cairo.Context,
-                              time_text_list: list, description_text_list: list):
+                              time_text_list: List[str], description_text_list: List[str]) -> None:
         cr.set_font_size(16)
         padding = 10
         line_padding = padding / 2
@@ -354,7 +356,8 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     @staticmethod
     def _set_tagged_entry_stop_date(stop_date: datetime,
-                                    tagged_entry: entity.TaggedEntry, tagged_entries: list):
+                                    tagged_entry: entity.TaggedEntry,
+                                    tagged_entries: List[entity.TaggedEntry]) -> datetime.datetime:
         tagged_entry.stop = stop_date
 
         creation_is_right = stop_date == tagged_entry.stop
@@ -373,7 +376,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         return date_to_use
 
-    def _on_button_press(self, widget, event: Gdk.EventButton):
+    def _on_button_press(self, _: Gtk.DrawingArea, event: Gdk.EventButton):
         # Right click
         if event.button == 3:
             # Ensure that we are on the tagged entry timeline
@@ -388,7 +391,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         start_date = self.current_moused_datetime
         self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_date, stop=start_date)
 
-    def _on_button_release(self, widget, event: Gdk.EventType):
+    def _on_button_release(self, _: Gtk.DrawingArea, event: Gdk.EventType):
         # Ensure that an entry is being created.
         if self.current_tagged_entry is None:
             return
@@ -462,8 +465,8 @@ class TimelineCanvas(Gtk.DrawingArea):
                                                  current_date=self._current_date,
                                                  pixels_per_second=self.pixels_per_seconds,
                                                  timeline_side_padding=self.timeline_side_padding,
-                                                 timeline_start_datetime=self.timeline_start,
-                                                 timeline_stop_datetime=self.timeline_end)
+                                                 timeline_start_dt=self.timeline_start,
+                                                 timeline_stop_dt=self.timeline_end)
 
     def _draw_tagged_entry(self, tagged_entry: entity.TaggedEntry, cr: cairo.Context):
         start_x = self._datetime_to_pixel(tagged_entry.start)
