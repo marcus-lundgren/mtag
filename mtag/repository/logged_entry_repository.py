@@ -33,7 +33,8 @@ class LoggedEntryRepository:
         cursor = conn.execute("SELECT * FROM logged_entry WHERE"
                               " (:from_date <= le_last_update AND le_last_update < :to_date)"
                               " OR"
-                              " (:from_date <= le_start AND le_start < :to_date)",
+                              " (:from_date <= le_start AND le_start < :to_date)"
+                              " ORDER BY le_start ASC",
                               {"from_date": datetime_helper.datetime_to_timestamp(from_datetime),
                                "to_date": datetime_helper.datetime_to_timestamp(to_datetime)})
         db_logged_entries = cursor.fetchall()

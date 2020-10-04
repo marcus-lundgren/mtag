@@ -377,6 +377,25 @@ class TimelineCanvas(Gtk.DrawingArea):
         return date_to_use
 
     def _on_button_press(self, _: Gtk.DrawingArea, event: Gdk.EventButton):
+        if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS and event.button == Gdk.BUTTON_PRIMARY:
+            start_dt = self.timeline_start
+            end_dt = self.timeline_end
+
+            for te in self.tagged_entries:
+                # Double click should not be possible if we are inside of a TaggedEntry
+                if te.contains_datetime(self.current_moused_datetime):
+                    return
+
+                # Update the intervals if necessary
+                if start_dt < te.stop < self.current_moused_datetime:
+                    start_dt = te.stop
+                elif self.current_moused_datetime < te.start < end_dt:
+                    end_dt = te.start
+                    break
+            self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_dt, stop=end_dt)
+            self.queue_draw()
+            return
+
         # Right click
         if event.button == 3:
             # Ensure that we are on the tagged entry timeline
@@ -399,8 +418,6 @@ class TimelineCanvas(Gtk.DrawingArea):
         tagged_entry_to_create = self.current_tagged_entry
         self.current_tagged_entry = None
 
-        stop_date = self._pixel_to_datetime(event.x)
-        self._set_tagged_entry_stop_date(stop_date, tagged_entry_to_create, self.tagged_entries)
         if tagged_entry_to_create.start == tagged_entry_to_create.stop:
             return
 

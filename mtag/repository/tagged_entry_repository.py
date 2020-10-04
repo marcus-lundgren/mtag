@@ -63,7 +63,8 @@ class TaggedEntryRepository:
         cursor = conn.execute("SELECT * FROM tagged_entry WHERE"
                               " (:from_date <= te_start AND te_start < :to_date)"
                               " OR"
-                              " (:from_date <= te_end AND te_end < :to_date)",
+                              " (:from_date <= te_end AND te_end < :to_date)"
+                              " ORDER BY te_start ASC",
                               {"from_date": datetime_helper.datetime_to_timestamp(from_datetime),
                                "to_date": datetime_helper.datetime_to_timestamp(to_datetime)})
         db_tagged_entries = cursor.fetchall()
