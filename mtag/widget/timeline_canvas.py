@@ -397,7 +397,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             return
 
         # Right click
-        if event.button == 3:
+        if event.button == Gdk.BUTTON_SECONDARY:
             # Ensure that we are on the tagged entry timeline
             if self.te_start_y <= event.y <= self.te_end_y:
                 moused_dt = self._pixel_to_datetime(event.x)
