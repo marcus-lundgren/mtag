@@ -416,9 +416,9 @@ class TimelineCanvas(Gtk.DrawingArea):
             return
 
         tagged_entry_to_create = self.current_tagged_entry
-        self.current_tagged_entry = None
 
         if tagged_entry_to_create.start == tagged_entry_to_create.stop:
+            self.current_tagged_entry = None
             return
 
         # Choose category
@@ -427,6 +427,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         conn.close()
         dialog = CategoryChoiceDialog(window=self.parent, categories=categories, tagged_entry=tagged_entry_to_create)
         r = dialog.run()
+        self.current_tagged_entry = None
         chosen_category_name = dialog.get_chosen_category_value()
         dialog.destroy()
 
