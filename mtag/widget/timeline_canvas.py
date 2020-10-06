@@ -208,8 +208,9 @@ class TimelineCanvas(Gtk.DrawingArea):
             current_time_line_time += datetime.timedelta(minutes=self.minute_increment)
 
         # Show guiding current actual time line
-        if datetime.datetime.now().date() == self._current_date.date():
-            current_time_guiding_line_x = self._datetime_to_pixel(datetime.datetime.now())
+        now_dt = datetime.datetime.now()
+        if now_dt.date() == self._current_date.date():
+            current_time_guiding_line_x = self._datetime_to_pixel(now_dt)
             cr.set_source_rgb(0.3, 0.3, 0.3)
             cr.move_to(current_time_guiding_line_x, self.timeline_top_padding)
             cr.line_to(current_time_guiding_line_x, drawing_area_height - self.hour_text_and_line_gap)
