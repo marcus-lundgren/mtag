@@ -557,12 +557,12 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.fill()
 
     def _pixel_to_datetime(self, x_position: float) -> datetime:
-        timeline_x = timeline_helper.to_timeline_x(x_position=x_position,
-                                                   canvas_width=self.get_allocated_width(),
-                                                   canvas_side_padding=self.timeline_side_padding)
-        return timeline_helper.pixel_to_datetime(x_position=timeline_x,
-                                                 timeline_side_padding=self.timeline_side_padding,
-                                                 pixels_per_second=self.pixels_per_seconds,
-                                                 current_date=self._current_date,
-                                                 timeline_start_datetime=self.timeline_start,
-                                                 timeline_stop_datetime=self.timeline_end)
+        timeline_x = timeline_helper.to_timeline_x(x_position,
+                                                   self.get_allocated_width(),
+                                                   self.timeline_side_padding)
+        return timeline_helper.pixel_to_datetime(timeline_x,
+                                                 self.timeline_side_padding,
+                                                 self.pixels_per_seconds,
+                                                 self._current_date,
+                                                 self.timeline_start,
+                                                 self.timeline_end)
