@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
-import mtag
+from mtag.widget import MTagWindow
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 
-mtag.start_mtag()
+
+def start_mtag():
+    _ = MTagWindow()
+    Gtk.main()
+
+if __name__ == "__main__":
+    start_mtag()
