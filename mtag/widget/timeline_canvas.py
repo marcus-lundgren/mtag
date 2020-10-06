@@ -39,15 +39,18 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.connect("button_press_event", self._on_button_press)
         self.connect("button_release_event", self._on_button_release)
         self.connect("scroll_event", self._do_scroll_event)
+        self.connect("configure-event", lambda *_: self._update_canvas_constants())
 
         self.parent = parent
 
         self.timeline_side_padding = 28.6
         self.timeline_top_padding = 10
         self.timeline_height = 80
-        self.time_guidingline_height = 12
-        self.time_guidingline_width = 44
+        self.time_guidingline_text_height = 12
+        self.time_guidingline_text_width = 44
         self.pixels_per_seconds = 2
+        self.hour_text_and_line_gap = 10
+        self.minute_increment = 0
 
         self.timeline_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
@@ -63,9 +66,14 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.current_tagged_entry = None
         self.tagged_entries = []
         self.logged_entries = []
+        self.activity_entries = [entity.ActivityEntry(active=False, start=datetime.datetime.now() + datetime.timedelta(hours=-5),
+                                                      stop=datetime.datetime.now() + datetime.timedelta(hours=-3)),
+                                 entity.ActivityEntry(active=True, start=datetime.datetime.now() + datetime.timedelta(hours=-3),
+                                                      stop=datetime.datetime.now() + datetime.timedelta(hours=3))]
 
         self.context_menu = TimelineContextPopover(relative_to=self)
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
+        self._update_canvas_constants()
 
     def _do_context_menu_delete(self, _: TimelineContextPopover, te: entity.TaggedEntry) -> None:
         self.emit("tagged-entry-deleted", te)
@@ -122,7 +130,40 @@ class TimelineCanvas(Gtk.DrawingArea):
                 self.timeline_start = self._current_date
 
         self._update_timeline_stop()
+        self._update_canvas_constants()
         self.queue_draw()
+
+    def _update_canvas_constants(self):
+        canvas_height = self.get_allocated_height()
+        canvas_width = self.get_allocated_width()
+
+        self.timeline_height = (canvas_height - self.timeline_top_padding * 3 - self.time_guidingline_text_height - self.hour_text_and_line_gap) / 3
+        self.pixels_per_seconds = (canvas_width - self.timeline_side_padding * 2) / (self.timeline_delta.total_seconds())
+
+        self.te_start_y = self.timeline_top_padding
+        self.te_end_y = self.te_start_y + self.timeline_height
+
+        self.ae_start_y = self.te_end_y + self.timeline_top_padding
+        self.ae_end_y = self.ae_start_y + self.timeline_height
+
+        self.le_start_y = self.ae_end_y + self.timeline_top_padding
+        self.le_end_y = self.le_start_y + self.timeline_height
+
+        minute_increment = int((self.time_guidingline_text_width * 1.2 / self.pixels_per_seconds) / 60)
+        if minute_increment > 59:
+            minute_increment = int((minute_increment / 60) + 1) * 60
+        elif minute_increment > 29:
+            minute_increment = 60
+        elif minute_increment > 14:
+            minute_increment = 30
+        elif minute_increment > 9:
+            minute_increment = 15
+        elif minute_increment > 4:
+            minute_increment = 10
+        else:
+            minute_increment = 5
+
+        self.minute_increment = minute_increment
 
     def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries) -> None:
         self.logged_entries = logged_entries
@@ -139,40 +180,15 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     def _do_draw(self, _, cr: cairo.Context):
         # Get the size
-        drawing_area_size, _ = self.get_allocated_size()
-
-        hour_text_and_line_gap = 10
-
-        self.timeline_height = (drawing_area_size.height - self.timeline_top_padding * 3 - self.time_guidingline_height - hour_text_and_line_gap) / 2
-        self.pixels_per_seconds = (drawing_area_size.width - self.timeline_side_padding * 2) / (self.timeline_delta.total_seconds())
-
-        self.te_start_y = self.timeline_top_padding
-        self.te_end_y = self.te_start_y + self.timeline_height
-
-        self.le_start_y = self.te_end_y + self.timeline_top_padding
-        self.le_end_y = self.le_start_y + self.timeline_height
+        drawing_area_height = self.get_allocated_height()
 
         # Draw the hour lines
-
-        minute_increment = int((self.time_guidingline_width * 1.2 / self.pixels_per_seconds) / 60)
-        if minute_increment > 59:
-            minute_increment = int((minute_increment / 60) + 1) * 60
-        elif minute_increment > 29:
-            minute_increment = 60
-        elif minute_increment > 14:
-            minute_increment = 30
-        elif minute_increment > 9:
-            minute_increment = 15
-        elif minute_increment > 4:
-            minute_increment = 10
-        else:
-            minute_increment = 5
-
         current_time_line_time = self._current_date + datetime.timedelta(hours=self.timeline_start.hour)
+        cr.set_font_size(16)
         while current_time_line_time <= self.timeline_end:
             # Hour line
             if current_time_line_time < self.timeline_start:
-                current_time_line_time += datetime.timedelta(minutes=minute_increment)
+                current_time_line_time += datetime.timedelta(minutes=self.minute_increment)
                 continue
 
             hx = self._datetime_to_pixel(current_time_line_time)
@@ -180,24 +196,23 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.set_source_rgb(0.5, 0.5, 0.5)
             cr.new_path()
             cr.move_to(hx, self.timeline_top_padding / 2)
-            cr.line_to(hx, drawing_area_size.height - self.time_guidingline_height - hour_text_and_line_gap)
+            cr.line_to(hx, drawing_area_height - self.time_guidingline_text_height - self.hour_text_and_line_gap)
             cr.stroke()
 
             # Hour text
-            cr.set_font_size(16)
             hour_minute_string = f"{str(current_time_line_time.hour).rjust(2, '0')}:{str(current_time_line_time.minute).rjust(2, '0')}"
             (tx, _, hour_text_width, _, dx, _) = cr.text_extents(hour_minute_string)
-            cr.move_to(hx - tx - (hour_text_width / 2), drawing_area_size.height)
+            cr.move_to(hx - tx - (hour_text_width / 2), drawing_area_height)
             cr.show_text(hour_minute_string)
 
-            current_time_line_time += datetime.timedelta(minutes=minute_increment)
+            current_time_line_time += datetime.timedelta(minutes=self.minute_increment)
 
         # Show guiding current actual time line
         if datetime.datetime.now().date() == self._current_date.date():
             current_time_guiding_line_x = self._datetime_to_pixel(datetime.datetime.now())
             cr.set_source_rgb(0.3, 0.3, 0.3)
             cr.move_to(current_time_guiding_line_x, self.timeline_top_padding)
-            cr.line_to(current_time_guiding_line_x, drawing_area_size.height - hour_text_and_line_gap)
+            cr.line_to(current_time_guiding_line_x, drawing_area_height - self.hour_text_and_line_gap)
             cr.stroke()
 
         for le in self.logged_entries:
@@ -224,12 +239,28 @@ class TimelineCanvas(Gtk.DrawingArea):
 
             self._draw_tagged_entry(tagged_entry, cr)
 
+        for ae in self.activity_entries:
+            if ae.stop < self.timeline_start:
+                continue
+            elif self.timeline_end < ae.start:
+                break
+
+            start_x = self._datetime_to_pixel(ae.start)
+            stop_x = self._datetime_to_pixel(ae.stop)
+
+            color_string = "#20EE20" if ae.active else "#EE2020"
+            color = Gdk.color_parse(spec=color_string)
+            cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
+            cr.rectangle(start_x, self.ae_start_y,
+                         stop_x - start_x, self.timeline_height)
+            cr.fill()
+
         if self.current_tagged_entry is not None:
             start_x = self._datetime_to_pixel(self.current_tagged_entry.start)
             stop_x = self._datetime_to_pixel(self.current_tagged_entry.stop)
             cr.set_source_rgba(0.2, 0.2, 0.2, 0.4)
             cr.rectangle(start_x, 0,
-                         stop_x - start_x, drawing_area_size.height)
+                         stop_x - start_x, drawing_area_height)
             cr.fill()
 
         # Show a guiding line under the mouse cursor
@@ -237,10 +268,11 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.new_path()
         cr.set_source_rgb(0.7, 0.7, 0.7)
         cr.move_to(timeline_x, 10)
-        cr.line_to(timeline_x, drawing_area_size.height - 10)
+        cr.line_to(timeline_x, drawing_area_height - 10)
         cr.stroke()
 
-        pixel_as_datetime = self._pixel_to_datetime(self.actual_mouse_pos["x"])
+        actual_mouse_pos_x = self.actual_mouse_pos["x"]
+        pixel_as_datetime = self._pixel_to_datetime(actual_mouse_pos_x)
         moused_over_time_string = datetime_helper.to_time_str(pixel_as_datetime)
         time_texts = [moused_over_time_string]
         desc_texts = []
@@ -250,11 +282,13 @@ class TimelineCanvas(Gtk.DrawingArea):
                                                         self.current_tagged_entry.stop,
                                                         self.current_tagged_entry.duration)
             time_texts = [time_details]
-        elif self.te_start_y <= self.actual_mouse_pos["y"] <= self.te_end_y:
+
+        actual_mouse_pos_y = self.actual_mouse_pos["y"]
+        if self.te_start_y <= actual_mouse_pos_y <= self.te_end_y:
             for te in self.tagged_entries:
-                if self._datetime_to_pixel(te.stop) < self.actual_mouse_pos["x"]:
+                if self._datetime_to_pixel(te.stop) < actual_mouse_pos_x:
                     continue
-                elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(te.start):
+                elif actual_mouse_pos_x < self._datetime_to_pixel(te.start):
                     break
                 else:
                     time_details = datetime_helper.to_time_text(te.start, te.stop, te.duration)
@@ -268,12 +302,31 @@ class TimelineCanvas(Gtk.DrawingArea):
                                  te_stop_x - te_start_x, self.te_end_y - self.te_start_y)
                     cr.fill()
                     break
-
-        if self.le_start_y <= self.actual_mouse_pos["y"] <= self.le_end_y:
-            for le in self.logged_entries:
-                if self._datetime_to_pixel(le.stop) < self.actual_mouse_pos["x"]:
+        elif self.ae_start_y <= actual_mouse_pos_y <= self.ae_end_y:
+            for ae in self.activity_entries:
+                if self._datetime_to_pixel(ae.stop) < actual_mouse_pos_x:
                     continue
-                elif self.actual_mouse_pos["x"] < self._datetime_to_pixel(le.start):
+                elif actual_mouse_pos_x < self._datetime_to_pixel(ae.start):
+                    break
+                else:
+                    if self.current_tagged_entry is None:
+                        time_details = datetime_helper.to_time_text(ae.start, ae.stop, ae.duration)
+                        time_texts.append(time_details)
+                    activity_text = "Active" if ae.active else "Inactive"
+                    desc_texts.append(activity_text)
+
+                    ae_start_x = self._datetime_to_pixel(ae.start)
+                    ae_stop_x = self._datetime_to_pixel(ae.stop)
+                    cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
+                    cr.rectangle(ae_start_x, self.ae_start_y,
+                                 ae_stop_x - ae_start_x, self.ae_end_y - self.ae_start_y)
+                    cr.fill()
+                    break
+        elif self.le_start_y <= actual_mouse_pos_y <= self.le_end_y:
+            for le in self.logged_entries:
+                if self._datetime_to_pixel(le.stop) < actual_mouse_pos_x:
+                    continue
+                elif actual_mouse_pos_x < self._datetime_to_pixel(le.start):
                     break
                 else:
                     if self.current_tagged_entry is None:
@@ -290,10 +343,10 @@ class TimelineCanvas(Gtk.DrawingArea):
                     cr.fill()
                     break
 
-        self._show_details_tooltip(mouse_x=self.actual_mouse_pos["x"],
-                                   mouse_y=self.actual_mouse_pos["y"],
-                                   canvas_width=drawing_area_size.width,
-                                   canvas_height=drawing_area_size.height,
+        self._show_details_tooltip(mouse_x=actual_mouse_pos_x,
+                                   mouse_y=actual_mouse_pos_y,
+                                   canvas_width=self.get_allocated_width(),
+                                   canvas_height=drawing_area_height,
                                    cr=cr,
                                    time_text_list=time_texts,
                                    description_text_list=desc_texts)
@@ -313,7 +366,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             texts.append(dt)
 
         for t in texts:
-            (_, _, width, height, _, _) = cr.text_extents(t)
+            (_, _, width, height, *_) = cr.text_extents(t)
             widths.append(width)
             heights.append(height)
 
@@ -462,7 +515,9 @@ class TimelineCanvas(Gtk.DrawingArea):
                 next_moused_datetime = datetime_used
         else:
             for t in self.tagged_entries:
-                if t.contains_datetime(stop_date):
+                if stop_date < t.start:
+                    break
+                elif t.contains_datetime(stop_date):
                     start_delta = stop_date - t.start
                     stop_delta = t.stop - stop_date
 
