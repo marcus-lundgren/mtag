@@ -397,11 +397,13 @@ class TimelineCanvas(Gtk.DrawingArea):
         number_of_time_texts = len(time_text_list)
         current_y = rect_y + heights[0] + padding
         for i, t in enumerate(texts):
+            # Add some padding between the lines
             if 0 < i:
                 current_y += heights[i - 1] + line_padding
 
+            # The time texts should be in a different color from the other ones
             if number_of_time_texts <= i:
-                cr.set_source_rgb(0.0, 0.9, 0.9)
+                cr.set_source_rgb(0.9, 0.9, 0.9)
             else:
                 cr.set_source_rgb(0.9, 0.9, 0.0)
 
