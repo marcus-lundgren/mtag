@@ -44,7 +44,6 @@ class MTagWindow(Gtk.Window):
         self.timeline_canvas = TimelineCanvas(parent=self)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
-        self.connect("configure-event", self._do_configure_event)
 
         b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
 
@@ -101,9 +100,6 @@ class MTagWindow(Gtk.Window):
         tagged_entry_repository.delete(conn=conn, db_id=te.db_id)
         conn.close()
         self._reload_logged_entries_from_date()
-
-    def _do_configure_event(self, w, e: Gdk.EventConfigure):
-        print(e.width, e.height)
 
     def _on_new_day_selected(self, _, date: datetime.datetime):
         self._current_date = date
