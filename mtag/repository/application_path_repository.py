@@ -6,6 +6,7 @@ class ApplicationPathRepository:
     @staticmethod
     def insert(conn: sqlite3.Connection, path: str):
         cursor = conn.execute("INSERT INTO application_path(ap_path) VALUES (:path)", {"path": path})
+        conn.commit()
         return cursor.lastrowid
 
     @staticmethod

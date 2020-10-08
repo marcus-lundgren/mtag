@@ -10,6 +10,7 @@ class ApplicationRepository:
     def insert(self, conn: sqlite3.Connection, name: str, application_path: ApplicationPath):
         cursor = conn.execute("INSERT INTO application(a_name, a_path_id) VALUES (:name, :path_id)",
                               {"name": name, "path_id": application_path.db_id})
+        conn.commit()
         return cursor.lastrowid
 
     def get_by_name_and_path_id(self, conn: sqlite3.Connection, name: str, path_id: int):
