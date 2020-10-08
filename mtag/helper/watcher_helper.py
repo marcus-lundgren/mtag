@@ -8,6 +8,9 @@ from mtag.repository import ApplicationRepository, ApplicationPathRepository
 from mtag.repository import LoggedEntryRepository, ApplicationWindowRepository
 
 
+configuration = configuration_helper.get_configuration()
+
+
 def register(window_title: Optional[str], application_name: Optional[str], application_path: Optional[str]) -> None:
     window_title_to_use = window_title if window_title is not None else "N/A"
     application_name_to_use = application_name if application_name is not None else "N/A"
@@ -25,11 +28,15 @@ def register(window_title: Optional[str], application_name: Optional[str], appli
                                                                      window_title=window_title_to_use)
 
     # Logged entry
-    db_connection = database_helper.create_connection()
+    register_logged_entry(application_window=application_window)
+
+
+def register_logged_entry(application_window: ApplicationWindow):
     logged_entry_repository = LoggedEntryRepository()
-    last_logged_entry = logged_entry_repository.get_latest_entry(conn=db_connection)
     datetime_now = datetime.datetime.now()
-    configuration = configuration_helper.get_configuration()
+
+    db_connection = database_helper.create_connection()
+    last_logged_entry = logged_entry_repository.get_latest_entry(conn=db_connection)
     if last_logged_entry is None:
         logging.info("No existing logged entry, creating a new one")
         new_update = datetime_now + datetime.timedelta(seconds=1)
@@ -38,22 +45,28 @@ def register(window_title: Optional[str], application_name: Optional[str], appli
                                    application_window=application_window)
         logged_entry_repository.insert(conn=db_connection, logged_entry=logged_entry)
     else:
-        seconds = configuration[configuration_helper.WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW]
-        max_delta_period = datetime.timedelta(seconds=seconds)
-
         logging.debug("Last logged stop:", last_logged_entry.stop)
+
+        global configuration
+        max_delta_seconds = configuration[configuration_helper.WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW]
+        max_delta_period = datetime.timedelta(seconds=max_delta_seconds)
+
         old_end = last_logged_entry.stop
         if max_delta_period < datetime_now - old_end:
             logging.info("Too long since last update. Create a new entry.")
-            logged_entry = LoggedEntry(start=datetime_now, stop=datetime_now, application_window=application_window)
+
+            new_update = datetime_now + datetime.timedelta(seconds=1)
+            logged_entry = LoggedEntry(start=datetime_now, stop=new_update, application_window=application_window)
             logged_entry_repository.insert(db_connection, logged_entry)
         elif last_logged_entry.application_window.db_id == application_window.db_id:
             logging.info("Still same window. Update existing logged entry")
+
             db_connection.execute("UPDATE logged_entry SET le_last_update=:new_update WHERE le_id=:id",
                                   {"id": last_logged_entry.db_id,
                                    "new_update": datetime_helper.datetime_to_timestamp(datetime_now)})
         else:
             logging.info("Not the same window. Insert new logged entry")
+
             logged_entry = LoggedEntry(start=last_logged_entry.stop, stop=datetime_now,
                                        application_window=application_window)
             logged_entry_repository.insert(db_connection, logged_entry)
