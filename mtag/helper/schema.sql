@@ -1,10 +1,10 @@
-DROP TABLE IF EXISTS logged_entry;
-DROP TABLE IF EXISTS application_window;
-DROP TABLE IF EXISTS application;
-DROP TABLE IF EXISTS application_path;
-DROP TABLE IF EXISTS tagged_entry;
-DROP TABLE IF EXISTS category;
-DROP TABLE IF EXISTS activity_entry;
+-- DROP TABLE IF EXISTS logged_entry;
+-- DROP TABLE IF EXISTS application_window;
+-- DROP TABLE IF EXISTS application;
+-- DROP TABLE IF EXISTS application_path;
+-- DROP TABLE IF EXISTS tagged_entry;
+-- DROP TABLE IF EXISTS category;
+-- DROP TABLE IF EXISTS activity_entry;
 
 CREATE TABLE application_path (
     ap_id INTEGER PRIMARY KEY AUTOINCREMENT,
