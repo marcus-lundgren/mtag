@@ -1,12 +1,11 @@
-import subprocess
-import re
-import time
+import ctypes.util
 import logging
-import ctypes, ctypes.util
 import os
+import re
+import subprocess
+import time
 
 from mtag.helper import watcher_helper
-
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(message)s")
@@ -51,8 +50,11 @@ def watch() -> None:
 
     active_window_id = active_window_id_information[active_window_id_information.rfind(" ") + 1:].strip()
     logging.debug(active_window_id)
+
+    # If the window handle id is 0, then make a logged entry with default values
     if active_window_id == "0x0":
         logging.info("No active window.")
+        watcher_helper.register(window_title=None, application_name=None, application_path=None)
         return
 
     active_window_x11_information = subprocess.run(["xprop", "-id", active_window_id,
@@ -60,9 +62,9 @@ def watch() -> None:
                                                    stdout=subprocess.PIPE, universal_newlines=True).stdout.strip()
     logging.debug(active_window_x11_information)
 
-    application_pid = ""
-    application_name = ""
-    active_window_title = ""
+    application_pid = None
+    application_name = None
+    active_window_title = None
     for line in active_window_x11_information.splitlines():
         if line.startswith("_NET_WM_PID"):
             application_pid = line[line.find("=") + 2:]
@@ -72,7 +74,7 @@ def watch() -> None:
             logging.debug(active_window_title)
         elif line.startswith("WM_NAME"):
             # Do not parse this if we already got a value
-            if len(active_window_title) > 0:
+            if active_window_title is not None:
                 logging.debug("Application window title already set")
                 continue
             application_window_title = line[line.find("=") + 2:].strip('"')
@@ -88,9 +90,10 @@ def watch() -> None:
                 logging.debug("Unable to extract the right hand side WM_CLASS value.")
 
     logging.debug(application_pid)
-    application_path = None
 
+    application_path = None
     if application_pid.isdigit() and application_pid != 0:
+        logging.debug(f"We have an application id: {application_pid}")
         application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"],
                                           stdout=subprocess.PIPE, universal_newlines=True).stdout
         application_path = application_path.replace("\0", " ")

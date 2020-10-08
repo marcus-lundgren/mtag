@@ -1,6 +1,7 @@
 import datetime
 import sqlite3
 import logging
+from typing import Optional
 
 from mtag.entity import LoggedEntry, Application, ApplicationWindow
 from mtag.helper import database_helper, datetime_helper, configuration_helper
@@ -8,24 +9,26 @@ from mtag.repository import LoggedEntryRepository, ApplicationWindowRepository
 from mtag.repository import ApplicationRepository, ApplicationPathRepository
 
 
-def register(window_title: str, application_name: str, application_path: str) -> None:
+def register(window_title: Optional[str], application_name: Optional[str], application_path: Optional[str]) -> None:
     db_connection = database_helper.create_connection()
     db_cursor = db_connection.cursor()
 
+    window_title_to_use = window_title if window_title is not None else "N/A"
+    application_name_to_use = application_name if application_name is not None else "N/A"
     application_path_to_use = application_path if application_path is not None else "N/A"
 
     application = get_and_create_if_needed_application(conn=db_connection,
-                                                       application_name=application_name,
+                                                       application_name=application_name_to_use,
                                                        application_path=application_path_to_use)
 
     # Application window
     application_window_repository = ApplicationWindowRepository()
     application_window = application_window_repository.get_by_title_and_application_id(conn=db_connection,
-                                                                                       title=window_title,
+                                                                                       title=window_title_to_use,
                                                                                        application_id=application.db_id)
     if application_window is None:
         logging.info("Adding new application window")
-        application_window = ApplicationWindow(title=window_title, application=application)
+        application_window = ApplicationWindow(title=window_title_to_use, application=application)
         db_id = application_window_repository.insert(conn=db_connection, application_window=application_window)
         application_window.db_id = db_id
 
