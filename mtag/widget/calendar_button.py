@@ -64,5 +64,5 @@ class CalendarButton(Gtk.Button):
 
     def _update_label(self):
         date = self.calendar.get_date_as_datetime()
-        date_as_str = date.strftime("%a %b %e")
+        date_as_str = date.strftime("%a %b %d")
         self.set_label(date_as_str)
