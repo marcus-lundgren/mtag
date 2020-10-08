@@ -1,3 +1,4 @@
+from .activity_entry_repository import ActivityEntryRepository
 from .category_repository import CategoryRepository
 from .application_path_repository import ApplicationPathRepository
 from .application_repository import ApplicationRepository

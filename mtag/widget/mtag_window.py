@@ -4,7 +4,7 @@ from itertools import groupby
 from mtag.helper import datetime_helper, database_helper
 from mtag.widget import CalendarPanel, TimelineCanvas
 from mtag.entity import TaggedEntry
-from mtag.repository import LoggedEntryRepository, TaggedEntryRepository
+from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -109,12 +109,14 @@ class MTagWindow(Gtk.Window):
         db_connection = database_helper.create_connection()
         logged_entry_repository = LoggedEntryRepository()
         tagged_entry_repository = TaggedEntryRepository()
+        activity_entry_repository = ActivityEntryRepository()
 
         logged_entries = logged_entry_repository.get_all_by_date(db_connection, self._current_date)
         tagged_entries = tagged_entry_repository.get_all_by_date(db_connection, self._current_date)
+        activity_entries = activity_entry_repository.get_all_by_date(db_connection, self._current_date)
         db_connection.close()
 
-        self.timeline_canvas.set_entries(self._current_date, logged_entries, tagged_entries)
+        self.timeline_canvas.set_entries(self._current_date, logged_entries, tagged_entries, activity_entries)
 
         self.logged_entries_list_store.clear()
         for le in logged_entries:

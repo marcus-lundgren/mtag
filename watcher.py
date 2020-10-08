@@ -104,7 +104,8 @@ def watch() -> None:
     logging.info(f"{application_name} -> {active_window_title}")
     watcher_helper.register(window_title=active_window_title,
                             application_name=application_name,
-                            application_path=application_path)
+                            application_path=application_path,
+                            idle_period=idle_seconds)
 
 
 if __name__ == "__main__":

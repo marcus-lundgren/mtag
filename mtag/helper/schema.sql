@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS application;
 DROP TABLE IF EXISTS application_path;
 DROP TABLE IF EXISTS tagged_entry;
 DROP TABLE IF EXISTS category;
+DROP TABLE IF EXISTS activity_entry;
 
 CREATE TABLE application_path (
     ap_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,4 +46,11 @@ CREATE TABLE tagged_entry (
     te_start INTEGER NOT NULL UNIQUE,
     te_end INTEGER NOT NULL UNIQUE,
     FOREIGN KEY (te_category_id) REFERENCES category(c_id)
+);
+
+CREATE TABLE activity_entry (
+    ae_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ae_start INTEGER NOT NULL UNIQUE,
+    ae_last_update INTEGER NOT NULL UNIQUE,
+    ae_active INTEGER NOT NULL
 );

@@ -66,10 +66,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.current_tagged_entry = None
         self.tagged_entries = []
         self.logged_entries = []
-        self.activity_entries = [entity.ActivityEntry(active=False, start=datetime.datetime.now() + datetime.timedelta(hours=-5),
-                                                      stop=datetime.datetime.now() + datetime.timedelta(hours=-3)),
-                                 entity.ActivityEntry(active=True, start=datetime.datetime.now() + datetime.timedelta(hours=-3),
-                                                      stop=datetime.datetime.now() + datetime.timedelta(hours=3))]
+        self.activity_entries = []
 
         self.context_menu = TimelineContextPopover(relative_to=self)
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
@@ -165,9 +162,10 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.minute_increment = minute_increment
 
-    def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries) -> None:
+    def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries, activity_entries) -> None:
         self.logged_entries = logged_entries
         self.tagged_entries = tagged_entries
+        self.activity_entries = activity_entries
         self._current_date = dt
 
         self.timeline_start = self.timeline_start.replace(year=dt.year, month=dt.month, day=dt.day)

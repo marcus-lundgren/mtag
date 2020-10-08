@@ -2,19 +2,21 @@ import datetime
 import logging
 from typing import Optional
 
-from mtag.entity import LoggedEntry, Application, ApplicationWindow, ApplicationPath
+from mtag.entity import LoggedEntry, Application, ApplicationWindow, ApplicationPath, ActivityEntry
 from mtag.helper import database_helper, datetime_helper, configuration_helper
 from mtag.repository import ApplicationRepository, ApplicationPathRepository
 from mtag.repository import LoggedEntryRepository, ApplicationWindowRepository
-
+from mtag.repository import ActivityEntryRepository
 
 configuration = configuration_helper.get_configuration()
 
 
-def register(window_title: Optional[str], application_name: Optional[str], application_path: Optional[str]) -> None:
+def register(window_title: Optional[str], application_name: Optional[str],
+             application_path: Optional[str], idle_period: Optional[int]) -> None:
     window_title_to_use = window_title if window_title is not None else "N/A"
     application_name_to_use = application_name if application_name is not None else "N/A"
     application_path_to_use = application_path if application_path is not None else "N/A"
+    idle_period_to_use = idle_period if idle_period is not None else 0
 
     # Application path
     application_path = insert_if_needed_and_get_application_path(application_path=application_path_to_use)
@@ -29,6 +31,49 @@ def register(window_title: Optional[str], application_name: Optional[str], appli
 
     # Logged entry
     register_logged_entry(application_window=application_window)
+    register_activity_entry(idle_period=idle_period_to_use)
+
+
+def register_activity_entry(idle_period: int):
+    activity_entry_repository = ActivityEntryRepository()
+    datetime_now = datetime.datetime.now()
+    was_active = idle_period < 120
+
+    db_connection = database_helper.create_connection()
+    last_activity_entry = activity_entry_repository.get_latest_entry(conn=db_connection)
+    if last_activity_entry is None:
+        logging.info("No existing activity entry, creating a new one")
+        new_update = datetime_now + datetime.timedelta(seconds=1)
+        activity_entry = ActivityEntry(start=datetime_now, stop=new_update, active=was_active)
+        activity_entry_repository.insert(conn=db_connection, activity_entry=activity_entry)
+    else:
+        logging.debug("Last logged stop:", last_activity_entry.stop)
+
+        global configuration
+        max_delta_seconds = configuration[configuration_helper.WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW]
+        max_delta_period = datetime.timedelta(seconds=max_delta_seconds)
+
+        old_end = last_activity_entry.stop
+        if max_delta_period < datetime_now - old_end:
+            logging.info("Too long since last update. Create a new entry.")
+
+            new_update = datetime_now + datetime.timedelta(seconds=1)
+            activity_entry = ActivityEntry(start=datetime_now, stop=new_update, active=was_active)
+            activity_entry_repository.insert(db_connection, activity_entry)
+        elif last_activity_entry.active == was_active:
+            logging.info("Still same activity level. Update existing entry")
+
+            db_connection.execute("UPDATE activity_entry SET ae_last_update=:new_update WHERE ae_id=:id",
+                                  {"id": last_activity_entry.db_id,
+                                   "new_update": datetime_helper.datetime_to_timestamp(datetime_now)})
+        else:
+            logging.info("Not the same activity level. Insert new activity entry")
+
+            activity_entry = ActivityEntry(start=last_activity_entry.stop, stop=datetime_now, active=was_active)
+            activity_entry_repository.insert(db_connection, activity_entry)
+
+    db_connection.commit()
+    db_connection.close()
 
 
 def register_logged_entry(application_window: ApplicationWindow):
