@@ -50,11 +50,15 @@ def watch() -> None:
 
     active_window_id = active_window_id_information[active_window_id_information.rfind(" ") + 1:].strip()
     logging.debug(active_window_id)
+    idle_seconds = get_idle_time()
 
     # If the window handle id is 0, then make a logged entry with default values
     if active_window_id == "0x0":
         logging.info("No active window.")
-        watcher_helper.register(window_title=None, application_name=None, application_path=None)
+        watcher_helper.register(window_title=None,
+                                application_name=None,
+                                application_path=None,
+                                idle_period=idle_seconds)
         return
 
     active_window_x11_information = subprocess.run(["xprop", "-id", active_window_id,
@@ -99,7 +103,6 @@ def watch() -> None:
         application_path = application_path.replace("\0", " ")
         application_path = application_path.strip()
 
-    idle_seconds = get_idle_time()
     logging.info(application_path)
     logging.info(f"{application_name} -> {active_window_title}")
     watcher_helper.register(window_title=active_window_title,
