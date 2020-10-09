@@ -35,9 +35,10 @@ def register(window_title: Optional[str], application_name: Optional[str],
 
 
 def register_activity_entry(idle_period: int):
+    global configuration
     activity_entry_repository = ActivityEntryRepository()
     datetime_now = datetime.datetime.now()
-    was_active = idle_period < 120
+    was_active = idle_period < configuration.inactive_after_idle_seconds
 
     db_connection = database_helper.create_connection()
     last_activity_entry = activity_entry_repository.get_latest_entry(conn=db_connection)
@@ -49,8 +50,7 @@ def register_activity_entry(idle_period: int):
     else:
         logging.debug("Last logged stop:", last_activity_entry.stop)
 
-        global configuration
-        max_delta_seconds = configuration[configuration_helper.WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW]
+        max_delta_seconds = configuration.seconds_before_new_entry
         max_delta_period = datetime.timedelta(seconds=max_delta_seconds)
 
         old_end = last_activity_entry.stop
@@ -93,7 +93,7 @@ def register_logged_entry(application_window: ApplicationWindow):
         logging.debug("Last logged stop:", last_logged_entry.stop)
 
         global configuration
-        max_delta_seconds = configuration[configuration_helper.WATCHER_MAX_DELTA_SECONDS_BEFORE_NEW]
+        max_delta_seconds = configuration.seconds_before_new_entry
         max_delta_period = datetime.timedelta(seconds=max_delta_seconds)
 
         old_end = last_logged_entry.stop
