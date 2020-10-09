@@ -10,6 +10,7 @@ from mtag.helper import watcher_helper
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(message)s")
 
+
 class XScreenSaverInfo(ctypes.Structure):
     _fields_ = [('window', ctypes.c_ulong),  # screen saver window
                 ('state', ctypes.c_int),  # off,on,disabled
@@ -17,6 +18,7 @@ class XScreenSaverInfo(ctypes.Structure):
                 ('since', ctypes.c_ulong),  # milliseconds
                 ('idle', ctypes.c_ulong),  # milliseconds
                 ('event_mask', ctypes.c_ulong)]  # events
+
 
 xlib_str = ctypes.util.find_library('X11')
 xlib = ctypes.cdll.LoadLibrary(xlib_str)
