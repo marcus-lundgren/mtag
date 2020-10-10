@@ -27,6 +27,7 @@ class TimelineMinimap(Gtk.DrawingArea):
         self.show_all()
 
     def set_boundaries(self, _, start: datetime.datetime, stop: datetime.datetime):
+        self.current_date = start.replace(hour=0, minute=0, second=0, microsecond=0)
         self.boundary_start = start
         self.boundary_stop = stop
         self.queue_draw()
