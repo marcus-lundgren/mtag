@@ -28,6 +28,13 @@ class TimelineCanvas(Gtk.DrawingArea):
     def tagged_entry_deleted(self, *args):
         pass
 
+    @GObject.Signal(name="timeline-boundary-changed",
+                    flags=GObject.SignalFlags.RUN_LAST,
+                    return_type=GObject.TYPE_BOOLEAN,
+                    arg_types=[object, object])
+    def timeline_boundary_changed(self, *args):
+        pass
+
     def __init__(self, parent: Gtk.Window):
         super().__init__()
         self.add_events(Gdk.EventMask.POINTER_MOTION_MASK
@@ -175,6 +182,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     def _update_timeline_stop(self) -> None:
         self.timeline_end = self.timeline_start + self.timeline_delta
+        self.emit("timeline-boundary-changed", self.timeline_start, self.timeline_end)
 
     def _do_draw(self, _, cr: cairo.Context):
         # Get the size

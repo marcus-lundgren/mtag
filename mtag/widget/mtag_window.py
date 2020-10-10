@@ -1,15 +1,14 @@
 import datetime
 from itertools import groupby
 
-from mtag.helper import datetime_helper, database_helper
-from mtag.widget import CalendarPanel, TimelineCanvas
 from mtag.entity import TaggedEntry
+from mtag.helper import datetime_helper, database_helper
 from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
+from . import CalendarPanel, TimelineCanvas, TimelineMinimap
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from gi.repository import Gdk
 
 
 class MTagWindow(Gtk.Window):
@@ -37,6 +36,10 @@ class MTagWindow(Gtk.Window):
 
         self._current_date = self.calendar_panel.get_selected_date()
 
+        # Minimap
+        mm = TimelineMinimap()
+        b.add(mm)
+
         # Drawing area
         self.current_mouse_pos = 0
         self.actual_mouse_pos = {"x": 0, "y": 0}
@@ -44,6 +47,7 @@ class MTagWindow(Gtk.Window):
         self.timeline_canvas = TimelineCanvas(parent=self)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
+        self.timeline_canvas.connect("timeline-boundary-changed", mm.set_boundaries)
 
         b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
 
