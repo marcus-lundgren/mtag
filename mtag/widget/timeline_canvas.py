@@ -61,6 +61,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.timeline_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
+        self.timeline_end = None
         self.minute_increment = 60
         self._update_timeline_stop()
 
@@ -178,6 +179,12 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.timeline_start = self.timeline_start.replace(year=dt.year, month=dt.month, day=dt.day)
         self._update_timeline_stop()
 
+        self.queue_draw()
+
+    def set_boundaries(self, start: datetime.datetime, stop: datetime.datetime):
+        self.timeline_start = start
+        self.timeline_end = stop
+        self.timeline_delta = stop - start
         self.queue_draw()
 
     def _update_timeline_stop(self) -> None:

@@ -47,7 +47,8 @@ class MTagWindow(Gtk.Window):
         self.timeline_canvas = TimelineCanvas(parent=self)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
-        self.timeline_canvas.connect("timeline-boundary-changed", mm.set_boundaries)
+        self.timeline_canvas.connect("timeline-boundary-changed", lambda _, start, stop: mm.set_boundaries(start, stop))
+        mm.connect("timeline-boundary-changed", lambda _, start, stop: self.timeline_canvas.set_boundaries(start, stop))
 
         b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
 
