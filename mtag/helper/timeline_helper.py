@@ -4,7 +4,7 @@ from mtag.helper import datetime_helper
 
 MIN_BOUNDARY = 30 * 60
 MAX_BOUNDARY = 24 * 60 * 60 -1
-ZOOM_STOP_IN_MINUTES = 15
+ZOOM_STEP_IN_MINUTES = 15
 
 
 def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: float):
@@ -28,7 +28,7 @@ def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: date
     if zoom_in:
         if boundary_delta.total_seconds() >= MIN_BOUNDARY:
             old_relative_mouse_pos_in_seconds = mouse_relative_position * boundary_delta.total_seconds()
-            boundary_delta -= timedelta(minutes=ZOOM_STOP_IN_MINUTES)
+            boundary_delta -= timedelta(minutes=ZOOM_STEP_IN_MINUTES)
             new_relative_mouse_pos_in_seconds = int(boundary_delta.total_seconds() * mouse_relative_position)
 
             seconds_to_add_to_start = old_relative_mouse_pos_in_seconds - new_relative_mouse_pos_in_seconds
@@ -39,7 +39,7 @@ def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: date
     else:
         if boundary_delta.total_seconds() < MAX_BOUNDARY:
             old_relative_mouse_pos_in_seconds = mouse_relative_position * boundary_delta.total_seconds()
-            boundary_delta += timedelta(minutes=ZOOM_STOP_IN_MINUTES)
+            boundary_delta += timedelta(minutes=ZOOM_STEP_IN_MINUTES)
 
             # Ensure that we don't zoom out too much
             if MAX_BOUNDARY <= boundary_delta.total_seconds():
