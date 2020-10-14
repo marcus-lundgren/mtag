@@ -2,6 +2,9 @@ from datetime import datetime, timedelta
 from mtag.helper import datetime_helper
 
 
+THIRTY_MINUTES = 30 * 60
+
+
 def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: float):
     max_timeline_x = canvas_width - canvas_side_padding
     min_timeline_x = canvas_side_padding
@@ -9,6 +12,53 @@ def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: flo
     timeline_x = max(x_position, min_timeline_x)
     timeline_x = min(max_timeline_x, timeline_x)
     return timeline_x
+
+
+def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: datetime, zoom_in: bool):
+    boundary_delta = boundary_stop - boundary_start
+    mouse_delta = mouse_datetime - boundary_start
+    mouse_relative_position = mouse_delta.total_seconds() / boundary_delta.total_seconds()
+    current_date = boundary_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    new_boundary_start = boundary_start
+
+    # Zoom in
+    if zoom_in:
+        if boundary_delta.total_seconds() >= THIRTY_MINUTES:
+            old_relative_mouse_pos_in_seconds = mouse_relative_position * boundary_delta.total_seconds()
+            boundary_delta -= timedelta(minutes=15)
+            new_relative_mouse_pos_in_seconds = int(boundary_delta.total_seconds() * mouse_relative_position)
+
+            seconds_to_add_to_start = old_relative_mouse_pos_in_seconds - new_relative_mouse_pos_in_seconds
+            hour, minute, second = datetime_helper.seconds_to_hour_minute_second(seconds_to_add_to_start)
+            delta_to_add = timedelta(hours=hour, minutes=minute, seconds=second)
+            new_boundary_start += delta_to_add
+    # Zoom out
+    else:
+        if boundary_delta.total_seconds() < (24 * 60 * 60 - 1):
+            old_relative_mouse_pos_in_seconds = mouse_relative_position * boundary_delta.total_seconds()
+            boundary_delta += timedelta(minutes=15)
+
+            # Ensure that we don't zoom out too much
+            if 24 * 60 * 60 - 1 <= boundary_delta.total_seconds():
+                boundary_delta = timedelta(hours=23, minutes=59, seconds=59)
+                new_boundary_start = current_date
+            else:
+                new_relative_mouse_pos_in_seconds = int(boundary_delta.total_seconds() * mouse_relative_position)
+                seconds_to_add_to_start = old_relative_mouse_pos_in_seconds - new_relative_mouse_pos_in_seconds
+                hour, minute, second = datetime_helper.seconds_to_hour_minute_second(seconds_to_add_to_start)
+                delta_to_add = timedelta(hours=hour, minutes=minute, seconds=second)
+                new_boundary_start += delta_to_add
+
+            # Ensure that we don't get too far to the left
+            if new_boundary_start < current_date:
+                new_boundary_start = current_date
+
+            # Ensure that we don't get too far to the right
+            if (new_boundary_start + boundary_delta).day != current_date.day:
+                new_boundary_start = current_date.replace(hour=23, minute=59, second=59) - boundary_delta
+
+    return new_boundary_start, new_boundary_start + boundary_delta
 
 
 def pixel_to_datetime(x_position: float, timeline_side_padding: float,

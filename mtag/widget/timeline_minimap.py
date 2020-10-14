@@ -21,11 +21,13 @@ class TimelineMinimap(Gtk.DrawingArea):
         super().__init__()
         self.add_events(Gdk.EventMask.POINTER_MOTION_MASK
                         | Gdk.EventMask.BUTTON_PRESS_MASK
-                        | Gdk.EventMask.BUTTON_RELEASE_MASK)
+                        | Gdk.EventMask.BUTTON_RELEASE_MASK
+                        | Gdk.EventMask.SCROLL_MASK)
         self.connect("draw", self._do_draw)
         self.connect("button_press_event", self._do_button_press)
         self.connect("button_release_event", self._do_button_release)
         self.connect("motion_notify_event", self._do_motion_notify)
+        self.connect("scroll_event", self._do_scroll_event)
         self.current_date = datetime.datetime.now().replace(hour=0,
                                                             minute=0,
                                                             second=0,
@@ -74,6 +76,18 @@ class TimelineMinimap(Gtk.DrawingArea):
     def _do_motion_notify(self, _, e: Gdk.EventMotion):
         if self.button_is_pressed:
             self._set_boundaries_and_fire_new_boundary(e.x)
+
+    def _do_scroll_event(self, _, e: Gdk.EventScroll):
+        mouse_datetime = self._pixel_to_datetime(e.x)
+
+        if e.direction == Gdk.ScrollDirection.UP or e.direction == Gdk.ScrollDirection.DOWN:
+            zoom_in = e.direction == Gdk.ScrollDirection.UP
+            self.boundary_start, self.boundary_stop = timeline_helper.zoom(mouse_datetime=mouse_datetime,
+                                                                           boundary_start=self.boundary_start,
+                                                                           boundary_stop=self.boundary_stop,
+                                                                           zoom_in=zoom_in)
+            self.queue_draw()
+            self.emit("timeline-boundary-changed", self.boundary_start, self.boundary_stop)
 
     def _do_draw(self, _: Gtk.DrawingArea, cr: cairo.Context):
         width = self.get_allocated_width()
