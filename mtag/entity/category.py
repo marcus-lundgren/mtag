@@ -9,7 +9,3 @@ class Category:
     @property
     def name(self):
         return self._name
-
-    @property
-    def color_rgb(self):
-        return color_helper.to_color(self._name)

@@ -238,9 +238,8 @@ class TimelineCanvas(Gtk.DrawingArea):
             start_x = self._datetime_to_pixel(le.start)
             stop_x = self._datetime_to_pixel(le.stop)
 
-            color_string = color_helper.to_color(le.application_window.application.name)
-            color = Gdk.color_parse(spec=color_string)
-            cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
+            r, g, b = color_helper.to_color_floats(le.application_window.application.name)
+            cr.set_source_rgb(r, g, b)
             cr.rectangle(start_x, self.le_start_y,
                          stop_x - start_x, self.timeline_height)
             cr.fill()
@@ -563,9 +562,8 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         cr.set_source_rgb(0, 1, 0)
         if tagged_entry.category is not None:
-            color_string = tagged_entry.category.color_rgb
-            color = Gdk.color_parse(spec=color_string)
-            cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
+            r, g, b = color_helper.to_color_floats(tagged_entry.category.name)
+            cr.set_source_rgb(r, g, b)
         cr.rectangle(start_x, self.te_start_y, stop_x - start_x, self.timeline_height)
         cr.fill()
 
