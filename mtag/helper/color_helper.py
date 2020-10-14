@@ -3,8 +3,13 @@ from functools import lru_cache
 from typing import Tuple
 
 
+@lru_cache(maxsize=2)
+def activity_to_color_floats(active: bool) -> Tuple[float, float, float]:
+    return (0.12, 0.93, 0.12) if active else (0.93, 0.12, 0.12)
+
+
 @lru_cache(maxsize=100)
-def to_color_floats(text: str) -> Tuple:
+def to_color_floats(text: str) -> Tuple[float, float, float]:
     hex_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
     rs = hex_hash[0:2]
     gs = hex_hash[2:4]

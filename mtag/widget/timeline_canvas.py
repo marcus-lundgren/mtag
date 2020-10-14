@@ -261,9 +261,8 @@ class TimelineCanvas(Gtk.DrawingArea):
             start_x = self._datetime_to_pixel(ae.start)
             stop_x = self._datetime_to_pixel(ae.stop)
 
-            color_string = "#20EE20" if ae.active else "#EE2020"
-            color = Gdk.color_parse(spec=color_string)
-            cr.set_source_rgb(color.red_float, color.green_float, color.blue_float)
+            r, g, b = color_helper.activity_to_color_floats(ae.active)
+            cr.set_source_rgb(r, g, b)
             cr.rectangle(start_x, self.ae_start_y,
                          stop_x - start_x, self.timeline_height)
             cr.fill()
