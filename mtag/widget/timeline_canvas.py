@@ -95,18 +95,14 @@ class TimelineCanvas(Gtk.DrawingArea):
                                                        zoom_in=zoom_in)
             self.timeline_start = new_start
             self.timeline_delta = new_stop - new_start
-        # Move right
-        elif e.direction == Gdk.ScrollDirection.RIGHT:
-            self.timeline_start += datetime.timedelta(minutes=8)
-            # Ensure that we don't get too far to the right
-            if (self.timeline_start + self.timeline_delta).day != self._current_date.day:
-                self.timeline_start = self._current_date.replace(hour=23, minute=59, second=59) - self.timeline_delta
-        # Move left
-        elif e.direction == Gdk.ScrollDirection.LEFT:
-            self.timeline_start -= datetime.timedelta(minutes=8)
-            # Ensure that we don't get too far to the left
-            if self.timeline_start < self._current_date:
-                self.timeline_start = self._current_date
+        # Move right or left
+        elif e.direction == Gdk.ScrollDirection.RIGHT or e.direction == Gdk.ScrollDirection.LEFT:
+            move_right = e.direction == Gdk.ScrollDirection.RIGHT
+            new_start, new_stop = timeline_helper.move(boundary_start=self.timeline_start,
+                                                       boundary_stop=self.timeline_end,
+                                                       move_right=move_right)
+            self.timeline_start = new_start
+            self.timeline_delta = new_stop - new_start
 
         self._update_timeline_stop()
         self._update_canvas_constants()

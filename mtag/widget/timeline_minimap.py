@@ -80,14 +80,22 @@ class TimelineMinimap(Gtk.DrawingArea):
     def _do_scroll_event(self, _, e: Gdk.EventScroll):
         mouse_datetime = self._pixel_to_datetime(e.x)
 
+        # Zoom in or out
         if e.direction == Gdk.ScrollDirection.UP or e.direction == Gdk.ScrollDirection.DOWN:
             zoom_in = e.direction == Gdk.ScrollDirection.UP
             self.boundary_start, self.boundary_stop = timeline_helper.zoom(mouse_datetime=mouse_datetime,
                                                                            boundary_start=self.boundary_start,
                                                                            boundary_stop=self.boundary_stop,
                                                                            zoom_in=zoom_in)
-            self.queue_draw()
-            self.emit("timeline-boundary-changed", self.boundary_start, self.boundary_stop)
+        # Move right or left
+        elif e.direction == Gdk.ScrollDirection.RIGHT or e.direction == Gdk.ScrollDirection.LEFT:
+            move_right = e.direction == Gdk.ScrollDirection.RIGHT
+            self.boundary_start, self.boundary_stop = timeline_helper.move(boundary_start=self.boundary_start,
+                                                                           boundary_stop=self.boundary_stop,
+                                                                           move_right=move_right)
+
+        self.queue_draw()
+        self.emit("timeline-boundary-changed", self.boundary_start, self.boundary_stop)
 
     def _do_draw(self, _: Gtk.DrawingArea, cr: cairo.Context):
         width = self.get_allocated_width()

@@ -7,6 +7,7 @@ from mtag.helper import datetime_helper
 MIN_BOUNDARY = 30 * 60
 MAX_BOUNDARY = 24 * 60 * 60 - 1
 ZOOM_STEP_IN_MINUTES = 15
+MOVE_STEP_IN_MINUTES = 8
 
 
 def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: float):
@@ -64,6 +65,23 @@ def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: date
                 new_boundary_start = current_date.replace(hour=23, minute=59, second=59) - boundary_delta
 
     return new_boundary_start, new_boundary_start + boundary_delta
+
+
+def move(boundary_start: datetime, boundary_stop: datetime, move_right: bool) -> Tuple[datetime, datetime]:
+    new_start = boundary_start
+    boundary_delta = boundary_stop - boundary_start
+    current_date = boundary_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if move_right:
+        new_start += timedelta(minutes=MOVE_STEP_IN_MINUTES)
+        if (new_start + boundary_delta).day != current_date.day:
+            new_start = current_date.replace(hour=23, minute=59, second=59) - boundary_delta
+    else:
+        new_start -= timedelta(minutes=MOVE_STEP_IN_MINUTES)
+        if new_start < current_date:
+            new_start = current_date
+
+    return new_start, new_start + boundary_delta
 
 
 def pixel_to_datetime(x_position: float, timeline_side_padding: float,
