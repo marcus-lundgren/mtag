@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
+from typing import Tuple
+
 from mtag.helper import datetime_helper
 
 
 MIN_BOUNDARY = 30 * 60
-MAX_BOUNDARY = 24 * 60 * 60 -1
+MAX_BOUNDARY = 24 * 60 * 60 - 1
 ZOOM_STEP_IN_MINUTES = 15
 
 
@@ -16,7 +18,8 @@ def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: flo
     return timeline_x
 
 
-def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: datetime, zoom_in: bool):
+def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: datetime,
+         zoom_in: bool) -> Tuple[datetime, datetime]:
     boundary_delta = boundary_stop - boundary_start
     mouse_delta = mouse_datetime - boundary_start
     mouse_relative_position = mouse_delta.total_seconds() / boundary_delta.total_seconds()
