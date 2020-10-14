@@ -95,19 +95,15 @@ class TimelineMinimap(Gtk.DrawingArea):
         self.pixels_per_second = (width - self.side_padding * 2) / (23 * 60 * 60 + 59 * 60 + 60)
 
         current_dt = self.current_date
-        cr.set_font_size(12)
+        cr.set_font_size(16)
         for h in range(24):
             hx = self._datetime_to_pixel(dt=current_dt)
             cr.set_source_rgb(0.3, 0.3, 0.3)
-            cr.new_path()
-            cr.move_to(hx, 0)
-            cr.line_to(hx, height - 12)
-            cr.stroke()
 
-            hour_minute_string = f"{str(current_dt.hour).rjust(2, '0')}:00"
-            (tx, _, hour_text_width, _, dx, _) = cr.text_extents(hour_minute_string)
-            cr.move_to(hx - tx - (hour_text_width / 2), height)
-            cr.show_text(hour_minute_string)
+            hour_string = str(current_dt.hour).rjust(2, '0')
+            (tx, _, hour_text_width, hour_text_height, dx, _) = cr.text_extents(hour_string)
+            cr.move_to(hx - tx - (hour_text_width / 2), (height + hour_text_height) / 2)
+            cr.show_text(hour_string)
 
             current_dt += datetime.timedelta(hours=1)
 
