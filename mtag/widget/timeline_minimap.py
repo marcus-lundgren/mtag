@@ -105,7 +105,7 @@ class TimelineMinimap(Gtk.DrawingArea):
         current_dt = self.current_date
         cr.set_font_size(16)
         for h in range(24):
-            hx = self._datetime_to_pixel(dt=current_dt)
+            hx = self._datetime_to_pixel(dt=current_dt, canvas_width=width)
             cr.set_source_rgb(0.3, 0.3, 0.3)
 
             hour_string = str(current_dt.hour).rjust(2, '0')
@@ -115,28 +115,23 @@ class TimelineMinimap(Gtk.DrawingArea):
 
             current_dt += datetime.timedelta(hours=1)
 
-        start_x = self._datetime_to_pixel(dt=self.boundary_start)
-        stop_x = self._datetime_to_pixel(dt=self.boundary_stop)
+        start_x = self._datetime_to_pixel(dt=self.boundary_start, canvas_width=width)
+        stop_x = self._datetime_to_pixel(dt=self.boundary_stop, canvas_width=width)
 
         cr.set_source_rgba(0.6, 0.6, 0.2, 0.5)
         cr.rectangle(start_x, 0, stop_x - start_x, height)
         cr.fill()
 
     def _pixel_to_datetime(self, x_position: float) -> datetime:
-        timeline_x = timeline_helper.to_timeline_x(x_position=x_position,
-                                                   canvas_width=self.get_allocated_width(),
-                                                   canvas_side_padding=self.side_padding)
-        return timeline_helper.pixel_to_datetime(x_position=timeline_x,
+        return timeline_helper.pixel_to_datetime(x_position=x_position,
                                                  timeline_side_padding=self.side_padding,
-                                                 pixels_per_second=self.pixels_per_second,
-                                                 current_date=self.current_date,
+                                                 canvas_width=self.get_allocated_width(),
                                                  timeline_start_datetime=self.current_date,
                                                  timeline_stop_datetime=self.end_of_current_date)
 
-    def _datetime_to_pixel(self, dt: datetime.datetime):
+    def _datetime_to_pixel(self, dt: datetime.datetime, canvas_width: int):
         return timeline_helper.datetime_to_pixel(dt=dt,
-                                                 current_date=self.current_date,
-                                                 pixels_per_second=self.pixels_per_second,
+                                                 canvas_width=canvas_width,
                                                  timeline_side_padding=self.side_padding,
                                                  timeline_start_dt=self.current_date,
                                                  timeline_stop_dt=self.end_of_current_date)

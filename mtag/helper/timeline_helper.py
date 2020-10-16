@@ -10,7 +10,7 @@ ZOOM_STEP_IN_MINUTES = 15
 MOVE_STEP_IN_MINUTES = 8
 
 
-def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: float):
+def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: float) -> float:
     max_timeline_x = canvas_width - canvas_side_padding
     min_timeline_x = canvas_side_padding
 
@@ -84,45 +84,31 @@ def move(boundary_start: datetime, boundary_stop: datetime, move_right: bool) ->
     return new_start, new_start + boundary_delta
 
 
-def pixel_to_datetime(x_position: float, timeline_side_padding: float,
-                      pixels_per_second: float, current_date: datetime,
-                      timeline_start_datetime: datetime,
-                      timeline_stop_datetime: datetime) -> datetime:
-    total_seconds = (x_position - timeline_side_padding) / pixels_per_second
-    hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=int(total_seconds))
-    actual_timedelta = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-    start_timedelta = timedelta(hours=timeline_start_datetime.hour,
-                                minutes=timeline_start_datetime.minute,
-                                seconds=timeline_start_datetime.second)
-    actual_time = current_date + actual_timedelta + start_timedelta
+def pixel_to_datetime(x_position: float, timeline_side_padding: float, canvas_width: int,
+                      timeline_start_datetime: datetime, timeline_stop_datetime: datetime) -> datetime:
+    if x_position - timeline_side_padding <= 0:
+        return timeline_start_datetime
+    elif canvas_width - timeline_side_padding <= x_position:
+        return timeline_stop_datetime
 
-    boundary_timedelta = timedelta(hours=timeline_stop_datetime.hour,
-                                   minutes=timeline_stop_datetime.minute,
-                                   seconds=timeline_stop_datetime.second)
+    canvas_width_minus_padding = canvas_width - (timeline_side_padding * 2)
+    x_position_to_use = x_position - timeline_side_padding
+    boundary_delta = timeline_stop_datetime - timeline_start_datetime
+    relative_pixel_delta = x_position_to_use / canvas_width_minus_padding
 
-    boundary_time = current_date + boundary_timedelta
-
-    time_to_use = actual_time if actual_time < boundary_time else boundary_time
-    return time_to_use
+    return relative_pixel_delta * boundary_delta + timeline_start_datetime
 
 
-def datetime_to_pixel(dt: datetime, current_date: datetime,
-                      pixels_per_second: float, timeline_side_padding: float,
-                      timeline_start_dt: datetime,
-                      timeline_stop_dt: datetime) -> float:
-    if dt < timeline_start_dt:
-        hour, minute, second = timeline_start_dt.hour, timeline_start_dt.minute, timeline_start_dt.second
+def datetime_to_pixel(dt: datetime, canvas_width: int, timeline_side_padding: float,
+                      timeline_start_dt: datetime, timeline_stop_dt: datetime) -> float:
+    if dt <= timeline_start_dt:
+        return timeline_side_padding
     elif timeline_stop_dt <= dt:
-        hour, minute, second = timeline_stop_dt.hour, timeline_stop_dt.minute, timeline_stop_dt.second
-    else:
-        hour, minute, second = dt.hour, dt.minute, dt.second
+        return canvas_width - timeline_side_padding
 
-    current_time = current_date.replace(hour=hour, minute=minute, second=second)
-    timeline_start_as_delta = timedelta(hours=timeline_start_dt.hour,
-                                        minutes=timeline_start_dt.minute,
-                                        seconds=timeline_start_dt.second)
+    canvas_width_minus_padding = canvas_width - (timeline_side_padding * 2)
+    boundary_delta = timeline_stop_dt - timeline_start_dt
+    delta_from_start = dt - timeline_start_dt
 
-    time_to_use = current_time - timeline_start_as_delta
-
-    total_seconds = (time_to_use.hour * 3600 + time_to_use.minute * 60 + time_to_use.second)
-    return pixels_per_second * total_seconds + timeline_side_padding
+    relative_dt_delta = delta_from_start.total_seconds() / boundary_delta.total_seconds()
+    return relative_dt_delta * canvas_width_minus_padding + timeline_side_padding
