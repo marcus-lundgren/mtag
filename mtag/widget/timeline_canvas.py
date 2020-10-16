@@ -436,7 +436,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         start_date = self.current_moused_datetime
         self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_date, stop=start_date)
 
-    def _on_button_release(self, _: Gtk.DrawingArea, event: Gdk.EventType):
+    def _on_button_release(self, *_):
         # Ensure that an entry is being created.
         if self.current_tagged_entry is None:
             return
