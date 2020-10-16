@@ -3,7 +3,6 @@ from functools import lru_cache
 from typing import Tuple
 
 
-@lru_cache(maxsize=2)
 def activity_to_color_floats(active: bool) -> Tuple[float, float, float]:
     return (0.12, 0.93, 0.12) if active else (0.93, 0.12, 0.12)
 
