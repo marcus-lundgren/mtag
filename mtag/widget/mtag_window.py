@@ -36,10 +36,6 @@ class MTagWindow(Gtk.Window):
 
         self._current_date = self.calendar_panel.get_selected_date()
 
-        # Minimap
-        mm = TimelineMinimap()
-        b.add(mm)
-
         # Drawing area
         self.current_mouse_pos = 0
         self.actual_mouse_pos = {"x": 0, "y": 0}
@@ -48,9 +44,13 @@ class MTagWindow(Gtk.Window):
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
         self.timeline_canvas.connect("timeline-boundary-changed", lambda _, start, stop: mm.set_boundaries(start, stop))
-        mm.connect("timeline-boundary-changed", lambda _, start, stop: self.timeline_canvas.set_boundaries(start, stop))
 
         b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
+
+        # Minimap
+        mm = TimelineMinimap()
+        mm.connect("timeline-boundary-changed", lambda _, start, stop: self.timeline_canvas.set_boundaries(start, stop))
+        b.add(mm)
 
         lists_grid = Gtk.Grid()
         lists_grid.set_column_homogeneous(True)
