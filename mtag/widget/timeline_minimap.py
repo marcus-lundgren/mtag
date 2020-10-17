@@ -118,7 +118,7 @@ class TimelineMinimap(Gtk.DrawingArea):
         start_x = self._datetime_to_pixel(dt=self.boundary_start, canvas_width=width)
         stop_x = self._datetime_to_pixel(dt=self.boundary_stop, canvas_width=width)
 
-        cr.set_source_rgba(0.6, 0.6, 0.2, 0.5)
+        cr.set_source_rgba(0.2, 0.6, 0.0, 0.5)
         cr.rectangle(start_x, 0, stop_x - start_x, height)
         cr.fill()
 
