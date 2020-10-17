@@ -282,7 +282,9 @@ class TimelineCanvas(Gtk.DrawingArea):
         actual_mouse_pos_y = self.actual_mouse_pos["y"]
         if self.te_start_y <= actual_mouse_pos_y <= self.te_end_y:
             for te in self.visible_tagged_entries:
-                if te.start_x <= actual_mouse_pos_x <= te.stop_x:
+                if actual_mouse_pos_x < te.start_x:
+                    break
+                elif actual_mouse_pos_x <= te.stop_x:
                     time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
                     time_texts.append(time_details)
                     desc_texts.append(te.entry.category.name)
@@ -294,7 +296,9 @@ class TimelineCanvas(Gtk.DrawingArea):
                     break
         elif self.ae_start_y <= actual_mouse_pos_y <= self.ae_end_y:
             for ae in self.visible_activity_entries:
-                if ae.start_x <= actual_mouse_pos_x <= ae.stop_x:
+                if actual_mouse_pos_x < ae.start_x:
+                    break
+                elif actual_mouse_pos_x <= ae.stop_x:
                     if self.current_tagged_entry is None:
                         time_details = datetime_helper.to_time_text(ae.entry.start, ae.entry.stop, ae.entry.duration)
                         time_texts.append(time_details)
@@ -308,7 +312,9 @@ class TimelineCanvas(Gtk.DrawingArea):
                     break
         elif self.le_start_y <= actual_mouse_pos_y <= self.le_end_y:
             for le in self.visible_logged_entries:
-                if le.start_x <= actual_mouse_pos_x <= le.stop_x:
+                if actual_mouse_pos_x < le.start_x:
+                    break
+                elif actual_mouse_pos_x <= le.stop_x:
                     if self.current_tagged_entry is None:
                         time_details = datetime_helper.to_time_text(le.entry.start, le.entry.stop, le.entry.duration)
                         time_texts.append(time_details)
