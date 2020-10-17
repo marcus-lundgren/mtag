@@ -10,7 +10,7 @@ class CalendarPanel(Gtk.Box):
     @GObject.Signal(name="day-selected",
                     flags=GObject.SignalFlags.RUN_LAST,
                     return_type=GObject.TYPE_BOOLEAN,
-                    arg_types=(object,))
+                    arg_types=[object])
     def day_selected(self, *args):
         pass
 

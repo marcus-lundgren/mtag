@@ -9,7 +9,7 @@ class TimelineContextPopover(Gtk.Popover):
     @GObject.Signal(name="tagged-entry-delete-event",
                     flags=GObject.SignalFlags.RUN_LAST,
                     return_type=GObject.TYPE_BOOLEAN,
-                    arg_types=(object,))
+                    arg_types=[object])
     def tagged_entry_delete_event(self, *args):
         pass
 

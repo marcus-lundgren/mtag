@@ -9,7 +9,7 @@ class Calendar(Gtk.Calendar):
     @GObject.Signal(name="day-selected-single-click",
                     flags=GObject.SignalFlags.RUN_LAST,
                     return_type=GObject.TYPE_BOOLEAN,
-                    arg_types=(object,))
+                    arg_types=[object])
     def day_selected_single_click(self, *args):
         pass
 
