@@ -15,8 +15,8 @@ def get_configuration() -> Configuration:
         "inactive_after_idle_seconds": 600
     }
 
-    userdata_path = filesystem_helper.get_userdata_path()
-    configuration_path = os.path.join(userdata_path, "configuration.json")
+    userconfig_path = filesystem_helper.get_userconfiguration_path()
+    configuration_path = os.path.join(userconfig_path, "configuration.json")
     if not os.path.exists(configuration_path):
         with open(configuration_path, "w") as config_file:
             json.dump(default_configuration, fp=config_file, indent=2)
