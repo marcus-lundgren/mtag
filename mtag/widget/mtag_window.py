@@ -57,8 +57,6 @@ class MTagWindow(Gtk.Window):
         lists_grid.set_row_homogeneous(True)
         lists_grid.set_column_spacing(20)
 
-        self.tagged_entries_box = Gtk.ListBox()
-
         # Logged entries list
         self.logged_entries_list_store = Gtk.ListStore(str, str, str, str, str)
         self.logged_entries_tree_view = Gtk.TreeView.new_with_model(self.logged_entries_list_store)
