@@ -81,12 +81,13 @@ class MTagWindow(Gtk.Window):
 
         self.logged_entries_tree_view.set_headers_clickable(True)
 
+        notebook = Gtk.Notebook()
+        notebook.append_page(self.tagged_entries_tree_view, Gtk.Label(label="Tagged entries"))
         letw_container = Gtk.ScrolledWindow()
         letw_container.add(self.logged_entries_tree_view)
-        lists_grid.attach(letw_container, 0, 0, 1, 1)
-        lists_grid.attach(self.tagged_entries_tree_view, 1, 0, 1, 1)
+        notebook.append_page(letw_container, Gtk.Label(label="Logged entries"))
 
-        b.pack_end(lists_grid, expand=True, fill=True, padding=10)
+        b.pack_end(notebook, expand=True, fill=True, padding=10)
         self._reload_logged_entries_from_date()
         self.show_all()
 
