@@ -154,8 +154,10 @@ class TimelineCanvas(Gtk.DrawingArea):
             minute_increment = 15
         elif minute_increment > 4:
             minute_increment = 10
-        else:
+        elif minute_increment >= 1:
             minute_increment = 5
+        else:
+            minute_increment = 1
 
         self.minute_increment = minute_increment
 

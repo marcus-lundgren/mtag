@@ -4,10 +4,10 @@ from typing import Tuple
 from mtag.helper import datetime_helper
 
 
-MIN_BOUNDARY = 30 * 60
+MIN_BOUNDARY = 5 * 60
 MAX_BOUNDARY = 24 * 60 * 60 - 1
-ZOOM_STEP_IN_MINUTES = 15
-MOVE_STEP_IN_MINUTES = 8
+ZOOM_STEP_IN_PERCENT = 3
+MOVE_STEP_IN_PERCENT = 5
 
 
 def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: float) -> float:
@@ -22,6 +22,7 @@ def to_timeline_x(x_position: float, canvas_width: int, canvas_side_padding: flo
 def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: datetime,
          zoom_in: bool) -> Tuple[datetime, datetime]:
     boundary_delta = boundary_stop - boundary_start
+    zoom_step = boundary_delta * ZOOM_STEP_IN_PERCENT / 100
     mouse_delta = mouse_datetime - boundary_start
     mouse_relative_position = mouse_delta.total_seconds() / boundary_delta.total_seconds()
     current_date = boundary_start.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -32,7 +33,7 @@ def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: date
     if zoom_in:
         if boundary_delta.total_seconds() >= MIN_BOUNDARY:
             old_relative_mouse_pos_in_seconds = mouse_relative_position * boundary_delta.total_seconds()
-            boundary_delta -= timedelta(minutes=ZOOM_STEP_IN_MINUTES)
+            boundary_delta -= zoom_step
             new_relative_mouse_pos_in_seconds = int(boundary_delta.total_seconds() * mouse_relative_position)
 
             seconds_to_add_to_start = old_relative_mouse_pos_in_seconds - new_relative_mouse_pos_in_seconds
@@ -43,7 +44,7 @@ def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: date
     else:
         if boundary_delta.total_seconds() < MAX_BOUNDARY:
             old_relative_mouse_pos_in_seconds = mouse_relative_position * boundary_delta.total_seconds()
-            boundary_delta += timedelta(minutes=ZOOM_STEP_IN_MINUTES)
+            boundary_delta += zoom_step
 
             # Ensure that we don't zoom out too much
             if MAX_BOUNDARY <= boundary_delta.total_seconds():
@@ -70,14 +71,15 @@ def zoom(mouse_datetime: datetime, boundary_start: datetime, boundary_stop: date
 def move(boundary_start: datetime, boundary_stop: datetime, move_right: bool) -> Tuple[datetime, datetime]:
     new_start = boundary_start
     boundary_delta = boundary_stop - boundary_start
+    move_step = boundary_delta * MOVE_STEP_IN_PERCENT / 100
     current_date = boundary_start.replace(hour=0, minute=0, second=0, microsecond=0)
 
     if move_right:
-        new_start += timedelta(minutes=MOVE_STEP_IN_MINUTES)
+        new_start += move_step
         if (new_start + boundary_delta).day != current_date.day:
             new_start = current_date.replace(hour=23, minute=59, second=59) - boundary_delta
     else:
-        new_start -= timedelta(minutes=MOVE_STEP_IN_MINUTES)
+        new_start -= move_step
         if new_start < current_date:
             new_start = current_date
 
