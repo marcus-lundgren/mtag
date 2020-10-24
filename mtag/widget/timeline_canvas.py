@@ -143,23 +143,23 @@ class TimelineCanvas(Gtk.DrawingArea):
                                        for te in self.tagged_entries
                                        if self.timeline_start <= te.stop or te.start <= self.timeline_end]
 
-        minute_increment = int((self.time_guidingline_text_width * 1.3 / self.pixels_per_seconds) / 60)
-        if minute_increment > 59:
-            minute_increment = int((minute_increment / 60) + 1) * 60
-        elif minute_increment > 29:
+        minute_text_width_with_padding = int((self.time_guidingline_text_width * 1.3 / self.pixels_per_seconds) / 60)
+        if minute_text_width_with_padding > 59:
+            minute_increment = int((minute_text_width_with_padding / 60) + 1) * 60
+        elif minute_text_width_with_padding > 29:
             minute_increment = 60
-        elif minute_increment > 14:
+        elif minute_text_width_with_padding > 14:
             minute_increment = 30
-        elif minute_increment > 9:
+        elif minute_text_width_with_padding > 9:
             minute_increment = 15
-        elif minute_increment > 4:
+        elif minute_text_width_with_padding > 4:
             minute_increment = 10
-        elif minute_increment >= 1:
+        elif minute_text_width_with_padding >= 1:
             minute_increment = 5
         else:
             minute_increment = 1
 
-        self.minute_increment = minute_increment
+        self.minute_increment_as_delta = datetime.timedelta(minutes=minute_increment)
 
     def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries, activity_entries) -> None:
         self.logged_entries = logged_entries
@@ -198,7 +198,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         while current_time_line_time <= self.timeline_end:
             # Hour line
             if current_time_line_time < self.timeline_start:
-                current_time_line_time += datetime.timedelta(minutes=self.minute_increment)
+                current_time_line_time += self.minute_increment_as_delta
                 continue
 
             hx = self._datetime_to_pixel(current_time_line_time, canvas_width)
@@ -220,7 +220,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.move_to(hx - tx - (hour_text_width / 2), self.time_guidingline_text_height)
             cr.show_text(hour_minute_string)
 
-            current_time_line_time += datetime.timedelta(minutes=self.minute_increment)
+            current_time_line_time += self.minute_increment_as_delta
 
         # Show the activity as a background for the time area
         actual_mouse_pos_x = self.actual_mouse_pos["x"]
@@ -235,6 +235,22 @@ class TimelineCanvas(Gtk.DrawingArea):
                          ae.stop_x - ae.start_x, drawing_area_height)
             cr.fill()
 
+        # Setup needed variables for the tooltip
+        pixel_as_datetime = self._pixel_to_datetime(actual_mouse_pos_x)
+        moused_over_time_string = datetime_helper.to_time_str(pixel_as_datetime)
+        time_texts = [moused_over_time_string]
+        desc_texts = []
+        hovered_on_entry_found = False
+
+        if self.current_tagged_entry is not None:
+            time_details = datetime_helper.to_time_text(self.current_tagged_entry.start,
+                                                        self.current_tagged_entry.stop,
+                                                        self.current_tagged_entry.duration)
+            time_texts = [time_details]
+
+        # Logged entries
+        actual_mouse_pos_y = self.actual_mouse_pos["y"]
+        is_on_le_timeline = self.le_start_y <= actual_mouse_pos_y <= self.le_end_y
         for le in self.visible_logged_entries:
             r, g, b = color_helper.to_color_floats(le.entry.application_window.application.name)
             cr.set_source_rgb(r, g, b)
@@ -242,12 +258,39 @@ class TimelineCanvas(Gtk.DrawingArea):
                          le.stop_x - le.start_x, self.timeline_height)
             cr.fill()
 
+            # Check if we should use the information of the current entry for the tooltip
+            if is_on_le_timeline and not hovered_on_entry_found and le.start_x <= actual_mouse_pos_x <= le.stop_x:
+                hovered_on_entry_found = True
+                if self.current_tagged_entry is None:
+                    time_details = datetime_helper.to_time_text(le.entry.start, le.entry.stop, le.entry.duration)
+                    time_texts.append(time_details)
+                desc_texts.append(le.entry.application_window.application.name)
+                desc_texts.append(le.entry.application_window.title)
+
+                cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
+                cr.rectangle(le.start_x, self.le_start_y,
+                             le.stop_x - le.start_x, self.le_end_y - self.le_start_y)
+                cr.fill()
+
+        is_on_te_timeline = self.te_start_y <= actual_mouse_pos_y <= self.te_end_y
         for te in self.visible_tagged_entries:
             cr.set_source_rgb(0, 1, 0)
             r, g, b = color_helper.to_color_floats(te.entry.category.name)
             cr.set_source_rgb(r, g, b)
             cr.rectangle(te.start_x, self.te_start_y, te.stop_x - te.start_x, self.timeline_height)
             cr.fill()
+
+            # Check if we should use the information of the current entry for the tooltip
+            if is_on_te_timeline and not hovered_on_entry_found and te.start_x <= actual_mouse_pos_x <= te.stop_x:
+                hovered_on_entry_found = True
+                time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
+                time_texts.append(time_details)
+                desc_texts.append(te.entry.category.name)
+
+                cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
+                cr.rectangle(te.start_x, self.te_start_y,
+                             te.stop_x - te.start_x, self.te_end_y - self.te_start_y)
+                cr.fill()
 
         if self.current_tagged_entry is not None:
             start_x = self._datetime_to_pixel(self.current_tagged_entry.start, canvas_width)
@@ -265,49 +308,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.line_to(timeline_x, drawing_area_height - 10)
         cr.stroke()
 
-        pixel_as_datetime = self._pixel_to_datetime(actual_mouse_pos_x)
-        moused_over_time_string = datetime_helper.to_time_str(pixel_as_datetime)
-        time_texts = [moused_over_time_string]
-        desc_texts = []
-
-        if self.current_tagged_entry is not None:
-            time_details = datetime_helper.to_time_text(self.current_tagged_entry.start,
-                                                        self.current_tagged_entry.stop,
-                                                        self.current_tagged_entry.duration)
-            time_texts = [time_details]
-
-        actual_mouse_pos_y = self.actual_mouse_pos["y"]
-        if self.te_start_y <= actual_mouse_pos_y <= self.te_end_y:
-            for te in self.visible_tagged_entries:
-                if actual_mouse_pos_x < te.start_x:
-                    break
-                elif actual_mouse_pos_x <= te.stop_x:
-                    time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
-                    time_texts.append(time_details)
-                    desc_texts.append(te.entry.category.name)
-
-                    cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
-                    cr.rectangle(te.start_x, self.te_start_y,
-                                 te.stop_x - te.start_x, self.te_end_y - self.te_start_y)
-                    cr.fill()
-                    break
-        elif self.le_start_y <= actual_mouse_pos_y <= self.le_end_y:
-            for le in self.visible_logged_entries:
-                if actual_mouse_pos_x < le.start_x:
-                    break
-                elif actual_mouse_pos_x <= le.stop_x:
-                    if self.current_tagged_entry is None:
-                        time_details = datetime_helper.to_time_text(le.entry.start, le.entry.stop, le.entry.duration)
-                        time_texts.append(time_details)
-                    desc_texts.append(le.entry.application_window.application.name)
-                    desc_texts.append(le.entry.application_window.title)
-
-                    cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
-                    cr.rectangle(le.start_x, self.le_start_y,
-                                 le.stop_x - le.start_x, self.le_end_y - self.le_start_y)
-                    cr.fill()
-                    break
-
+        # Show the tooltip
         self._show_details_tooltip(mouse_x=actual_mouse_pos_x,
                                    mouse_y=actual_mouse_pos_y,
                                    canvas_width=canvas_width,
