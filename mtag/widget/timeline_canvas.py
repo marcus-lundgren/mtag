@@ -15,6 +15,7 @@ from gi.repository import Gtk, Gdk, GObject
 
 
 VisibleEntry = namedtuple("VisibleEntry", ["entry", "start_x", "stop_x"])
+TimelineTimeline = namedtuple("TimelineTimeline", ["time", "x", "text"])
 
 
 class TimelineCanvas(Gtk.DrawingArea):
@@ -159,7 +160,20 @@ class TimelineCanvas(Gtk.DrawingArea):
         else:
             minute_increment = 1
 
-        self.minute_increment_as_delta = datetime.timedelta(minutes=minute_increment)
+        minute_increment_as_delta = datetime.timedelta(minutes=minute_increment)
+        current_timeline_time = self._current_date + datetime.timedelta(hours=self.timeline_start.hour)
+        self.timeline_timelines = []
+        while current_timeline_time <= self.timeline_end:
+            if self.timeline_start <= current_timeline_time:
+                text = f"{str(current_timeline_time.hour).rjust(2, '0')}:{str(current_timeline_time.minute).rjust(2, '0')}"
+                self.timeline_timelines.append(TimelineTimeline(time=current_timeline_time,
+                                                                x=self._datetime_to_pixel(dt=current_timeline_time,
+                                                                                          canvas_width=canvas_width),
+                                                                text=text))
+                current_timeline_time += minute_increment_as_delta
+            else:
+                current_timeline_time += minute_increment_as_delta
+                continue
 
     def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries, activity_entries) -> None:
         self.logged_entries = logged_entries
@@ -190,24 +204,19 @@ class TimelineCanvas(Gtk.DrawingArea):
         canvas_width = self.get_allocated_width()
 
         # Draw the hour lines
-        current_time_line_time = self._current_date + datetime.timedelta(hours=self.timeline_start.hour)
         cr.set_font_size(16)
         cr.set_source_rgb(0.4, 0.4, 0.4)
         cr.rectangle(0, 0, canvas_width, self.guidingline_on_timeline_start + 10)
         cr.fill()
-        while current_time_line_time <= self.timeline_end:
+        for timeline_timeline in self.timeline_timelines:
             # Hour line
-            if current_time_line_time < self.timeline_start:
-                current_time_line_time += self.minute_increment_as_delta
-                continue
-
-            hx = self._datetime_to_pixel(current_time_line_time, canvas_width)
-
-            if current_time_line_time.minute == 0:
+            time = timeline_timeline.time
+            if time.minute == 0:
                 cr.set_source_rgb(0.5, 0.5, 0.5)
             else:
                 cr.set_source_rgb(0.8, 0.8, 0.8)
 
+            hx = timeline_timeline.x
             cr.new_path()
             cr.move_to(hx, self.guidingline_on_timeline_start)
             cr.line_to(hx, drawing_area_height)
@@ -215,12 +224,10 @@ class TimelineCanvas(Gtk.DrawingArea):
 
             # Hour text
             cr.set_source_rgb(0.8, 0.8, 0.8)
-            hour_minute_string = f"{str(current_time_line_time.hour).rjust(2, '0')}:{str(current_time_line_time.minute).rjust(2, '0')}"
+            hour_minute_string = timeline_timeline.text
             (tx, _, hour_text_width, _, dx, _) = cr.text_extents(hour_minute_string)
             cr.move_to(hx - tx - (hour_text_width / 2), self.time_guidingline_text_height)
             cr.show_text(hour_minute_string)
-
-            current_time_line_time += self.minute_increment_as_delta
 
         # Show the activity as a background for the time area
         actual_mouse_pos_x = self.actual_mouse_pos["x"]
