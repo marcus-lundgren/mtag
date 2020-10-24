@@ -223,7 +223,12 @@ class TimelineCanvas(Gtk.DrawingArea):
             current_time_line_time += datetime.timedelta(minutes=self.minute_increment)
 
         # Show the activity as a background for the time area
+        actual_mouse_pos_x = self.actual_mouse_pos["x"]
+        is_active = None
         for ae in self.visible_activity_entries:
+            if ae.start_x <= actual_mouse_pos_x <= ae.stop_x:
+                is_active = ae.entry.active
+
             r, g, b = color_helper.activity_to_color_floats(ae.entry.active)
             cr.set_source_rgba(r, g, b, 0.4)
             cr.rectangle(ae.start_x, 0,
@@ -260,7 +265,6 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.line_to(timeline_x, drawing_area_height - 10)
         cr.stroke()
 
-        actual_mouse_pos_x = self.actual_mouse_pos["x"]
         pixel_as_datetime = self._pixel_to_datetime(actual_mouse_pos_x)
         moused_over_time_string = datetime_helper.to_time_str(pixel_as_datetime)
         time_texts = [moused_over_time_string]
@@ -303,13 +307,6 @@ class TimelineCanvas(Gtk.DrawingArea):
                                  le.stop_x - le.start_x, self.le_end_y - self.le_start_y)
                     cr.fill()
                     break
-
-        is_active = None
-        for ae in self.visible_activity_entries:
-            if actual_mouse_pos_x < ae.start_x:
-                break
-            elif actual_mouse_pos_x <= ae.stop_x:
-                is_active = ae.entry.active
 
         self._show_details_tooltip(mouse_x=actual_mouse_pos_x,
                                    mouse_y=actual_mouse_pos_y,
