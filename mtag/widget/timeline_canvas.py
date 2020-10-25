@@ -113,6 +113,31 @@ class TimelineCanvas(Gtk.DrawingArea):
         self._update_canvas_constants()
         self.queue_draw()
 
+    def zoom(self, zoom_in: bool) -> None:
+        middle_x = (self.get_allocated_width() - (self.timeline_side_padding * 2)) / 2
+        middle_dt = self._pixel_to_datetime(middle_x)
+        new_start, new_stop = timeline_helper.zoom(mouse_datetime=middle_dt,
+                                                   boundary_start=self.timeline_start,
+                                                   boundary_stop=self.timeline_end,
+                                                   zoom_in=zoom_in)
+        self.timeline_start = new_start
+        self.timeline_delta = new_stop - new_start
+
+        self._update_timeline_stop()
+        self._update_canvas_constants()
+        self.queue_draw()
+
+    def move(self, move_right: bool) -> None:
+        new_start, new_stop = timeline_helper.move(boundary_start=self.timeline_start,
+                                                   boundary_stop=self.timeline_end,
+                                                   move_right=move_right)
+        self.timeline_start = new_start
+        self.timeline_delta = new_stop - new_start
+
+        self._update_timeline_stop()
+        self._update_canvas_constants()
+        self.queue_draw()
+
     def _update_canvas_constants(self):
         canvas_height = self.get_allocated_height()
         canvas_width = self.get_allocated_width()

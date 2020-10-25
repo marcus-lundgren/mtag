@@ -91,7 +91,20 @@ class MTagWindow(Gtk.Window):
         self._reload_logged_entries_from_date()
         self.show_all()
 
+        self.connect("key-press-event", self._do_key_press_event)
         self.connect("key-release-event", self._do_key_release_event)
+
+    def _do_key_press_event(self, _, e: Gdk.EventKey):
+        # Zoom in and out using CTRL + up/down, move with Ctrl + left/right
+        if e.state & Gdk.ModifierType.CONTROL_MASK:
+            if e.keyval == Gdk.KEY_Up:
+                self.timeline_canvas.zoom(True)
+            elif e.keyval == Gdk.KEY_Down:
+                self.timeline_canvas.zoom(False)
+            elif e.keyval == Gdk.KEY_Left:
+                self.timeline_canvas.move(False)
+            elif e.keyval == Gdk.KEY_Right:
+                self.timeline_canvas.move(True)
 
     def _do_key_release_event(self, _, e: Gdk.EventKey):
         # Change date on Alt (META) + left/right
