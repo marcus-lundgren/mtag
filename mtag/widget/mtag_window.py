@@ -108,7 +108,7 @@ class MTagWindow(Gtk.Window):
 
     def _do_key_release_event(self, _, e: Gdk.EventKey):
         # Change date on Alt (META) + left/right
-        if e.type & Gdk.KEY_Meta_L:
+        if e.state & Gdk.ModifierType.MOD1_MASK:
             if e.keyval == Gdk.KEY_Left:
                 self.calendar_panel.previous_day()
             elif e.keyval == Gdk.KEY_Right:
