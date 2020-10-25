@@ -14,7 +14,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 
 
-VisibleEntry = namedtuple("VisibleEntry", ["entry", "start_x", "stop_x"])
+VisibleEntry = namedtuple("VisibleEntry", ["entry", "start_x", "stop_x", "color"])
 TimelineTimeline = namedtuple("TimelineTimeline", ["time", "x", "text"])
 
 
@@ -130,17 +130,21 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.visible_activity_entries = [VisibleEntry(ae,
                                                       self._datetime_to_pixel(ae.start, canvas_width),
-                                                      self._datetime_to_pixel(ae.stop, canvas_width))
+                                                      self._datetime_to_pixel(ae.stop, canvas_width),
+                                                      color_helper.activity_to_color_floats(ae.active))
                                          for ae in self.activity_entries
                                          if self.timeline_start <= ae.stop or ae.start <= self.timeline_end]
         self.visible_logged_entries = [VisibleEntry(le,
                                                     self._datetime_to_pixel(le.start, canvas_width),
-                                                    self._datetime_to_pixel(le.stop, canvas_width))
+                                                    self._datetime_to_pixel(le.stop, canvas_width),
+                                                    color_helper.to_color_floats(
+                                                            le.application_window.application.name))
                                        for le in self.logged_entries
                                        if self.timeline_start <= le.stop or le.start <= self.timeline_end]
         self.visible_tagged_entries = [VisibleEntry(te,
                                                     self._datetime_to_pixel(te.start, canvas_width),
-                                                    self._datetime_to_pixel(te.stop, canvas_width))
+                                                    self._datetime_to_pixel(te.stop, canvas_width),
+                                                    color_helper.to_color_floats(te.category.name))
                                        for te in self.tagged_entries
                                        if self.timeline_start <= te.stop or te.start <= self.timeline_end]
 
@@ -236,7 +240,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             if ae.start_x <= actual_mouse_pos_x <= ae.stop_x:
                 is_active = ae.entry.active
 
-            r, g, b = color_helper.activity_to_color_floats(ae.entry.active)
+            r, g, b = ae.color
             cr.set_source_rgba(r, g, b, 0.4)
             cr.rectangle(ae.start_x, 0,
                          ae.stop_x - ae.start_x, drawing_area_height)
@@ -259,7 +263,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         actual_mouse_pos_y = self.actual_mouse_pos["y"]
         is_on_le_timeline = self.le_start_y <= actual_mouse_pos_y <= self.le_end_y
         for le in self.visible_logged_entries:
-            r, g, b = color_helper.to_color_floats(le.entry.application_window.application.name)
+            r, g, b = le.color
             cr.set_source_rgb(r, g, b)
             cr.rectangle(le.start_x, self.le_start_y,
                          le.stop_x - le.start_x, self.timeline_height)
@@ -276,13 +280,13 @@ class TimelineCanvas(Gtk.DrawingArea):
 
                 cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
                 cr.rectangle(le.start_x, self.le_start_y,
-                             le.stop_x - le.start_x, self.le_end_y - self.le_start_y)
+                             le.stop_x - le.start_x, self.timeline_height)
                 cr.fill()
 
         is_on_te_timeline = self.te_start_y <= actual_mouse_pos_y <= self.te_end_y
         for te in self.visible_tagged_entries:
             cr.set_source_rgb(0, 1, 0)
-            r, g, b = color_helper.to_color_floats(te.entry.category.name)
+            r, g, b = te.color
             cr.set_source_rgb(r, g, b)
             cr.rectangle(te.start_x, self.te_start_y, te.stop_x - te.start_x, self.timeline_height)
             cr.fill()
@@ -296,7 +300,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
                 cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
                 cr.rectangle(te.start_x, self.te_start_y,
-                             te.stop_x - te.start_x, self.te_end_y - self.te_start_y)
+                             te.stop_x - te.start_x, self.timeline_height)
                 cr.fill()
 
         if self.current_tagged_entry is not None:
@@ -316,14 +320,14 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.stroke()
 
         # Show the tooltip
-        self._show_details_tooltip(mouse_x=actual_mouse_pos_x,
-                                   mouse_y=actual_mouse_pos_y,
-                                   canvas_width=canvas_width,
-                                   canvas_height=drawing_area_height,
-                                   cr=cr,
-                                   time_text_list=time_texts,
-                                   description_text_list=desc_texts,
-                                   is_active=is_active)
+        self._show_details_tooltip(actual_mouse_pos_x,
+                                   actual_mouse_pos_y,
+                                   canvas_width,
+                                   drawing_area_height,
+                                   cr,
+                                   time_texts,
+                                   desc_texts,
+                                   is_active)
 
     def _show_details_tooltip(self, mouse_x: float, mouse_y: float,
                               canvas_width, canvas_height, cr: cairo.Context,
@@ -419,16 +423,16 @@ class TimelineCanvas(Gtk.DrawingArea):
             start_dt = self.timeline_start
             end_dt = self.timeline_end
 
-            for te in self.tagged_entries:
+            for te in self.visible_tagged_entries:
                 # Double click should not be possible if we are inside of a TaggedEntry
-                if te.contains_datetime(self.current_moused_datetime):
+                if te.entry.contains_datetime(self.current_moused_datetime):
                     return
 
                 # Update the intervals if necessary
-                if start_dt < te.stop < self.current_moused_datetime:
-                    start_dt = te.stop
-                elif self.current_moused_datetime < te.start < end_dt:
-                    end_dt = te.start
+                if start_dt < te.entry.stop < self.current_moused_datetime:
+                    start_dt = te.entry.stop
+                elif self.current_moused_datetime < te.entry.start < end_dt:
+                    end_dt = te.entry.start
                     break
             self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_dt, stop=end_dt)
             self.queue_draw()
@@ -438,10 +442,9 @@ class TimelineCanvas(Gtk.DrawingArea):
         if event.button == Gdk.BUTTON_SECONDARY:
             # Ensure that we are on the tagged entry timeline
             if self.te_start_y <= event.y <= self.te_end_y:
-                moused_dt = self._pixel_to_datetime(event.x)
-                for te in self.tagged_entries:
-                    if te.contains_datetime(moused_dt):
-                        self.context_menu.popup_at_coordinate(x=event.x, y=event.y, te=te)
+                for te in self.visible_tagged_entries:
+                    if te.start_x <= event.x <= te.stop_x:
+                        self.context_menu.popup_at_coordinate(x=event.x, y=event.y, te=te.entry)
                         break
             return
 
@@ -499,14 +502,14 @@ class TimelineCanvas(Gtk.DrawingArea):
             if datetime_used is not None:
                 next_moused_datetime = datetime_used
         else:
-            for t in self.tagged_entries:
-                if stop_date < t.start:
+            for t in self.visible_tagged_entries:
+                if event.x < t.start_x:
                     break
-                elif t.contains_datetime(stop_date):
-                    start_delta = stop_date - t.start
-                    stop_delta = t.stop - stop_date
+                elif event.x <= t.stop_x:
+                    start_delta = event.x - t.start_x
+                    stop_delta = t.stop_x - event.x
 
-                    next_moused_datetime = t.start if start_delta < stop_delta else t.stop
+                    next_moused_datetime = t.entry.start if start_delta < stop_delta else t.entry.stop
                     break
 
         self.current_moused_datetime = next_moused_datetime
