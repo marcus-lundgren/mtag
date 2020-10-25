@@ -8,7 +8,7 @@ from . import CalendarPanel, TimelineCanvas, TimelineMinimap
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 
 
 class MTagWindow(Gtk.Window):
@@ -90,6 +90,16 @@ class MTagWindow(Gtk.Window):
         b.pack_end(notebook, expand=True, fill=True, padding=10)
         self._reload_logged_entries_from_date()
         self.show_all()
+
+        self.connect("key-release-event", self._do_key_release_event)
+
+    def _do_key_release_event(self, _, e: Gdk.EventKey):
+        # Change date on Alt (META) + left/right
+        if e.type & Gdk.KEY_Meta_L:
+            if e.keyval == Gdk.KEY_Left:
+                self.calendar_panel.previous_day()
+            elif e.keyval == Gdk.KEY_Right:
+                self.calendar_panel.next_day()
 
     def _do_tagged_entry_created(self, _, te: TaggedEntry):
         tagged_entry_repository = TaggedEntryRepository()

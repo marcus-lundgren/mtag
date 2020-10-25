@@ -40,5 +40,11 @@ class CalendarPanel(Gtk.Box):
         self.calendar_button.add_days(days)
         self.emit("day-selected", self.calendar_button.get_selected_date())
 
+    def previous_day(self):
+        self._add_days(None, -1)
+
+    def next_day(self):
+        self._add_days(None, 1)
+
     def get_selected_date(self):
         return self.calendar_button.get_selected_date()
