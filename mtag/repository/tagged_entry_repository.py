@@ -82,8 +82,9 @@ class TaggedEntryRepository:
                               " INNER JOIN category ON tagged_entry.te_category_id == category.c_id"
                               " WHERE c_name=:c_name",
                               {"c_name": category_name})
-        total_seconds = cursor.fetchone()
-        return 0 if total_seconds is None else total_seconds["total_time"]
+        row = cursor.fetchone()
+        total_seconds = row["total_time"]
+        return 0 if total_seconds is None else total_seconds
 
     def _from_dbo(self, conn: sqlite3.Connection, db_te: dict) -> TaggedEntry:
         category = self.category_repository.get(conn=conn, db_id=db_te["te_category_id"])
