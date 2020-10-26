@@ -105,6 +105,7 @@ class MTagWindow(Gtk.Window):
                 self.timeline_canvas.move(False)
             elif e.keyval == Gdk.KEY_Right:
                 self.timeline_canvas.move(True)
+            return True
 
     def _do_key_release_event(self, _, e: Gdk.EventKey):
         # Handle date switching
@@ -113,6 +114,7 @@ class MTagWindow(Gtk.Window):
                 self.calendar_panel.previous_day()
             elif e.keyval == Gdk.KEY_Right:
                 self.calendar_panel.next_day()
+            return True
 
     def _do_tagged_entry_created(self, _, te: TaggedEntry):
         tagged_entry_repository = TaggedEntryRepository()
