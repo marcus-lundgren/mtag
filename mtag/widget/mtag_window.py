@@ -3,8 +3,8 @@ from itertools import groupby
 
 from mtag.entity import TaggedEntry
 from mtag.helper import datetime_helper, database_helper
-from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
-from . import CalendarPanel, TimelineCanvas, TimelineMinimap
+from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository, CategoryRepository
+from . import CalendarPanel, TimelineCanvas, TimelineMinimap, TimelineOverlay
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -44,8 +44,11 @@ class MTagWindow(Gtk.Window):
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
         self.timeline_canvas.connect("timeline-boundary-changed", lambda _, start, stop: mm.set_boundaries(start, stop))
+        canvas_overlay = Gtk.Overlay()
+        canvas_overlay.add_overlay(self.timeline_canvas)
+        canvas_overlay.add_overlay(TimelineOverlay(timeline_canvas=self.timeline_canvas))
 
-        b.pack_start(self.timeline_canvas, expand=True, fill=True, padding=0)
+        b.pack_start(canvas_overlay, expand=True, fill=True, padding=10)
 
         # Minimap
         mm = TimelineMinimap()

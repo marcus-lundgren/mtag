@@ -4,4 +4,5 @@ from .calendar_button import CalendarButton
 from .calendar_panel import CalendarPanel
 from .timeline_context_popover import TimelineContextPopover
 from .timeline_canvas import TimelineCanvas
+from .timeline_overlay import TimelineOverlay
 from .mtag_window import MTagWindow
