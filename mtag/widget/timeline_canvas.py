@@ -293,7 +293,6 @@ class TimelineCanvas(Gtk.DrawingArea):
                     end_dt = te.entry.start
                     break
             self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_dt, stop=end_dt)
-            self.queue_draw()
             return
 
         # Right click
