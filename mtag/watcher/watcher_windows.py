@@ -45,7 +45,7 @@ def watch():
                            + " | Format-List Name, Description, Path, Product"],
                           stdout=subprocess.PIPE,
                           startupinfo=sui,
-                          shell=True,
+                          shell=False,
                           creationflags=subprocess.CREATE_NEW_CONSOLE) as proc:
         ps_output_as_bytes, _ = proc.communicate()
         logging.debug(ps_output_as_bytes)
@@ -73,10 +73,11 @@ def watch():
             value = line[colon_index + 1:].strip()
             ps_values[key] = value
         except:
+            logging.error(ps_output)
             logging.error("Unable to parse ps_output line:")
             logging.error(stripped_line)
-            logging.error("The following PID was found:", pid_param.value)
-            logging.error("Window title:", active_window_title)
+            logging.error(f"The following PID was found: {pid_param.value}")
+            logging.error("Window title: {active_window_title}")
 
     path = ps_values["Path"]
 
@@ -90,7 +91,7 @@ def watch():
 
     logging.info(idle_period)
     logging.info(path)
-    logging.info(application_name, "=>", active_window_title)
+    logging.info(f"{application_name} => {active_window_title}")
 
     watcher_helper.register(window_title=active_window_title,
                             application_name=application_name,
