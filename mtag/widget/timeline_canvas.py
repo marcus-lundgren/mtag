@@ -15,7 +15,7 @@ from gi.repository import Gtk, Gdk, GObject
 
 
 VisibleEntry = namedtuple("VisibleEntry", ["entry", "start_x", "stop_x", "color"])
-TimelineTimeline = namedtuple("TimelineTimeline", ["time", "x", "text"])
+TimelineTimeline = namedtuple("TimelineTimeline", ["time", "x", "text", "text_extents"])
 
 
 class TimelineCanvas(Gtk.DrawingArea):
@@ -66,6 +66,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.tagged_entries = []
         self.logged_entries = []
         self.activity_entries = []
+        self.time_text_extents = {}
 
         self.context_menu = TimelineContextPopover(relative_to=self)
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
@@ -110,7 +111,6 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.guidingline_on_timeline_start = self.time_guidingline_text_height + (self.timeline_top_padding / 2)
 
         self.timeline_height = (canvas_height - self.timeline_top_padding * 2 - self.guidingline_on_timeline_start - self.hour_text_and_line_gap) / 2
-        pixels_per_seconds = (canvas_width - self.timeline_side_padding * 2) / (self.timeline_delta.total_seconds())
 
         self.te_start_y = self.guidingline_on_timeline_start + self.timeline_top_padding
         self.te_end_y = self.te_start_y + self.timeline_height
@@ -138,6 +138,7 @@ class TimelineCanvas(Gtk.DrawingArea):
                                        for te in self.tagged_entries
                                        if self.timeline_start <= te.stop or te.start <= self.timeline_end]
 
+        pixels_per_seconds = (canvas_width - self.timeline_side_padding * 2) / (self.timeline_delta.total_seconds())
         minute_text_width_with_padding = int((self.time_guidingline_text_width * 1.3 / pixels_per_seconds) / 60)
         if minute_text_width_with_padding > 59:
             minute_increment = int((minute_text_width_with_padding / 60) + 1) * 60
@@ -154,16 +155,27 @@ class TimelineCanvas(Gtk.DrawingArea):
         else:
             minute_increment = 1
 
+        window: Gdk.Window = self.get_root_window()
+        cr: cairo.Context = window.cairo_create()
+        cr.set_font_size(16)
+
         minute_increment_as_delta = datetime.timedelta(minutes=minute_increment)
         current_timeline_time = self._current_date + datetime.timedelta(hours=self.timeline_start.hour)
         self.timeline_timelines = []
         while current_timeline_time <= self.timeline_end:
             if self.timeline_start <= current_timeline_time:
                 text = f"{str(current_timeline_time.hour).rjust(2, '0')}:{str(current_timeline_time.minute).rjust(2, '0')}"
+                if text in self.time_text_extents:
+                    text_extents = self.time_text_extents[text]
+                else:
+                    (tx, _, hour_text_width, *_) = cr.text_extents(text)
+                    text_extents = (tx, hour_text_width)
+                    self.time_text_extents[text] = text_extents
                 self.timeline_timelines.append(TimelineTimeline(time=current_timeline_time,
                                                                 x=self.datetime_to_pixel(dt=current_timeline_time,
                                                                                          canvas_width=canvas_width),
-                                                                text=text))
+                                                                text=text,
+                                                                text_extents=text_extents))
                 current_timeline_time += minute_increment_as_delta
             else:
                 current_timeline_time += minute_increment_as_delta
@@ -218,10 +230,9 @@ class TimelineCanvas(Gtk.DrawingArea):
 
             # Hour text
             cr.set_source_rgb(0.8, 0.8, 0.8)
-            hour_minute_string = timeline_timeline.text
-            (tx, _, hour_text_width, _, dx, _) = cr.text_extents(hour_minute_string)
+            tx, hour_text_width = timeline_timeline.text_extents
             cr.move_to(hx - tx - (hour_text_width / 2), self.time_guidingline_text_height)
-            cr.show_text(hour_minute_string)
+            cr.show_text(timeline_timeline.text)
 
         # Show the activity as a background for the time area
         for ae in self.visible_activity_entries:
