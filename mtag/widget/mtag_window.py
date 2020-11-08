@@ -1,12 +1,12 @@
-import datetime
-from itertools import groupby
+from datetime import datetime
 
-from mtag.entity import TaggedEntry
-from mtag.helper import datetime_helper, database_helper
-from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository, CategoryRepository
-from . import CalendarPanel, TimelineCanvas, TimelineMinimap, TimelineOverlay
+from mtag.helper import database_helper, statistics_helper, datetime_helper
+from mtag.repository import CategoryRepository
 
 import gi
+
+from mtag.widget.timeline_page import TimelinePage
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
@@ -24,145 +24,69 @@ class MTagWindow(Gtk.Window):
 
         self.connect("destroy", Gtk.main_quit)
 
-        b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.add(b)
-
-        # Top bar
-        top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.calendar_panel = CalendarPanel()
-        self.calendar_panel.connect("day-selected", self._on_new_day_selected)
-        top_bar.pack_start(self.calendar_panel, expand=True, fill=False, padding=0)
-        b.add(top_bar)
-
-        self._current_date = self.calendar_panel.get_selected_date()
-
-        # Drawing area
-        self.current_mouse_pos = 0
-        self.actual_mouse_pos = {"x": 0, "y": 0}
-
-        self.timeline_canvas = TimelineCanvas(parent=self)
-        self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
-        self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
-        self.timeline_canvas.connect("timeline-boundary-changed", lambda _, start, stop: mm.set_boundaries(start, stop))
-        canvas_overlay = Gtk.Overlay()
-        canvas_overlay.add_overlay(self.timeline_canvas)
-        canvas_overlay.add_overlay(TimelineOverlay(timeline_canvas=self.timeline_canvas))
-
-        b.pack_start(canvas_overlay, expand=True, fill=True, padding=10)
-
-        # Minimap
-        mm = TimelineMinimap()
-        mm.connect("timeline-boundary-changed", lambda _, start, stop: self.timeline_canvas.set_boundaries(start, stop))
-        b.add(mm)
-
-        lists_grid = Gtk.Grid()
-        lists_grid.set_column_homogeneous(True)
-        lists_grid.set_row_homogeneous(True)
-        lists_grid.set_column_spacing(20)
-
-        # Logged entries list
-        self.logged_entries_list_store = Gtk.ListStore(str, str, str, str, str)
-        self.logged_entries_tree_view = Gtk.TreeView.new_with_model(self.logged_entries_list_store)
-
-        for i, title in enumerate(["Start", "Stop", "Duration", "Application", "Title"]):
+        category_view = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.category_store = Gtk.ListStore(str, int)
+        categories_tree_view = Gtk.TreeView.new_with_model(self.category_store)
+        categories_tree_view.connect("button-press-event", self._do_button_press)
+        for i, title in enumerate(["Name"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             column.set_sort_column_id(i)
-            column.set_expand(title == "Title")
-            self.logged_entries_tree_view.append_column(column)
+            categories_tree_view.append_column(column)
 
-        # Tagged entries list
-        self.tagged_entries_list_store = Gtk.ListStore(str, str)
-        self.tagged_entries_tree_view = Gtk.TreeView.new_with_model(self.tagged_entries_list_store)
-        self.tagged_entries_tree_view.set_headers_clickable(True)
+        conn = database_helper.create_connection()
+        categories = CategoryRepository().get_all(conn)
+        conn.close()
+        for c in categories:
+            self.category_store.append([c.name, c.db_id])
+        categories_tree_view.set_headers_clickable(True)
+        categories_tree_view.show_all()
+        category_view.add(categories_tree_view)
 
-        for i, title in enumerate(["Duration", "Category"]):
-            renderer = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn(title, renderer, text=i)
-            column.set_sort_column_id(i)
-            self.tagged_entries_tree_view.append_column(column)
+        category_details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        title = Gtk.Label(label="-- Details --")
+        title.set_xalign(0)
+        category_details.pack_start(title, expand=False, fill=False, padding=10)
 
-        self.logged_entries_tree_view.set_headers_clickable(True)
+        grid = Gtk.Grid()
+        name_title = Gtk.Label(label="Name: ")
+        name_title.set_xalign(0)
+        grid.attach(name_title, 0, 0, 1, 1)
+        self.name_label = Gtk.Label("-")
+        self.name_label.set_xalign(0)
+        grid.attach(self.name_label, 1, 0, 1, 1)
 
-        notebook = Gtk.Notebook()
-        notebook.append_page(self.tagged_entries_tree_view, Gtk.Label(label="Tagged entries"))
-        letw_container = Gtk.ScrolledWindow()
-        letw_container.add(self.logged_entries_tree_view)
-        notebook.append_page(letw_container, Gtk.Label(label="Logged entries"))
+        time_tagged_title = Gtk.Label(label="Time tagged: ")
+        time_tagged_title.set_xalign(0)
+        grid.attach(time_tagged_title, 0, 1, 1, 1)
+        self.total_time_label= Gtk.Label(label="-")
+        self.total_time_label.set_xalign(0)
+        grid.attach(self.total_time_label, 1, 1, 1, 1)
+        category_details.add(grid)
 
-        b.pack_end(notebook, expand=True, fill=True, padding=10)
-        self._reload_logged_entries_from_date()
+        category_view.pack_end(category_details, expand=True, fill=True, padding=20)
+
+        outer_nb = Gtk.Notebook()
+
+        timeline_page = TimelinePage()
+        outer_nb.append_page(timeline_page, Gtk.Label(label="Timeline"))
+        outer_nb.append_page(category_view, Gtk.Label(label="Categories"))
+        self.add(outer_nb)
         self.show_all()
 
-        self.connect("key-press-event", self._do_key_press_event)
-        self.connect("key-release-event", self._do_key_release_event)
+    def _do_button_press(self, w, e):
+        p, c, *_ = w.get_path_at_pos(e.x, e.y)
+        i = self.category_store.get_iter(p)
+        v = self.category_store.get_value(i, 1)
+        self._update_details_pane(v)
 
-    def _do_key_press_event(self, _, e: Gdk.EventKey):
-        # Handle canvas zoom and movement
-        if e.state & Gdk.ModifierType.CONTROL_MASK:
-            if e.keyval == Gdk.KEY_Up:
-                self.timeline_canvas.zoom(True)
-            elif e.keyval == Gdk.KEY_Down:
-                self.timeline_canvas.zoom(False)
-            elif e.keyval == Gdk.KEY_Left:
-                self.timeline_canvas.move(False)
-            elif e.keyval == Gdk.KEY_Right:
-                self.timeline_canvas.move(True)
-            return True
-
-    def _do_key_release_event(self, _, e: Gdk.EventKey):
-        # Handle date switching
-        if e.state & Gdk.ModifierType.MOD1_MASK:
-            if e.keyval == Gdk.KEY_Left:
-                self.calendar_panel.previous_day()
-            elif e.keyval == Gdk.KEY_Right:
-                self.calendar_panel.next_day()
-            return True
-
-    def _do_tagged_entry_created(self, _, te: TaggedEntry):
-        tagged_entry_repository = TaggedEntryRepository()
+    def _update_details_pane(self, category_db_id: int):
+        cr = CategoryRepository()
         conn = database_helper.create_connection()
-        tagged_entry_repository.insert(conn=conn, tagged_entry=te)
+        category = cr.get(conn=conn, db_id=category_db_id)
         conn.close()
-        self._reload_logged_entries_from_date()
-
-    def _do_tagged_entry_deleted(self, _, te: TaggedEntry):
-        tagged_entry_repository = TaggedEntryRepository()
-        conn = database_helper.create_connection()
-        tagged_entry_repository.delete(conn=conn, db_id=te.db_id)
-        conn.close()
-        self._reload_logged_entries_from_date()
-
-    def _on_new_day_selected(self, _, date: datetime.datetime):
-        self._current_date = date
-        self._reload_logged_entries_from_date()
-
-    def _reload_logged_entries_from_date(self):
-        db_connection = database_helper.create_connection()
-        logged_entry_repository = LoggedEntryRepository()
-        tagged_entry_repository = TaggedEntryRepository()
-        activity_entry_repository = ActivityEntryRepository()
-
-        logged_entries = logged_entry_repository.get_all_by_date(db_connection, self._current_date)
-        tagged_entries = tagged_entry_repository.get_all_by_date(db_connection, self._current_date)
-        activity_entries = activity_entry_repository.get_all_by_date(db_connection, self._current_date)
-        db_connection.close()
-
-        self.timeline_canvas.set_entries(self._current_date, logged_entries, tagged_entries, activity_entries)
-
-        self.logged_entries_list_store.clear()
-        for le in logged_entries:
-            self.logged_entries_list_store.append([datetime_helper.to_time_str(le.start),
-                                                   datetime_helper.to_time_str(le.stop),
-                                                   datetime_helper.to_duration_str(le.duration),
-                                                   le.application_window.application.name,
-                                                   le.application_window.title])
-        self.logged_entries_tree_view.columns_autosize()
-
-        self.tagged_entries_list_store.clear()
-        for te_category, te_group in groupby(sorted(tagged_entries, key=lambda x: x.category.db_id),
-                                             key=lambda x: x.category.name):
-            duration = sum([te.duration for te in te_group], start=datetime.timedelta())
-            self.tagged_entries_list_store.append([datetime_helper.to_duration_str(duration),
-                                                   te_category])
-        self.tagged_entries_tree_view.columns_autosize()
+        seconds = statistics_helper.get_total_category_tagged_time(category.name)
+        h, m, s = datetime_helper.seconds_to_hour_minute_second(seconds)
+        total_time_str = f"{h} hours, {m} minutes, {s} seconds"
+        self.name_label.set_label(category.name)
+        self.total_time_label.set_label(total_time_str)
