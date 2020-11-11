@@ -14,7 +14,7 @@ from gi.repository import Gtk, Gdk
 
 
 class TimelinePage(Gtk.Box):
-    def __init__(self):
+    def __init__(self, parent: Gtk.Window):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
 
         # Top bar
@@ -27,7 +27,7 @@ class TimelinePage(Gtk.Box):
         self._current_date = self.calendar_panel.get_selected_date()
 
         # Drawing area
-        self.timeline_canvas = TimelineCanvas(parent=self)
+        self.timeline_canvas = TimelineCanvas(parent=parent)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
         self.timeline_canvas.connect("timeline-boundary-changed", lambda _, start, stop: mm.set_boundaries(start, stop))

@@ -68,7 +68,7 @@ class MTagWindow(Gtk.Window):
 
         outer_nb = Gtk.Notebook()
 
-        timeline_page = TimelinePage()
+        timeline_page = TimelinePage(parent=self)
         outer_nb.append_page(timeline_page, Gtk.Label(label="Timeline"))
         outer_nb.append_page(category_view, Gtk.Label(label="Categories"))
         self.add(outer_nb)
