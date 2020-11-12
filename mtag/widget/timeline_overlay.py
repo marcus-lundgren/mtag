@@ -1,4 +1,5 @@
 import datetime
+from collections import namedtuple
 from typing import List, Optional
 
 from mtag.entity import LoggedEntry, TaggedEntry
@@ -11,6 +12,10 @@ from mtag.widget import TimelineCanvas
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
+
+
+TooltipAttributes = namedtuple("TooltipAttributes", ["time_texts", "description_texts", "activity_text", "is_active",
+                                                     "text_heights", "x", "y", "width", "height"])
 
 
 class TimelineOverlay(Gtk.DrawingArea):
@@ -29,6 +34,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         self.timeline_canvas = timeline_canvas
         self.current_moused_datetime = datetime.datetime.now()
         self.actual_mouse_pos = {"x": 0, "y": 0}
+        self.tooltip_attributes = None
         self.dirty_rectangles = []
         self.moused_over_entity = None
 
@@ -66,46 +72,24 @@ class TimelineOverlay(Gtk.DrawingArea):
         current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 5, 0, 10, height)
         self.dirty_rectangles.append(current_guidingline_rectangle)
 
-        # Get the activity value under the mouse
-        is_active = None
-        mouse_x = self.actual_mouse_pos["x"]
-        for ae in timeline_canvas.visible_activity_entries:
-            if ae.start_x <= mouse_x <= ae.stop_x:
-                is_active = ae.entry.active
-
-        # Tooltip information setup
-        dt = timeline_canvas.pixel_to_datetime(mouse_x)
-        time_texts = [datetime_helper.to_time_str(dt)]
-        desc_texts = []
-
-        # See if we have an entry below the cursor. Use its information for the tooltip.
-        mouse_y = self.actual_mouse_pos["y"]
+        # Hightlight the hovered over entry
         moused_entry = None if self.moused_over_entity is None else self.moused_over_entity.entry
         if type(moused_entry) is LoggedEntry:
             le = self.moused_over_entity
-            if timeline_canvas.current_tagged_entry is None:
-                time_details = datetime_helper.to_time_text(le.entry.start, le.entry.stop, le.entry.duration)
-                time_texts.append(time_details)
-            desc_texts.append(le.entry.application_window.application.name)
-            desc_texts.append(le.entry.application_window.title)
-
             cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
             cr.rectangle(le.start_x, timeline_canvas.le_start_y,
                          le.stop_x - le.start_x, timeline_canvas.timeline_height)
             cr.fill()
         elif type(moused_entry) is TaggedEntry:
             te = self.moused_over_entity
-            time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
-            time_texts.append(time_details)
-            desc_texts.append(te.entry.category.name)
-
             cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
             cr.rectangle(te.start_x, timeline_canvas.te_start_y,
                          te.stop_x - te.start_x, timeline_canvas.timeline_height)
             cr.fill()
 
         # Show the tooltip
-        self._show_details_tooltip(mouse_x, mouse_y, width, height, cr, time_texts, desc_texts, is_active)
+        if self.tooltip_attributes is not None:
+            self._show_details_tooltip(self.tooltip_attributes, cr)
         return True
 
     def _on_motion_notify(self, _, e: Gdk.EventMotion):
@@ -143,6 +127,12 @@ class TimelineOverlay(Gtk.DrawingArea):
                     next_moused_datetime = t.entry.start if start_delta < stop_delta else t.entry.stop
                     break
 
+        is_active = None
+        for ae in timeline_canvas.visible_activity_entries:
+            if ae.start_x <= mouse_x <= ae.stop_x:
+                is_active = ae.entry.active
+                break
+
         self.current_moused_datetime = next_moused_datetime
         self.actual_mouse_pos["x"], self.actual_mouse_pos["y"] = mouse_x, mouse_y
 
@@ -152,6 +142,14 @@ class TimelineOverlay(Gtk.DrawingArea):
 
         self.moused_over_entity = None
         highlight_rectangle = None
+
+        # Show the current tagged entry time text if relevant
+        if timeline_canvas.current_tagged_entry is not None:
+            current_te = timeline_canvas.current_tagged_entry
+            current_te_time_text = datetime_helper.to_time_text(current_te.start, current_te.stop,
+                                                            current_te.stop - current_te.start)
+            time_texts = [current_te_time_text]
+
         if timeline_canvas.le_start_y <= mouse_y <= timeline_canvas.le_end_y:
             for le in timeline_canvas.visible_logged_entries:
                 if le.start_x <= mouse_x <= le.stop_x:
@@ -172,8 +170,9 @@ class TimelineOverlay(Gtk.DrawingArea):
             for te in timeline_canvas.visible_tagged_entries:
                 if te.start_x <= mouse_x <= te.stop_x:
                     self.moused_over_entity = te
-                    time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
-                    time_texts.append(time_details)
+                    if timeline_canvas.current_tagged_entry is None:
+                        time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
+                        time_texts.append(time_details)
                     desc_texts.append(te.entry.category.name)
 
                     highlight_rectangle = cairo.RectangleInt(int(te.start_x) - 5,
@@ -186,7 +185,12 @@ class TimelineOverlay(Gtk.DrawingArea):
         window: Gdk.Window = self.get_window()
         cr = window.cairo_create()
 
-        dirty_new_tooltip_rect = self._get_tooltip_dimension(mouse_x, mouse_y, canvas_width, canvas_height, cr, time_texts, desc_texts, False)
+        self.tooltip_attributes = self._get_tooltip_attributes(mouse_x, mouse_y, canvas_width, canvas_height,
+                                                               cr, time_texts, desc_texts, is_active)
+        dirty_new_tooltip_rect = cairo.RectangleInt(int(self.tooltip_attributes.x) - 5,
+                                                    int(self.tooltip_attributes.y) - 5,
+                                                    int(self.tooltip_attributes.width) + 10,
+                                                    int(self.tooltip_attributes.height) + 10)
         self.dirty_rectangles.append(dirty_new_tooltip_rect)
 
         timeline_x = self.timeline_canvas.datetime_to_pixel(self.current_moused_datetime, canvas_width)
@@ -203,10 +207,10 @@ class TimelineOverlay(Gtk.DrawingArea):
         if current_tagged_entry_dirty_rectangle is not None:
             self.dirty_rectangles.append(current_tagged_entry_dirty_rectangle)
 
-    def _get_tooltip_dimension(self, mouse_x: float, mouse_y: float,
-                               canvas_width, canvas_height, cr: cairo.Context,
-                               time_text_list: List[str], description_text_list: List[str],
-                               is_active: Optional[bool]) -> cairo.RectangleInt:
+    def _get_tooltip_attributes(self, mouse_x: float, mouse_y: float,
+                                canvas_width, canvas_height, cr: cairo.Context,
+                                time_text_list: List[str], description_text_list: List[str],
+                                is_active: Optional[bool]) -> TooltipAttributes:
         cr.set_font_size(16)
         padding = 10
         line_padding = padding / 2
@@ -221,6 +225,8 @@ class TimelineOverlay(Gtk.DrawingArea):
         if is_active is not None:
             activity_text = "[## Active ##]" if is_active else "[## Inactive ##]"
             texts.append(activity_text)
+        else:
+            activity_text = None
 
         for t in texts:
             (_, _, width, height, *_) = cr.text_extents(t)
@@ -233,67 +239,45 @@ class TimelineOverlay(Gtk.DrawingArea):
         rect_y = min(canvas_height - height_to_use, mouse_y)
         x_to_use = min(mouse_x, canvas_width - width_to_use)
         x_to_use = max(x_to_use, 0.0)
-        dirty_rectangle = cairo.RectangleInt(int(x_to_use) - 5,
-                                             int(rect_y) - 5,
-                                             int(width_to_use) + 10,
-                                             int(height_to_use) + 10)
-        return dirty_rectangle
+        return TooltipAttributes(time_texts=time_text_list, description_texts=description_text_list,
+                                 activity_text=activity_text, text_heights=heights, x=x_to_use, y=rect_y,
+                                 width=width_to_use, height=height_to_use, is_active=is_active)
 
-    def _show_details_tooltip(self, mouse_x: float, mouse_y: float,
-                              canvas_width, canvas_height, cr: cairo.Context,
-                              time_text_list: List[str], description_text_list: List[str],
-                              is_active: Optional[bool]) -> None:
+    def _show_details_tooltip(self, tooltip_attributes: TooltipAttributes, cr: cairo.Context) -> None:
         cr.set_font_size(16)
         padding = 10
         line_padding = padding / 2
+        texts = tooltip_attributes.time_texts.copy()
 
-        widths = []
-        heights = []
-        texts = time_text_list.copy()
-
-        for dt in description_text_list:
+        for dt in tooltip_attributes.description_texts:
             texts.append(dt)
 
-        if is_active is not None:
-            activity_text = "[## Active ##]" if is_active else "[## Inactive ##]"
-            texts.append(activity_text)
+        if tooltip_attributes.is_active is not None:
+            texts.append(tooltip_attributes.activity_text)
 
-        for t in texts:
-            (_, _, width, height, *_) = cr.text_extents(t)
-            widths.append(width)
-            heights.append(height)
-
-        width_to_use = max(widths) + (padding * 2)
-        height_to_use = sum(heights) + (padding * 2) + line_padding * (len(heights) - 1)
-
-        rect_y = min(canvas_height - height_to_use, mouse_y)
-        x_to_use = min(mouse_x, canvas_width - width_to_use)
-        x_to_use = max(x_to_use, 0.0)
-        dirty_rectangle = cairo.RectangleInt(int(x_to_use) - 5,
-                                             int(rect_y) - 5,
-                                             int(width_to_use) + 10,
-                                             int(height_to_use) + 10)
-        self.dirty_rectangles.append(dirty_rectangle)
+        x = tooltip_attributes.x
+        y = tooltip_attributes.y
 
         # Draw rectangle
         cr.set_source_rgba(0.2, 0.2, 0.8, 0.8)
-        cr.rectangle(x_to_use,
-                     rect_y,
-                     width_to_use,
-                     height_to_use)
+        cr.rectangle(x,
+                     y,
+                     tooltip_attributes.width,
+                     tooltip_attributes.height)
         cr.fill()
 
         cr.set_source_rgba(0.8, 0.6, 0.2, 0.6)
-        cr.rectangle(x_to_use,
-                     rect_y,
-                     width_to_use,
-                     height_to_use)
+        cr.rectangle(x,
+                     y,
+                     tooltip_attributes.width,
+                     tooltip_attributes.height)
         cr.stroke()
 
         # The texts
-        number_of_time_texts = len(time_text_list)
-        number_of_texts = number_of_time_texts + len(description_text_list)
-        current_y = rect_y + heights[0] + padding
+        number_of_time_texts = len(tooltip_attributes.time_texts)
+        number_of_texts = number_of_time_texts + len(tooltip_attributes.description_texts)
+        heights = tooltip_attributes.text_heights
+        current_y = y + heights[0] + padding
         for i, t in enumerate(texts):
             # Add some padding between the lines
             if 0 < i:
@@ -305,8 +289,8 @@ class TimelineOverlay(Gtk.DrawingArea):
             elif i < number_of_texts:
                 cr.set_source_rgb(0.9, 0.9, 0.9)
             else:
-                r, g, b = color_helper.activity_to_color_floats(is_active)
+                r, g, b = color_helper.activity_to_color_floats(tooltip_attributes.is_active)
                 cr.set_source_rgb(r, g, b)
 
-            cr.move_to(x_to_use + padding, current_y)
+            cr.move_to(x + padding, current_y)
             cr.show_text(t)
