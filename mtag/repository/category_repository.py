@@ -26,5 +26,11 @@ class CategoryRepository:
         db_c = cursor.fetchone()
         return self._from_dbo(db_c)
 
+    def update(self, conn: sqlite3.Connection, category: Category):
+        cursor = conn.execute("UPDATE category SET c_url=:url WHERE c_id=:db_id",
+                              {"url": category.url, "db_id": category.db_id})
+        conn.commit()
+        cursor.close()
+
     def _from_dbo(self, db_c: Dict) -> Category:
-        return Category(name=db_c["c_name"], db_id=db_c["c_id"])
+        return Category(name=db_c["c_name"], db_id=db_c["c_id"], url=db_c["c_url"])

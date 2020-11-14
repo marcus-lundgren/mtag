@@ -1,15 +1,10 @@
-from datetime import datetime
-
 from mtag.helper import database_helper, statistics_helper, datetime_helper
 from mtag.repository import CategoryRepository
-
-import gi
-
 from mtag.widget.timeline_page import TimelinePage
 
+import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
-
+from gi.repository import Gtk
 
 class MTagWindow(Gtk.Window):
     def __init__(self):
@@ -44,9 +39,9 @@ class MTagWindow(Gtk.Window):
         category_view.add(categories_tree_view)
 
         category_details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        title = Gtk.Label(label="-- Details --")
-        title.set_xalign(0)
+        title = Gtk.Label(label="== Details ==")
         category_details.pack_start(title, expand=False, fill=False, padding=10)
+        self.current_category = None
 
         grid = Gtk.Grid()
         name_title = Gtk.Label(label="Name: ")
@@ -61,7 +56,17 @@ class MTagWindow(Gtk.Window):
         grid.attach(time_tagged_title, 0, 1, 1, 1)
         self.total_time_label= Gtk.Label(label="-")
         self.total_time_label.set_xalign(0)
-        grid.attach(self.total_time_label, 1, 1, 1, 1)
+        grid.attach(self.total_time_label, 1, 1, 2, 1)
+
+        url_title = Gtk.Label(label="URL: ")
+        url_title.set_xalign(0)
+        grid.attach(url_title, 0, 2, 1, 1)
+        self.url_entry= Gtk.Entry()
+        grid.attach(self.url_entry, 1, 2, 2, 1)
+
+        save_button = Gtk.Button("Save")
+        save_button.connect("clicked", self._do_save_clicked)
+        grid.attach(save_button, 0, 3, 2, 1)
         category_details.add(grid)
 
         category_view.pack_end(category_details, expand=True, fill=True, padding=20)
@@ -74,6 +79,16 @@ class MTagWindow(Gtk.Window):
         self.add(outer_nb)
         self.show_all()
 
+    def _do_save_clicked(self, w):
+        if self.current_category is None:
+            return
+
+        cr = CategoryRepository()
+        conn = database_helper.create_connection()
+        self.current_category.url = self.url_entry.get_text()
+        cr.update(conn=conn, category=self.current_category)
+        conn.close()
+
     def _do_button_press(self, w, e):
         p, c, *_ = w.get_path_at_pos(e.x, e.y)
         i = self.category_store.get_iter(p)
@@ -85,8 +100,10 @@ class MTagWindow(Gtk.Window):
         conn = database_helper.create_connection()
         category = cr.get(conn=conn, db_id=category_db_id)
         conn.close()
+        self.current_category = category
         seconds = statistics_helper.get_total_category_tagged_time(category.name)
         h, m, s = datetime_helper.seconds_to_hour_minute_second(seconds)
         total_time_str = f"{h} hours, {m} minutes, {s} seconds"
         self.name_label.set_label(category.name)
         self.total_time_label.set_label(total_time_str)
+        self.url_entry.set_text(category.url)

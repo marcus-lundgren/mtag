@@ -1,8 +1,8 @@
-class Category:
-    def __init__(self, name: str, db_id: int = None):
-        self.db_id = db_id
-        self._name = name
+from typing import Optional
 
-    @property
-    def name(self):
-        return self._name
+
+class Category:
+    def __init__(self, name: str, url: Optional[str] = None, db_id: Optional[int] = None):
+        self.db_id = db_id
+        self.name = name
+        self.url = url

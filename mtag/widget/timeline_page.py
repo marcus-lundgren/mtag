@@ -4,7 +4,7 @@ import webbrowser
 
 from mtag.entity import TaggedEntry
 from mtag.helper import datetime_helper, database_helper
-from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
+from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository, CategoryRepository
 from . import CalendarPanel, TimelineCanvas, TimelineMinimap, TimelineOverlay
 
 import gi
@@ -157,11 +157,15 @@ class TimelinePage(Gtk.Box):
                                                    le.application_window.title])
         self.logged_entries_tree_view.columns_autosize()
 
+        cr = CategoryRepository()
         self.tagged_entries_list_store.clear()
         for te_category, te_group in groupby(sorted(tagged_entries, key=lambda x: x.category.db_id),
                                              key=lambda x: x.category.name):
-            duration = sum([te.duration for te in te_group], start=datetime.timedelta())
+            te_list = list(te_group)
+            duration = sum([te.duration for te in te_list], start=datetime.timedelta())
+
+            category = te_list[0].category
             self.tagged_entries_list_store.append([datetime_helper.to_duration_str(duration),
                                                    te_category,
-                                                   "https://www.google.com"])
+                                                   category.url])
         self.tagged_entries_tree_view.columns_autosize()
