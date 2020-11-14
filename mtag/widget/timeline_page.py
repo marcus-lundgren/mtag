@@ -114,8 +114,9 @@ class TimelinePage(Gtk.Box):
             i = self.tagged_entries_list_store.get_iter(p)
             v = self.tagged_entries_list_store.get_value(i, 2)
 
-            print(v)
-            webbrowser.open(v)
+            if v != "":
+                print(v)
+                webbrowser.open(v)
 
     def _do_tagged_entry_created(self, _, te: TaggedEntry):
         tagged_entry_repository = TaggedEntryRepository()
