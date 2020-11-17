@@ -11,7 +11,7 @@ class CategoryRepository:
         return cursor.lastrowid
 
     def get_all(self, conn: sqlite3.Connection):
-        cursor = conn.execute("SELECT * FROM category")
+        cursor = conn.execute("SELECT * FROM category ORDER BY c_name ASC")
         db_categories = cursor.fetchall()
 
         categories = []
