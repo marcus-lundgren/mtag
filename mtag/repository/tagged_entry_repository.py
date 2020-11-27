@@ -1,13 +1,16 @@
 import sqlite3
 import datetime
+from typing import Dict, List
+
 from mtag.helper import datetime_helper
-from mtag.entity import TaggedEntry
+from mtag.entity import TaggedEntry, Category
 from mtag.repository import CategoryRepository
 
 
 class TaggedEntryRepository:
     def __init__(self):
         self.category_repository = CategoryRepository()
+        self.category_cache = {}
 
     def insert(self, conn: sqlite3.Connection, tagged_entry: TaggedEntry) -> None:
         cursor = conn.execute("SELECT te_id, te_start"
@@ -57,7 +60,7 @@ class TaggedEntryRepository:
         conn.execute("DELETE FROM tagged_entry WHERE te_id=:db_id", {"db_id": db_id})
         conn.commit()
 
-    def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime):
+    def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime) -> List[TaggedEntry]:
         from_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
         to_datetime = from_datetime + datetime.timedelta(days=1)
         cursor = conn.execute("SELECT * FROM tagged_entry WHERE"
@@ -87,8 +90,16 @@ class TaggedEntryRepository:
         return 0 if total_seconds is None else total_seconds
 
     def _from_dbo(self, conn: sqlite3.Connection, db_te: dict) -> TaggedEntry:
-        category = self.category_repository.get(conn=conn, db_id=db_te["te_category_id"])
+        category = self._get_category(conn=conn, c_id=db_te["te_category_id"])
         return TaggedEntry(start=datetime_helper.timestamp_to_datetime(db_te["te_start"]),
                            stop=datetime_helper.timestamp_to_datetime(db_te["te_end"]),
                            category=category,
                            db_id=db_te["te_id"])
+
+    def _get_category(self, conn: sqlite3.Connection, c_id: int) -> Category:
+        if c_id in self.category_cache:
+            return self.category_cache[c_id]
+
+        category = self.category_repository.get(conn=conn, db_id=c_id)
+        self.category_cache[c_id] = category
+        return category

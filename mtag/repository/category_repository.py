@@ -1,5 +1,5 @@
 import sqlite3
-from typing import Dict
+from typing import Dict, List
 
 from mtag.entity import Category
 
@@ -10,7 +10,7 @@ class CategoryRepository:
         conn.commit()
         return cursor.lastrowid
 
-    def get_all(self, conn: sqlite3.Connection):
+    def get_all(self, conn: sqlite3.Connection) -> List[Category]:
         cursor = conn.execute("SELECT * FROM category ORDER BY c_name ASC")
         db_categories = cursor.fetchall()
 
@@ -26,7 +26,7 @@ class CategoryRepository:
         db_c = cursor.fetchone()
         return self._from_dbo(db_c)
 
-    def update(self, conn: sqlite3.Connection, category: Category):
+    def update(self, conn: sqlite3.Connection, category: Category) -> None:
         cursor = conn.execute("UPDATE category SET c_url=:url WHERE c_id=:db_id",
                               {"url": category.url, "db_id": category.db_id})
         conn.commit()

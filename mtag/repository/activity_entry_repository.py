@@ -1,12 +1,14 @@
 import sqlite3
 import datetime
+from typing import Optional, List
+
 from mtag.helper import datetime_helper
 from mtag.entity import ActivityEntry
 
 
 class ActivityEntryRepository:
     @staticmethod
-    def insert(conn: sqlite3.Connection, activity_entry: ActivityEntry):
+    def insert(conn: sqlite3.Connection, activity_entry: ActivityEntry) -> None:
         conn.execute("INSERT INTO activity_entry(ae_start, ae_last_update, ae_active)"
                      " VALUES (:start, :last_update, :active)",
                      {"start": datetime_helper.datetime_to_timestamp(activity_entry.start),
@@ -14,7 +16,7 @@ class ActivityEntryRepository:
                       "active": 1 if activity_entry.active else 0})
         conn.commit()
 
-    def get_latest_entry(self, conn: sqlite3.Connection):
+    def get_latest_entry(self, conn: sqlite3.Connection) -> Optional[ActivityEntry]:
         cursor = conn.execute(
                 "SELECT * FROM activity_entry ORDER BY ae_last_update DESC")
         db_ae = cursor.fetchone()
@@ -23,7 +25,7 @@ class ActivityEntryRepository:
 
         return self._from_dbo(db_ae=db_ae)
 
-    def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime):
+    def get_all_by_date(self, conn: sqlite3.Connection, date: datetime.datetime) -> List[ActivityEntry]:
         from_datetime = datetime.datetime(year=date.year, month=date.month, day=date.day)
         to_datetime = from_datetime + datetime.timedelta(days=1)
         cursor = conn.execute("SELECT * FROM activity_entry WHERE"
@@ -38,7 +40,7 @@ class ActivityEntryRepository:
         activity_entries = [self._from_dbo(db_ae=db_ae) for db_ae in db_activity_entries]
         return activity_entries
 
-    def _from_dbo(self, db_ae: dict):
+    def _from_dbo(self, db_ae: dict) -> ActivityEntry:
         return ActivityEntry(db_id=db_ae["ae_id"],
                              start=datetime_helper.timestamp_to_datetime(db_ae["ae_start"]),
                              stop=datetime_helper.timestamp_to_datetime(db_ae["ae_last_update"]),
