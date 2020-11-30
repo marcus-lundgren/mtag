@@ -4,7 +4,11 @@ from typing import Tuple
 
 
 def activity_to_color_floats(active: bool) -> Tuple[float, float, float]:
-    return (0.12, 0.93, 0.12) if active else (1.0, 0.60, 0.72)
+    return (0.12, 0.93, 0.12) if active else (0.5, 0.5, 0.5)
+
+
+def activity_to_text_color_floats(active: bool) -> Tuple[float, float, float]:
+    return (0.12, 0.93, 0.12) if active else (0.75, 0.75, 0.75)
 
 
 @lru_cache(maxsize=100)
