@@ -12,7 +12,8 @@ configuration = configuration_helper.get_configuration()
 
 
 def register(window_title: Optional[str], application_name: Optional[str],
-             application_path: Optional[str], idle_period: Optional[int]) -> None:
+             application_path: Optional[str], idle_period: Optional[int],
+             locked_state: bool = False) -> None:
     window_title_to_use = window_title if window_title is not None else "N/A"
     application_name_to_use = application_name if application_name is not None else "N/A"
     application_path_to_use = application_path if application_path is not None else "N/A"
@@ -31,14 +32,16 @@ def register(window_title: Optional[str], application_name: Optional[str],
 
     # Logged entry
     register_logged_entry(application_window=application_window)
-    register_activity_entry(idle_period=idle_period_to_use)
+
+    # Activity entry
+    register_activity_entry(idle_period=idle_period_to_use, locked_state=locked_state)
 
 
-def register_activity_entry(idle_period: int):
+def register_activity_entry(idle_period: int, locked_state: bool):
     global configuration
     activity_entry_repository = ActivityEntryRepository()
     datetime_now = datetime.datetime.now()
-    was_active = idle_period < configuration.inactive_after_idle_seconds
+    was_active = not locked_state and idle_period < configuration.inactive_after_idle_seconds
 
     db_connection = database_helper.create_connection()
     last_activity_entry = activity_entry_repository.get_latest_entry(conn=db_connection)

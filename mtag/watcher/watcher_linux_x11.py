@@ -39,6 +39,28 @@ def get_idle_time():
     return idle_seconds
 
 
+whoiam = subprocess.run(["whoami"], stdout=subprocess.PIPE, universal_newlines=True).stdout.strip()
+session_id = subprocess.run(["loginctl", "show-user", "-pSessions", "--value", whoiam],
+                            stdout=subprocess.PIPE, universal_newlines=True).stdout.strip()
+
+logging.debug(whoiam, "=>", session_id)
+
+
+def get_locked_state():
+    global session_id
+    locked_hint = subprocess.run(["loginctl", "show-session", "-pLockedHint", "--value", session_id],
+                                 stdout=subprocess.PIPE).stdout.strip()
+    if locked_hint.lower() == b"no":
+        logging.debug("Not locked")
+        return False
+    elif locked_hint.lower() == b"yes":
+        logging.debug("Locked")
+        return True
+    else:
+        logging.debug("Unknown lock hint:", locked_hint)
+        return False
+
+
 def watch() -> None:
     logging.info("== STARTED ==")
 
@@ -50,13 +72,16 @@ def watch() -> None:
     logging.debug(active_window_id)
     idle_seconds = get_idle_time()
 
+    locked_state = get_locked_state()
+
     # If the window handle id is 0, then make a logged entry with default values
     if active_window_id == "0x0":
         logging.info("No active window.")
         watcher_helper.register(window_title=None,
                                 application_name=None,
                                 application_path=None,
-                                idle_period=idle_seconds)
+                                idle_period=idle_seconds,
+                                locked_state=locked_state)
         return
 
     active_window_x11_information = subprocess.run(["xprop", "-id", active_window_id,
@@ -106,4 +131,5 @@ def watch() -> None:
     watcher_helper.register(window_title=active_window_title,
                             application_name=application_name,
                             application_path=application_path,
-                            idle_period=idle_seconds)
+                            idle_period=idle_seconds,
+                            locked_state=locked_state)
