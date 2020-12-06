@@ -2,13 +2,13 @@ import datetime
 from collections import namedtuple
 from typing import List, Optional
 
+import cairo
+import gi
+
 from mtag import entity
 from mtag.helper import color_helper, database_helper, timeline_helper
 from mtag.repository import CategoryRepository
 from mtag.widget import CategoryChoiceDialog, TimelineContextPopover
-
-import cairo
-import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
@@ -102,7 +102,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self._update_canvas_constants()
         self.queue_draw()
 
-    def _update_canvas_constants(self):
+    def _update_canvas_constants(self) -> None:
         canvas_height = self.get_allocated_height()
         canvas_width = self.get_allocated_width()
 
@@ -191,7 +191,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self._update_canvas_constants()
         self.queue_draw()
 
-    def set_boundaries(self, start: datetime.datetime, stop: datetime.datetime):
+    def set_boundaries(self, start: datetime.datetime, stop: datetime.datetime) -> None:
         self.timeline_start = start
         self.timeline_end = stop
         self.timeline_delta = stop - start

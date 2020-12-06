@@ -43,26 +43,26 @@ class CalendarButton(Gtk.Button):
         self.calendar.select_day(new_date.day)
         self._update_label()
 
-    def get_selected_date(self):
+    def get_selected_date(self) -> datetime.datetime:
         return self.calendar.get_date_as_datetime()
 
-    def _show_popup(self, _):
+    def _show_popup(self, _) -> None:
         self.calendar_popover.show_all()
         self.calendar_popover.popup()
 
-    def _do_today_button_clicked(self, _):
+    def _do_today_button_clicked(self, _) -> None:
         today = datetime.date.today()
         self.calendar.select_month(today.month - 1, today.year)
         self.calendar.select_day(today.day)
         selected_date = self.get_selected_date()
         self._date_selected(None, selected_date)
 
-    def _date_selected(self, _, selected_date):
+    def _date_selected(self, _, selected_date) -> None:
         self.calendar_popover.popdown()
         self._update_label()
         self.emit("day-selected", selected_date)
 
-    def _update_label(self):
+    def _update_label(self) -> None:
         date = self.calendar.get_date_as_datetime()
         date_as_str = date.strftime("%a %b %d")
         self.set_label(date_as_str)

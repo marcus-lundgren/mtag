@@ -44,7 +44,7 @@ class CategoryChoiceDialog(Gtk.Dialog):
         if e.keyval == Gdk.KEY_Return and len(self.get_chosen_category_value()) > 0:
             self.response(Gtk.ResponseType.OK)
 
-    def get_chosen_category_value(self):
+    def get_chosen_category_value(self) -> str:
         tree_iter = self.combobox.get_active_iter()
         if tree_iter is not None:
             model = self.combobox.get_model()

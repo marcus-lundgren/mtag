@@ -31,15 +31,15 @@ class Calendar(Gtk.Calendar):
     def _register_not_single_click_select(self, _):
         self._last_signal_was_not_single_click = True
 
-    def get_date_as_str(self):
+    def get_date_as_str(self) -> str:
         year, month, day = self.get_date()
         return f"{year}-{str(month + 1).rjust(2, '0')}-{str(day).rjust(2, '0')}"
 
-    def get_date_as_datetime(self):
+    def get_date_as_datetime(self) -> datetime.datetime:
         year, month, day = self.get_date()
         return datetime.datetime(year=year, month=month + 1, day=day)
 
-    def _on_date_selected(self, _):
+    def _on_date_selected(self, _) -> None:
         if self._last_signal_was_not_single_click:
             # Reset our signal watching state
             self._last_signal_was_not_single_click = False
