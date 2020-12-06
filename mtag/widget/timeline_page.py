@@ -22,7 +22,7 @@ class TimelinePage(Gtk.Box):
         self.calendar_panel = CalendarPanel()
         self.calendar_panel.connect("day-selected", self._on_new_day_selected)
         top_bar.pack_start(self.calendar_panel, expand=True, fill=False, padding=0)
-        self.add(top_bar)
+        self.pack_start(top_bar, expand=False, fill=False, padding=0)
 
         self._current_date = self.calendar_panel.get_selected_date()
 
