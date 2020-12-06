@@ -19,11 +19,6 @@ class CategoryPage(Gtk.Box):
             column.set_sort_column_id(i)
             categories_tree_view.append_column(column)
 
-        conn = database_helper.create_connection()
-        categories = CategoryRepository().get_all(conn)
-        conn.close()
-        for c in categories:
-            self.category_store.append([c.name, c.db_id])
         categories_tree_view.set_headers_clickable(True)
         categories_tree_view.show_all()
         self.add(categories_tree_view)
@@ -62,6 +57,19 @@ class CategoryPage(Gtk.Box):
 
         self.pack_end(category_details, expand=True, fill=True, padding=20)
         self.show_all()
+
+    def update_page(self):
+        conn = database_helper.create_connection()
+        categories = CategoryRepository().get_all(conn)
+        conn.close()
+        self.category_store.clear()
+        for c in categories:
+            self.category_store.append([c.name, c.db_id])
+
+        self.current_category = None
+        self.name_label.set_label("-")
+        self.total_time_label.set_label("-")
+        self.url_entry.set_text("-")
 
     def _do_save_clicked(self, w):
         if self.current_category is None:

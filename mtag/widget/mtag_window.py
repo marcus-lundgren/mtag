@@ -27,11 +27,16 @@ class MTagWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
 
         outer_nb = Gtk.Notebook()
+        outer_nb.set_name("nb")
+        outer_nb.connect("switch-page", self._do_switch_page)
 
         timeline_page = TimelinePage(parent=self)
         category_page = CategoryPage()
-        outer_nb.set_name("nb")
         outer_nb.append_page(timeline_page, Gtk.Label(label="Timeline"))
         outer_nb.append_page(category_page, Gtk.Label(label="Categories"))
         self.add(outer_nb)
         self.show_all()
+
+    def _do_switch_page(self, nb: Gtk.Notebook, _, page_num: int):
+        page = nb.get_nth_page(page_num=page_num)
+        page.update_page()

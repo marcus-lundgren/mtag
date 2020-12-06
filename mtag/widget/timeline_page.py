@@ -86,6 +86,9 @@ class TimelinePage(Gtk.Box):
         self.connect("key-release-event", self._do_key_release_event)
         self.show_all()
 
+    def update_page(self):
+        self._reload_logged_entries_from_date()
+
     def _do_key_press_event(self, _, e: Gdk.EventKey):
         # Handle canvas zoom and movement
         if e.state & Gdk.ModifierType.CONTROL_MASK:
