@@ -144,17 +144,16 @@ class TimelineOverlay(Gtk.DrawingArea):
         highlight_rectangle = None
 
         # Show the current tagged entry time text if relevant
-        if timeline_canvas.current_tagged_entry is not None:
-            current_te = timeline_canvas.current_tagged_entry
-            current_te_time_text = datetime_helper.to_time_text(current_te.start, current_te.stop,
-                                                            current_te.stop - current_te.start)
+        if current_tagged_entry is not None:
+            current_te_time_text = datetime_helper.to_time_text(current_tagged_entry.start, current_tagged_entry.stop,
+                                                                current_tagged_entry.stop - current_tagged_entry.start)
             time_texts = [current_te_time_text]
 
         if timeline_canvas.le_start_y <= mouse_y <= timeline_canvas.le_end_y:
             for le in timeline_canvas.visible_logged_entries:
                 if le.start_x <= mouse_x <= le.stop_x:
                     self.moused_over_entity = le
-                    if timeline_canvas.current_tagged_entry is None:
+                    if current_tagged_entry is None:
                         time_details = datetime_helper.to_time_text(le.entry.start, le.entry.stop, le.entry.duration)
                         time_texts.append(time_details)
                     desc_texts.append(le.entry.application_window.application.name)
@@ -170,7 +169,7 @@ class TimelineOverlay(Gtk.DrawingArea):
             for te in timeline_canvas.visible_tagged_entries:
                 if te.start_x <= mouse_x <= te.stop_x:
                     self.moused_over_entity = te
-                    if timeline_canvas.current_tagged_entry is None:
+                    if current_tagged_entry is None:
                         time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
                         time_texts.append(time_details)
                     desc_texts.append(te.entry.category.name)
