@@ -20,10 +20,27 @@ def get_idle_duration():
     return millis // 1000
 
 
+def get_locked_state():
+    global session_id
+    locked_hint = subprocess.run(["tasklist", '/FI', "IMAGENAME eq LogonUI.exe"],
+                                 stdout=subprocess.PIPE).stdout.strip()
+    if locked_hint == b"INFO: No tasks are running which match the specified criteria.":
+        logging.debug("Not locked")
+        return False
+    elif b"LogonUI.exe" in locked_hint:
+        logging.debug("Locked")
+        return True
+    else:
+        logging.warning("Unknown lock hint:", locked_hint)
+        return False
+
+
 def watch():
     logging.info("== STARTED ==")
+
     pid_param = c_ulong()
     idle_period = get_idle_duration()
+    locked_state = get_locked_state()
     window_handle = windll.user32.GetForegroundWindow()
     logging.debug(f"Got window handle: {window_handle}")
 
@@ -59,7 +76,8 @@ def watch():
         watcher_helper.register(window_title=active_window_title,
                                 application_name=None,
                                 application_path=None,
-                                idle_period=idle_period)
+                                idle_period=idle_period,
+                                locked_state=locked_state)
         return
 
     for line in ps_output.splitlines():
@@ -96,4 +114,5 @@ def watch():
     watcher_helper.register(window_title=active_window_title,
                             application_name=application_name,
                             application_path=path,
-                            idle_period=idle_period)
+                            idle_period=idle_period,
+                            locked_state=locked_state)
