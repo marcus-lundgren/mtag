@@ -199,6 +199,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         for r in self.dirty_rectangles:
             self.queue_draw_area(r.x, r.y, r.width, r.height)
 
+        # Prepare the dirty rectangles for the next time.
         self.dirty_rectangles = [current_guidingline_rectangle, dirty_new_tooltip_rect]
         if highlight_rectangle is not None:
             self.dirty_rectangles.append(highlight_rectangle)
