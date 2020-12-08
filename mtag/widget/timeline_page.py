@@ -18,10 +18,14 @@ class TimelinePage(Gtk.Box):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
 
         # Top bar
+        self.tagged_time_label = Gtk.Label()
         top_bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.calendar_panel = CalendarPanel()
         self.calendar_panel.connect("day-selected", self._on_new_day_selected)
-        top_bar.pack_start(self.calendar_panel, expand=True, fill=False, padding=0)
+        top_bar.pack_start(self.calendar_panel, expand=False, fill=False, padding=0)
+        top_bar.pack_start(Gtk.Label(), expand=True, fill=True, padding=10)
+        top_bar.pack_start(Gtk.Label(label="Tagged time:"), expand=False, fill=False, padding=10)
+        top_bar.pack_start(self.tagged_time_label, expand=False, fill=False, padding=10)
         self.pack_start(top_bar, expand=False, fill=False, padding=0)
 
         self._current_date = self.calendar_panel.get_selected_date()
@@ -163,13 +167,16 @@ class TimelinePage(Gtk.Box):
 
         cr = CategoryRepository()
         self.tagged_entries_list_store.clear()
+        total_duration = datetime.timedelta()
         for te_category, te_group in groupby(sorted(tagged_entries, key=lambda x: x.category.db_id),
                                              key=lambda x: x.category.name):
             te_list = list(te_group)
             duration = sum([te.duration for te in te_list], start=datetime.timedelta())
+            total_duration += duration
 
             category = te_list[0].category
             self.tagged_entries_list_store.append([datetime_helper.to_duration_str(duration),
                                                    te_category,
                                                    category.url])
         self.tagged_entries_tree_view.columns_autosize()
+        self.tagged_time_label.set_label(datetime_helper.to_duration_str(total_duration))
