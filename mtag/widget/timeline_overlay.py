@@ -97,8 +97,8 @@ class TimelineOverlay(Gtk.DrawingArea):
         mouse_y = e.y
 
         timeline_canvas = self.timeline_canvas
-        stop_date = timeline_canvas.pixel_to_datetime(mouse_x)
-        next_moused_datetime = stop_date
+        current_moused_dt = timeline_canvas.pixel_to_datetime(mouse_x)
+        next_moused_datetime = current_moused_dt
 
         canvas_height = self.get_allocated_height()
         canvas_width = self.get_allocated_width()
@@ -106,7 +106,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         current_tagged_entry = timeline_canvas.current_tagged_entry
         current_tagged_entry_dirty_rectangle = None
         if current_tagged_entry is not None:
-            datetime_used = timeline_canvas._set_tagged_entry_stop_date(stop_date,
+            datetime_used = timeline_canvas._set_tagged_entry_stop_date(current_moused_dt,
                                                                         current_tagged_entry,
                                                                         timeline_canvas.tagged_entries)
             start_x = int(timeline_canvas.datetime_to_pixel(current_tagged_entry.start, canvas_width))
@@ -136,8 +136,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         self.current_moused_datetime = next_moused_datetime
         self.actual_mouse_pos["x"], self.actual_mouse_pos["y"] = mouse_x, mouse_y
 
-        dt = timeline_canvas.pixel_to_datetime(mouse_x)
-        time_texts = [datetime_helper.to_time_str(dt)]
+        time_texts = [datetime_helper.to_time_str(current_moused_dt)]
         desc_texts = []
 
         self.moused_over_entity = None
