@@ -4,6 +4,10 @@ MTag is an application that tracks the focused window's title and application. T
 
 The collected data is stored locally on the computer in a SQLite database. Some configuration is made in a JSON formatted file.
 
+## License
+
+GPLv3.
+
 ## Requirements
 
 The supported platforms are Linux (X11 and Logind are required) and Windows (only tested on 10, may work on older versions).
