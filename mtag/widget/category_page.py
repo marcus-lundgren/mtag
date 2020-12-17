@@ -9,6 +9,7 @@ from gi.repository import Gtk
 class CategoryPage(Gtk.Box):
     def __init__(self):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, name="category_view")
+        self.current_category = None
 
         self.category_store = Gtk.ListStore(str, int)
         categories_tree_view: Gtk.TreeView = Gtk.TreeView.new_with_model(self.category_store)
@@ -82,7 +83,11 @@ class CategoryPage(Gtk.Box):
         conn.close()
 
     def _do_button_press(self, w, e):
-        p, c, *_ = w.get_path_at_pos(e.x, e.y)
+        item_at_path = w.get_path_at_pos(e.x, e.y)
+        if item_at_path is None:
+            return
+
+        p, c, *_ = item_at_path
         i = self.category_store.get_iter(p)
         v = self.category_store.get_value(i, 1)
         self._update_details_pane(v)
