@@ -27,27 +27,25 @@ class CategoryPage(Gtk.Box):
 
         self.add(ctw_sw)
 
-        category_details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, name="category_details")
-        self.current_category = None
-
         grid = Gtk.Grid()
         grid.set_column_homogeneous(homogeneous=True)
-        grid.set_row_homogeneous(homogeneous=True)
-        name_title = Gtk.Label(label="Name: ")
+        grid.set_row_spacing(5)
+        grid.set_margin_top(5)
+        name_title = Gtk.Label(label="Name")
         name_title.set_xalign(0)
         grid.attach(name_title, 0, 0, 1, 1)
         self.name_label = Gtk.Label("-")
         self.name_label.set_xalign(0)
-        grid.attach(self.name_label, 1, 0, 1, 1)
+        grid.attach(self.name_label, 1, 0, 2, 1)
 
-        time_tagged_title = Gtk.Label(label="Time tagged: ")
+        time_tagged_title = Gtk.Label(label="Time tagged")
         time_tagged_title.set_xalign(0)
         grid.attach(time_tagged_title, 0, 1, 1, 1)
         self.total_time_label= Gtk.Label(label="-")
         self.total_time_label.set_xalign(0)
         grid.attach(self.total_time_label, 1, 1, 2, 1)
 
-        url_title = Gtk.Label(label="URL: ")
+        url_title = Gtk.Label(label="URL")
         url_title.set_xalign(0)
         grid.attach(url_title, 0, 2, 1, 1)
         self.url_entry= Gtk.Entry()
@@ -56,10 +54,8 @@ class CategoryPage(Gtk.Box):
         save_button = Gtk.Button("Save")
         save_button.connect("clicked", self._do_save_clicked)
         grid.attach(save_button, 2, 4, 1, 1)
-        category_details.add(grid)
-        category_details.set_name("category_details")
 
-        self.pack_end(category_details, expand=True, fill=True, padding=20)
+        self.pack_end(grid, expand=True, fill=True, padding=20)
         self.show_all()
 
     def update_page(self):
