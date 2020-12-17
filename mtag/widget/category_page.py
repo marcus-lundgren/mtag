@@ -11,7 +11,7 @@ class CategoryPage(Gtk.Box):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, name="category_view")
 
         self.category_store = Gtk.ListStore(str, int)
-        categories_tree_view = Gtk.TreeView.new_with_model(self.category_store)
+        categories_tree_view: Gtk.TreeView = Gtk.TreeView.new_with_model(self.category_store)
         categories_tree_view.connect("button-press-event", self._do_button_press)
         for i, title in enumerate(["Name"]):
             renderer = Gtk.CellRendererText()
@@ -21,14 +21,18 @@ class CategoryPage(Gtk.Box):
 
         categories_tree_view.set_headers_clickable(True)
         categories_tree_view.show_all()
-        self.add(categories_tree_view)
+        ctw_sw = Gtk.ScrolledWindow()
+        ctw_sw.set_size_request(200, -1)
+        ctw_sw.add(categories_tree_view)
+
+        self.add(ctw_sw)
 
         category_details = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, name="category_details")
-        title = Gtk.Label(label="== Details ==")
-        category_details.pack_start(title, expand=False, fill=False, padding=10)
         self.current_category = None
 
         grid = Gtk.Grid()
+        grid.set_column_homogeneous(homogeneous=True)
+        grid.set_row_homogeneous(homogeneous=True)
         name_title = Gtk.Label(label="Name: ")
         name_title.set_xalign(0)
         grid.attach(name_title, 0, 0, 1, 1)
@@ -51,7 +55,7 @@ class CategoryPage(Gtk.Box):
 
         save_button = Gtk.Button("Save")
         save_button.connect("clicked", self._do_save_clicked)
-        grid.attach(save_button, 0, 3, 2, 1)
+        grid.attach(save_button, 2, 4, 1, 1)
         category_details.add(grid)
         category_details.set_name("category_details")
 
