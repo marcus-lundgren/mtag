@@ -17,7 +17,12 @@ def register(window_title: Optional[str], application_name: Optional[str],
     window_title_to_use = window_title if window_title is not None else "N/A"
     application_name_to_use = application_name if application_name is not None else "N/A"
     application_path_to_use = application_path if application_path is not None else "N/A"
+    application_path_to_use = application_path_to_use if configuration.log_application_path else "N/A"
     idle_period_to_use = idle_period if idle_period is not None else 0
+
+    logging.info(f"Idle period in seconds: {idle_period_to_use}")
+    logging.info(application_path_to_use)
+    logging.info(f"{application_name_to_use} -> {window_title_to_use}")
 
     # Application path
     application_path = insert_if_needed_and_get_application_path(application_path=application_path_to_use)

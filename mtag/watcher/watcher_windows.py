@@ -1,8 +1,7 @@
 from ctypes import *
 import subprocess
 import logging
-from mtag.helper import watcher_helper
-
+from . import watcher_helper
 
 class LASTINPUTINFO(Structure):
     _fields_ = [
@@ -72,7 +71,7 @@ def watch():
     ps_values = {}
 
     if "Get-Process : Cannot find a process with the process identifier" in ps_output:
-        logging.warn("Unable to find process data. Register what we have.")
+        logging.warning("Unable to find process data. Register what we have.")
         watcher_helper.register(window_title=active_window_title,
                                 application_name=None,
                                 application_path=None,
@@ -106,10 +105,6 @@ def watch():
         if len(np_value) > 0:
             application_name = np_value
             break
-
-    logging.info(idle_period)
-    logging.info(path)
-    logging.info(f"{application_name} => {active_window_title}")
 
     watcher_helper.register(window_title=active_window_title,
                             application_name=application_name,

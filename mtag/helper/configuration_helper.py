@@ -4,15 +4,17 @@ from mtag.helper import filesystem_helper
 
 
 class Configuration:
-    def __init__(self, inactive_after_idle_seconds: int, seconds_before_new_entry: int):
+    def __init__(self, inactive_after_idle_seconds: int, seconds_before_new_entry: int, log_application_path: bool):
         self.inactive_after_idle_seconds = inactive_after_idle_seconds
         self.seconds_before_new_entry = seconds_before_new_entry
+        self.log_application_path = log_application_path
 
 
 def get_configuration() -> Configuration:
     default_configuration = {
         "seconds_before_new_entry": 10,
-        "inactive_after_idle_seconds": 600
+        "inactive_after_idle_seconds": 600,
+        "log_application_path": False
     }
 
     userconfig_path = filesystem_helper.get_userconfiguration_path()

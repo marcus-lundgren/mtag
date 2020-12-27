@@ -4,8 +4,7 @@ import os
 import re
 import subprocess
 
-from mtag.helper import watcher_helper
-
+from . import watcher_helper
 
 class XScreenSaverInfo(ctypes.Structure):
     _fields_ = [('window', ctypes.c_ulong),  # screen saver window
@@ -35,7 +34,6 @@ def get_idle_time():
     global xss, dpy, xss_info
     xss.XScreenSaverQueryInfo(dpy, root, xss_info)
     idle_seconds = xss_info.contents.idle // 1000
-    logging.info(f"Idle time in seconds: {idle_seconds}")
     return idle_seconds
 
 
@@ -126,8 +124,6 @@ def watch() -> None:
         application_path = application_path.replace("\0", " ")
         application_path = application_path.strip()
 
-    logging.info(application_path)
-    logging.info(f"{application_name} -> {active_window_title}")
     watcher_helper.register(window_title=active_window_title,
                             application_name=application_name,
                             application_path=application_path,
