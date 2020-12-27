@@ -1,9 +1,7 @@
-from ..helper import database_helper, statistics_helper, datetime_helper
-from ..repository import CategoryRepository
-from . import CategoryPage
-from . import TimelinePage
+from . import CategoryPage, SettingPage, TimelinePage
 
 import gi
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
@@ -26,14 +24,17 @@ class MTagWindow(Gtk.Window):
 
         self.connect("destroy", Gtk.main_quit)
 
+        timeline_page = TimelinePage(parent=self)
+        category_page = CategoryPage()
+        setting_page = SettingPage()
+
         outer_nb = Gtk.Notebook()
         outer_nb.set_name("nb")
         outer_nb.connect("switch-page", self._do_switch_page)
 
-        timeline_page = TimelinePage(parent=self)
-        category_page = CategoryPage()
         outer_nb.append_page(timeline_page, Gtk.Label(label="Timeline"))
         outer_nb.append_page(category_page, Gtk.Label(label="Categories"))
+        outer_nb.append_page(setting_page, Gtk.Label(label="Settings"))
         self.add(outer_nb)
         self.show_all()
 

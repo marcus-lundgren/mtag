@@ -7,4 +7,5 @@ from .timeline_canvas import TimelineCanvas
 from .timeline_overlay import TimelineOverlay
 from .category_page import CategoryPage
 from .timeline_page import TimelinePage
+from .setting_page import SettingPage
 from .mtag_window import MTagWindow
