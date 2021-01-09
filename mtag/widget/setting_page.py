@@ -16,10 +16,11 @@ class SettingPage(Gtk.Bin):
         grid.set_column_homogeneous(True)
         grid.set_margin_left(10)
         grid.set_margin_right(10)
+        grid.set_column_spacing(5)
 
         # Inactive after idle seconds
         idle_label = Gtk.Label(label="Inactive after idle seconds")
-        idle_label.set_xalign(0)
+        idle_label.set_xalign(1)
         grid.attach(idle_label, 0, 0, 1, 1)
         adjustment = Gtk.Adjustment(value=configuration.inactive_after_idle_seconds, lower=1, upper=6000,
                                                                  step_incr=1, page_incr=1, page_size=1)
@@ -30,7 +31,7 @@ class SettingPage(Gtk.Bin):
 
         # Seconds before new entry
         seconds_before_new_entry_label = Gtk.Label(label="Seconds before new entry")
-        seconds_before_new_entry_label.set_xalign(0)
+        seconds_before_new_entry_label.set_xalign(1)
         grid.attach(seconds_before_new_entry_label, 0, 1, 1, 1)
         adjustment = Gtk.Adjustment(value=configuration.seconds_before_new_entry,
                                     lower=1, upper=6000,
@@ -42,7 +43,7 @@ class SettingPage(Gtk.Bin):
 
         # Enable/disable logging of application path
         log_application_path_label = Gtk.Label(label="Log application path")
-        log_application_path_label.set_xalign(0)
+        log_application_path_label.set_xalign(1)
         grid.attach(log_application_path_label, 0, 2, 1, 1)
         self.log_application_path_switch = Gtk.Switch()
         self.log_application_path_switch.set_active(configuration.log_application_path)
