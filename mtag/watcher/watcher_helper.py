@@ -8,12 +8,12 @@ from mtag.repository import ApplicationRepository, ApplicationPathRepository
 from mtag.repository import LoggedEntryRepository, ApplicationWindowRepository
 from mtag.repository import ActivityEntryRepository
 
-configuration = configuration_helper.get_configuration()
-
 
 def register(window_title: Optional[str], application_name: Optional[str],
              application_path: Optional[str], idle_period: Optional[int],
              locked_state: bool = False) -> None:
+    configuration = configuration_helper.get_configuration()
+
     window_title_to_use = window_title if window_title is not None else "N/A"
     application_name_to_use = application_name if application_name is not None else "N/A"
     application_path_to_use = application_path if application_path is not None else "N/A"
@@ -43,7 +43,7 @@ def register(window_title: Optional[str], application_name: Optional[str],
 
 
 def register_activity_entry(idle_period: int, locked_state: bool):
-    global configuration
+    configuration = configuration_helper.get_configuration()
     activity_entry_repository = ActivityEntryRepository()
     datetime_now = datetime.datetime.now()
     was_active = not locked_state and idle_period < configuration.inactive_after_idle_seconds
@@ -100,7 +100,7 @@ def register_logged_entry(application_window: ApplicationWindow):
     else:
         logging.debug("Last logged stop:", last_logged_entry.stop)
 
-        global configuration
+        configuration = configuration_helper.get_configuration()
         max_delta_seconds = configuration.seconds_before_new_entry
         max_delta_period = datetime.timedelta(seconds=max_delta_seconds)
 

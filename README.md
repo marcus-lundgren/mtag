@@ -2,7 +2,7 @@
 
 MTag is an application that tracks the focused window's title and application. This information is then visualized on a timeline, where a time period can be tagged with a category. The total tagged time per category can then be used for e.g. time reporting. In addition to keeping tracked of the focused window, the idle time and screen lock state is also taken into consideration, which is also visualized on the timeline.
 
-The collected data is stored locally on the computer in a SQLite database. Some configuration is made in a JSON formatted file.
+The collected data is stored locally on the computer in a SQLite database. Some configuration is made in a JSON formatted file (recommended to be changed using the GUI).
 
 ## License
 
@@ -31,8 +31,6 @@ The supported platforms are Linux (X11 and Logind are required) and Windows (onl
   * HOME/.local/share/mtag/ (as fallback)
 
 ### Configuration file
-
-*Changes to the configuration file is only taken into consideration at startup.*
 
 * Windows
   * %APPDATA%\mtag\
