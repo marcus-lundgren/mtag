@@ -329,10 +329,10 @@ class TimelineCanvas(Gtk.DrawingArea):
             return
 
         # Choose category
-        conn = database_helper.create_connection()
-        category_repository = CategoryRepository()
-        categories = category_repository.get_all(conn=conn)
-        conn.close()
+        with database_helper.create_connection() as conn:
+            category_repository = CategoryRepository()
+            categories = category_repository.get_all(conn=conn)
+
         dialog = CategoryChoiceDialog(window=self.parent, categories=categories, tagged_entry=tagged_entry_to_create)
         r = dialog.run()
         self.current_tagged_entry = None
@@ -348,9 +348,8 @@ class TimelineCanvas(Gtk.DrawingArea):
                 chosen_category = chosen_category[0]
             else:
                 new_category = entity.Category(name=chosen_category_name)
-                conn = database_helper.create_connection()
-                new_category.db_id = category_repository.insert(conn=conn, category=new_category)
-                conn.close()
+                with database_helper.create_connection() as conn:
+                    new_category.db_id = category_repository.insert(conn=conn, category=new_category)
                 chosen_category = new_category
 
             tagged_entry_to_create.category = chosen_category

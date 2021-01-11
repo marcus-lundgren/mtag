@@ -70,9 +70,8 @@ class CategoryPage(Gtk.Box):
         self.show_all()
 
     def update_page(self):
-        conn = database_helper.create_connection()
-        categories = CategoryRepository().get_all(conn)
-        conn.close()
+        with database_helper.create_connection() as conn:
+            categories = CategoryRepository().get_all(conn)
         self.category_store.clear()
         for c in categories:
             self.category_store.append([c.name, c.db_id])
@@ -95,11 +94,10 @@ class CategoryPage(Gtk.Box):
             return
 
         cr = CategoryRepository()
-        conn = database_helper.create_connection()
-        self.current_category.name = self.name_entry.get_text()
-        self.current_category.url = self.url_entry.get_text()
-        cr.update(conn=conn, category=self.current_category)
-        conn.close()
+        with database_helper.create_connection() as conn:
+            self.current_category.name = self.name_entry.get_text()
+            self.current_category.url = self.url_entry.get_text()
+            cr.update(conn=conn, category=self.current_category)
 
         self.update_page()
 
@@ -118,9 +116,8 @@ class CategoryPage(Gtk.Box):
 
     def _update_details_pane(self, category_db_id: int):
         cr = CategoryRepository()
-        conn = database_helper.create_connection()
-        category = cr.get(conn=conn, db_id=category_db_id)
-        conn.close()
+        with database_helper.create_connection() as conn:
+            category = cr.get(conn=conn, db_id=category_db_id)
 
         self.current_category = category
         seconds = statistics_helper.get_total_category_tagged_time(category.name)

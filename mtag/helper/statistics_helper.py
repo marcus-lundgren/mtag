@@ -6,7 +6,6 @@ tagged_entry_repository = TaggedEntryRepository()
 
 
 def get_total_category_tagged_time(category_name: str) -> int:
-    conn = database_helper.create_connection()
-    total_time = tagged_entry_repository.total_time_by_category(conn=conn, category_name=category_name)
-    conn.close()
+    with database_helper.create_connection() as conn:
+        total_time = tagged_entry_repository.total_time_by_category(conn=conn, category_name=category_name)
     return total_time

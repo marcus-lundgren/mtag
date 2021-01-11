@@ -127,16 +127,14 @@ class TimelinePage(Gtk.Box):
 
     def _do_tagged_entry_created(self, _, te: TaggedEntry):
         tagged_entry_repository = TaggedEntryRepository()
-        conn = database_helper.create_connection()
-        tagged_entry_repository.insert(conn=conn, tagged_entry=te)
-        conn.close()
+        with database_helper.create_connection() as conn:
+            tagged_entry_repository.insert(conn=conn, tagged_entry=te)
         self._reload_logged_entries_from_date()
 
     def _do_tagged_entry_deleted(self, _, te: TaggedEntry):
         tagged_entry_repository = TaggedEntryRepository()
-        conn = database_helper.create_connection()
-        tagged_entry_repository.delete(conn=conn, db_id=te.db_id)
-        conn.close()
+        with database_helper.create_connection() as conn:
+            tagged_entry_repository.delete(conn=conn, db_id=te.db_id)
         self._reload_logged_entries_from_date()
 
     def _on_new_day_selected(self, _, date: datetime.datetime):
@@ -144,15 +142,14 @@ class TimelinePage(Gtk.Box):
         self._reload_logged_entries_from_date()
 
     def _reload_logged_entries_from_date(self):
-        db_connection = database_helper.create_connection()
-        logged_entry_repository = LoggedEntryRepository()
-        tagged_entry_repository = TaggedEntryRepository()
-        activity_entry_repository = ActivityEntryRepository()
+        with database_helper.create_connection() as db_connection:
+            logged_entry_repository = LoggedEntryRepository()
+            tagged_entry_repository = TaggedEntryRepository()
+            activity_entry_repository = ActivityEntryRepository()
 
-        logged_entries = logged_entry_repository.get_all_by_date(db_connection, self._current_date)
-        tagged_entries = tagged_entry_repository.get_all_by_date(db_connection, self._current_date)
-        activity_entries = activity_entry_repository.get_all_by_date(db_connection, self._current_date)
-        db_connection.close()
+            logged_entries = logged_entry_repository.get_all_by_date(db_connection, self._current_date)
+            tagged_entries = tagged_entry_repository.get_all_by_date(db_connection, self._current_date)
+            activity_entries = activity_entry_repository.get_all_by_date(db_connection, self._current_date)
 
         self.timeline_canvas.set_entries(self._current_date, logged_entries, tagged_entries, activity_entries)
 
