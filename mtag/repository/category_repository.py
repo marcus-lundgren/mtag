@@ -27,8 +27,8 @@ class CategoryRepository:
         return self._from_dbo(db_c)
 
     def update(self, conn: sqlite3.Connection, category: Category) -> None:
-        cursor = conn.execute("UPDATE category SET c_url=:url WHERE c_id=:db_id",
-                              {"url": category.url, "db_id": category.db_id})
+        cursor = conn.execute("UPDATE category SET c_url=:url, c_name=:name WHERE c_id=:db_id",
+                              {"url": category.url, "name": category.name, "db_id": category.db_id})
         conn.commit()
         cursor.close()
 
