@@ -52,14 +52,14 @@ class CategoryPage(Gtk.Box):
         time_tagged_title = Gtk.Label(label="Time tagged")
         time_tagged_title.set_xalign(1)
         grid.attach(time_tagged_title, 0, 1, 1, 1)
-        self.total_time_label= Gtk.Label(label="-")
+        self.total_time_label = Gtk.Label(label="-")
         self.total_time_label.set_xalign(0)
         grid.attach(self.total_time_label, 1, 1, 2, 1)
 
         url_title = Gtk.Label(label="URL")
         url_title.set_xalign(1)
         grid.attach(url_title, 0, 2, 1, 1)
-        self.url_entry= Gtk.Entry()
+        self.url_entry = Gtk.Entry()
         grid.attach(self.url_entry, 1, 2, 2, 1)
 
         save_button = Gtk.Button("Save")
@@ -89,7 +89,7 @@ class CategoryPage(Gtk.Box):
     def _do_toggle(self, w: Gtk.CheckButton):
         self.name_entry.set_sensitive(w.get_active())
 
-    def _do_save_clicked(self, w):
+    def _do_save_clicked(self, _):
         if self.current_category is None:
             return
 

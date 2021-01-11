@@ -18,7 +18,7 @@ class Configuration:
         self.log_application_path = log_application_path
 
     def asdict(self) -> Dict:
-        d = { k: self.__getattribute__(k) for k, v in Configuration.default_configuration.items() }
+        d = {k: self.__getattribute__(k) for k, v in Configuration.default_configuration.items()}
         return d
 
 

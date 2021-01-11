@@ -3,6 +3,7 @@ import subprocess
 import logging
 from . import watcher_helper
 
+
 class LASTINPUTINFO(Structure):
     _fields_ = [
         ('cbSize', c_uint),
