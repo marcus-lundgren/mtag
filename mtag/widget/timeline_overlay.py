@@ -45,10 +45,12 @@ class TimelineOverlay(Gtk.DrawingArea):
             dt = self.timeline_canvas.pixel_to_datetime(x_to_use)
             zoom_in = e.direction == Gdk.ScrollDirection.UP
             self.timeline_canvas.zoom(zoom_in, dt)
+            self._update_state(e.x, e.y)
         # Move right or left
         elif e.direction == Gdk.ScrollDirection.RIGHT or e.direction == Gdk.ScrollDirection.LEFT:
             move_right = e.direction == Gdk.ScrollDirection.RIGHT
             self.timeline_canvas.move(move_right)
+            self._update_state(e.x, e.y)
 
     def _do_button_release(self, *_):
         self.timeline_canvas.do_button_release()
@@ -93,9 +95,9 @@ class TimelineOverlay(Gtk.DrawingArea):
         return True
 
     def _on_motion_notify(self, _, e: Gdk.EventMotion):
-        mouse_x = e.x
-        mouse_y = e.y
+        self._update_state(e.x, e.y)
 
+    def _update_state(self, mouse_x: float, mouse_y: float):
         timeline_canvas = self.timeline_canvas
         current_moused_dt = timeline_canvas.pixel_to_datetime(mouse_x)
         next_moused_datetime = current_moused_dt
