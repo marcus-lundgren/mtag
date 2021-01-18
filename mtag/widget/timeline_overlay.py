@@ -150,7 +150,7 @@ class TimelineOverlay(Gtk.DrawingArea):
                                                                 current_tagged_entry.stop - current_tagged_entry.start)
             time_texts = [current_te_time_text]
 
-        if timeline_canvas.le_start_y <= mouse_y <= timeline_canvas.le_end_y:
+        if timeline_canvas.le_start_y <= mouse_y <= timeline_canvas.le_end_y or current_tagged_entry is not None:
             for le in timeline_canvas.visible_logged_entries:
                 if le.start_x <= mouse_x <= le.stop_x:
                     self.moused_over_entity = le
