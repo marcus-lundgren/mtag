@@ -207,6 +207,13 @@ class TimelineCanvas(Gtk.DrawingArea):
         drawing_area_height = self.get_allocated_height()
         canvas_width = self.get_allocated_width()
 
+        # Draw the sides
+        cr.set_source_rgb(0.8, 0.8, 0.8)
+        cr.rectangle(0, 0, self.timeline_side_padding, drawing_area_height)
+        cr.fill()
+        cr.rectangle(canvas_width - self.timeline_side_padding, 0, canvas_width, drawing_area_height)
+        cr.fill()
+
         # Draw the hour lines
         cr.set_font_size(16)
         cr.set_source_rgb(0.4, 0.4, 0.4)
