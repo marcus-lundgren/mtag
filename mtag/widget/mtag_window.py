@@ -1,3 +1,5 @@
+import logging
+
 from . import CategoryPage, SettingPage, TimelinePage
 
 import gi
@@ -15,7 +17,7 @@ class MTagWindow(Gtk.Window):
             icon = it.load_icon(Gtk.STOCK_FIND, 256, Gtk.IconLookupFlags.GENERIC_FALLBACK)
             self.set_icon(icon)
         except:
-            print("Unable to load window icon")
+            logging.warning("Unable to load window icon")
 
         css = Gtk.CssProvider()
         css.load_from_data(b"#nb > * { background-color: transparent; } ")

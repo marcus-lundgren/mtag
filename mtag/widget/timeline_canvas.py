@@ -339,8 +339,6 @@ class TimelineCanvas(Gtk.DrawingArea):
         chosen_category_name = dialog.get_chosen_category_value()
         dialog.destroy()
 
-        print(r)
-
         if r == Gtk.ResponseType.OK:
             # Set chosen category
             chosen_category = [c for c in categories if c.name.lower() == chosen_category_name.lower()]
