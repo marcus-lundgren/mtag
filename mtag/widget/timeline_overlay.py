@@ -71,7 +71,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         cr.line_to(timeline_x, height)
         cr.stroke()
 
-        current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 5, 0, 10, height)
+        current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 3, 0, 6, height)
         self.dirty_rectangles.append(current_guidingline_rectangle)
 
         # Hightlight the hovered over entry
@@ -187,14 +187,14 @@ class TimelineOverlay(Gtk.DrawingArea):
 
         self.tooltip_attributes = self._get_tooltip_attributes(mouse_x, mouse_y, canvas_width, canvas_height,
                                                                cr, time_texts, desc_texts, is_active)
-        dirty_new_tooltip_rect = cairo.RectangleInt(int(self.tooltip_attributes.x) - 5,
-                                                    int(self.tooltip_attributes.y) - 5,
-                                                    int(self.tooltip_attributes.width) + 10,
-                                                    int(self.tooltip_attributes.height) + 10)
+        dirty_new_tooltip_rect = cairo.RectangleInt(int(self.tooltip_attributes.x) - 3,
+                                                    int(self.tooltip_attributes.y) - 3,
+                                                    int(self.tooltip_attributes.width) + 6,
+                                                    int(self.tooltip_attributes.height) + 6)
         self.dirty_rectangles.append(dirty_new_tooltip_rect)
 
         timeline_x = self.timeline_canvas.datetime_to_pixel(self.current_moused_datetime, canvas_width)
-        current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 5, 0, 10, canvas_height)
+        current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 3, 0, 6, canvas_height)
         self.dirty_rectangles.append(current_guidingline_rectangle)
 
         for r in self.dirty_rectangles:
