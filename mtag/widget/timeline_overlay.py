@@ -238,6 +238,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         height_to_use = sum(heights) + (padding * 2) + line_padding * (len(heights) - 1)
 
         rect_y = min(canvas_height - height_to_use, mouse_y)
+        rect_y = max(rect_y, 0)
         x_to_use = min(mouse_x, canvas_width - width_to_use)
         x_to_use = max(x_to_use, 0.0)
         return TooltipAttributes(time_texts=time_text_list, description_texts=description_text_list,
