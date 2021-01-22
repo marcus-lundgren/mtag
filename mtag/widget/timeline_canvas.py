@@ -116,52 +116,48 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.le_start_y = self.te_end_y + self.timeline_top_padding
         self.le_end_y = self.le_start_y + self.timeline_height
 
+        minute_increment = self._get_current_minute_increment()
+
+        minute_increment_as_delta = datetime.timedelta(minutes=minute_increment)
+        timelines_start = self.timeline_start - minute_increment_as_delta
+        if timelines_start <= self._current_date:
+            timelines_start = self._current_date
+
+        timelines_end = self.timeline_end + minute_increment_as_delta
+        if timelines_end.day != self._current_date.day:
+            timelines_end = self.timeline_end
+
         self.visible_activity_entries = [VisibleEntry(ae,
                                                       self.datetime_to_pixel(ae.start, canvas_width),
                                                       self.datetime_to_pixel(ae.stop, canvas_width),
                                                       color_helper.activity_to_color_floats(ae.active))
                                          for ae in self.activity_entries
-                                         if self.timeline_start <= ae.stop or ae.start <= self.timeline_end]
+                                         if timelines_start <= ae.stop and ae.start <= timelines_end]
         self.visible_logged_entries = [VisibleEntry(le,
                                                     self.datetime_to_pixel(le.start, canvas_width),
                                                     self.datetime_to_pixel(le.stop, canvas_width),
                                                     color_helper.to_color_floats(
                                                             le.application_window.application.name))
                                        for le in self.logged_entries
-                                       if self.timeline_start <= le.stop or le.start <= self.timeline_end]
+                                       if timelines_start <= le.stop and le.start <= timelines_end]
         self.visible_tagged_entries = [VisibleEntry(te,
                                                     self.datetime_to_pixel(te.start, canvas_width),
                                                     self.datetime_to_pixel(te.stop, canvas_width),
                                                     color_helper.to_color_floats(te.category.name))
                                        for te in self.tagged_entries
-                                       if self.timeline_start <= te.stop or te.start <= self.timeline_end]
-
-        pixels_per_seconds = (canvas_width - self.timeline_side_padding * 2) / (self.timeline_delta.total_seconds())
-        minute_text_width_with_padding = int((self.time_guidingline_text_width * 1.3 / pixels_per_seconds) / 60)
-        if minute_text_width_with_padding > 59:
-            minute_increment = int((minute_text_width_with_padding / 60) + 1) * 60
-        elif minute_text_width_with_padding > 29:
-            minute_increment = 60
-        elif minute_text_width_with_padding > 14:
-            minute_increment = 30
-        elif minute_text_width_with_padding > 9:
-            minute_increment = 15
-        elif minute_text_width_with_padding > 4:
-            minute_increment = 10
-        elif minute_text_width_with_padding >= 1:
-            minute_increment = 5
-        else:
-            minute_increment = 1
+                                       if timelines_start <= te.stop and te.start <= timelines_end]
 
         window: Gdk.Window = self.get_root_window()
         cr: cairo.Context = window.cairo_create()
         cr.set_font_size(16)
 
-        minute_increment_as_delta = datetime.timedelta(minutes=minute_increment)
+        # Start with the current hour, since we want the timelines to be normalized
+        # against e.g. 13:00. This needs to be modified if the side padding no longer represents
+        # half of the timeline label.
         current_timeline_time = self._current_date + datetime.timedelta(hours=self.timeline_start.hour)
         self.timeline_timelines = []
-        while current_timeline_time <= self.timeline_end:
-            if self.timeline_start <= current_timeline_time:
+        while current_timeline_time <= timelines_end:
+            if timelines_start <= current_timeline_time:
                 text = f"{str(current_timeline_time.hour).rjust(2, '0')}:{str(current_timeline_time.minute).rjust(2, '0')}"
                 if text in self.time_text_extents:
                     text_extents = self.time_text_extents[text]
@@ -178,6 +174,25 @@ class TimelineCanvas(Gtk.DrawingArea):
             else:
                 current_timeline_time += minute_increment_as_delta
                 continue
+
+    def _get_current_minute_increment(self):
+        pixels_per_seconds = (self.get_allocated_width() - self.timeline_side_padding * 2) / (self.timeline_delta.total_seconds())
+        minute_text_width_with_padding = int((self.time_guidingline_text_width * 1.3 / pixels_per_seconds) / 60)
+        if minute_text_width_with_padding > 59:
+            minute_increment = int((minute_text_width_with_padding / 60) + 1) * 60
+        elif minute_text_width_with_padding > 29:
+            minute_increment = 60
+        elif minute_text_width_with_padding > 14:
+            minute_increment = 30
+        elif minute_text_width_with_padding > 9:
+            minute_increment = 15
+        elif minute_text_width_with_padding > 4:
+            minute_increment = 10
+        elif minute_text_width_with_padding >= 1:
+            minute_increment = 5
+        else:
+            minute_increment = 1
+        return minute_increment
 
     def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries, activity_entries) -> None:
         self.logged_entries = logged_entries
@@ -206,13 +221,6 @@ class TimelineCanvas(Gtk.DrawingArea):
         # Get the size
         drawing_area_height = self.get_allocated_height()
         canvas_width = self.get_allocated_width()
-
-        # Draw the sides
-        cr.set_source_rgb(0.8, 0.8, 0.8)
-        cr.rectangle(0, 0, self.timeline_side_padding, drawing_area_height)
-        cr.fill()
-        cr.rectangle(canvas_width - self.timeline_side_padding, 0, canvas_width, drawing_area_height)
-        cr.fill()
 
         # Draw the hour lines
         cr.set_font_size(16)
@@ -269,6 +277,13 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.rectangle(start_x, 0,
                          stop_x - start_x, drawing_area_height)
             cr.fill()
+
+        # Draw the sides
+        cr.set_source_rgba(0.5, 0.5, 0.5, 0.5)
+        cr.rectangle(0, 0, self.timeline_side_padding, drawing_area_height)
+        cr.fill()
+        cr.rectangle(canvas_width - self.timeline_side_padding, 0, canvas_width, drawing_area_height)
+        cr.fill()
 
     @staticmethod
     def _set_tagged_entry_stop_date(stop_date: datetime,

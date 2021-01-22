@@ -103,11 +103,6 @@ def pixel_to_datetime(x_position: float, timeline_side_padding: float, canvas_wi
 
 def datetime_to_pixel(dt: datetime, canvas_width: int, timeline_side_padding: float,
                       timeline_start_dt: datetime, timeline_stop_dt: datetime) -> float:
-    if dt <= timeline_start_dt:
-        return timeline_side_padding
-    elif timeline_stop_dt <= dt:
-        return canvas_width - timeline_side_padding
-
     canvas_width_minus_padding = canvas_width - (timeline_side_padding * 2)
     boundary_delta = timeline_stop_dt - timeline_start_dt
     delta_from_start = dt - timeline_start_dt
