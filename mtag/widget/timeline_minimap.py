@@ -1,4 +1,5 @@
 import datetime
+from collections import namedtuple
 
 from mtag.helper import timeline_helper
 
@@ -7,6 +8,9 @@ import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
+
+
+TimelineEntry = namedtuple("TimelineEntry", ["start_x", "stop_x"])
 
 
 class TimelineMinimap(Gtk.DrawingArea):
@@ -28,15 +32,17 @@ class TimelineMinimap(Gtk.DrawingArea):
         self.connect("button_release_event", self._do_button_release)
         self.connect("motion_notify_event", self._do_motion_notify)
         self.connect("scroll_event", self._do_scroll_event)
-        self.current_date = datetime.datetime.now().replace(hour=0,
-                                                            minute=0,
-                                                            second=0,
-                                                            microsecond=0)
+        self.connect("configure-event", lambda *_: self._update_timeline_entries())
+        self.current_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.end_of_current_date = self.current_date.replace(hour=23, minute=59, second=59)
         self.boundary_start = self.current_date.replace(hour=4, minute=15)
         self.boundary_stop = self.boundary_start.replace(hour=8)
         self.side_padding = 20
         self.button_is_pressed = False
+        self.logged_entries = []
+        self.tagged_entries = []
+        self.logged_timeline_entries = []
+        self.tagged_timeline_entries = []
 
         self.set_size_request(-1, 80)
         self.show_all()
@@ -46,6 +52,19 @@ class TimelineMinimap(Gtk.DrawingArea):
         self.end_of_current_date = self.current_date.replace(hour=23, minute=59, second=59)
         self.boundary_start = start
         self.boundary_stop = stop
+        self.queue_draw()
+
+    def set_entries(self, current_date: datetime.datetime, logged_entries, tagged_entries) -> None:
+        self.current_date = current_date
+        self.end_of_current_date = self.current_date.replace(hour=23, minute=59, second=59)
+        self.boundary_start = self.boundary_start.replace(year=current_date.year, month=current_date.month,
+                                                          day=current_date.day)
+        self.boundary_stop = self.boundary_stop.replace(year=current_date.year, month=current_date.month,
+                                                        day=current_date.day)
+        self.logged_entries = logged_entries
+        self.tagged_entries = tagged_entries
+
+        self._update_timeline_entries()
         self.queue_draw()
 
     def _set_boundaries_and_fire_new_boundary(self, actual_x: float):
@@ -115,6 +134,16 @@ class TimelineMinimap(Gtk.DrawingArea):
 
             current_dt += datetime.timedelta(hours=1)
 
+        for te in self.tagged_timeline_entries:
+            cr.set_source_rgb(1, 0.64, 0)
+            cr.rectangle(te.start_x, 10, te.stop_x - te.start_x, 20)
+            cr.fill()
+
+        for le in self.logged_timeline_entries:
+            cr.set_source_rgb(0.2, 0.2, 0.8)
+            cr.rectangle(le.start_x, 50, le.stop_x - le.start_x, 20)
+            cr.fill()
+
         start_x = self._datetime_to_pixel(dt=self.boundary_start, canvas_width=width)
         stop_x = self._datetime_to_pixel(dt=self.boundary_stop, canvas_width=width)
 
@@ -135,3 +164,12 @@ class TimelineMinimap(Gtk.DrawingArea):
                                                  timeline_side_padding=self.side_padding,
                                                  timeline_start_dt=self.current_date,
                                                  timeline_stop_dt=self.end_of_current_date)
+
+    def _update_timeline_entries(self):
+        canvas_width = self.get_allocated_width()
+        self.logged_timeline_entries = [TimelineEntry(self._datetime_to_pixel(le.start, canvas_width),
+                                                      self._datetime_to_pixel(le.stop, canvas_width))
+                                        for le in self.logged_entries]
+        self.tagged_timeline_entries = [TimelineEntry(self._datetime_to_pixel(te.start, canvas_width),
+                                                      self._datetime_to_pixel(te.stop, canvas_width))
+                                        for te in self.tagged_entries]

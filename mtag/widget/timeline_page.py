@@ -42,9 +42,9 @@ class TimelinePage(Gtk.Box):
         self.pack_start(canvas_overlay, expand=True, fill=True, padding=10)
 
         # Minimap
-        mm = TimelineMinimap()
-        mm.connect("timeline-boundary-changed", lambda _, start, stop: self.timeline_canvas.set_boundaries(start, stop))
-        self.add(mm)
+        self.timeline_minimap = TimelineMinimap()
+        self.timeline_minimap.connect("timeline-boundary-changed", lambda _, start, stop: self.timeline_canvas.set_boundaries(start, stop))
+        self.add(self.timeline_minimap)
 
         lists_grid = Gtk.Grid()
         lists_grid.set_column_homogeneous(True)
@@ -84,7 +84,6 @@ class TimelinePage(Gtk.Box):
 
         self.pack_end(notebook, expand=True, fill=True, padding=10)
         self._reload_logged_entries_from_date()
-        self.show_all()
 
         self.connect("key-press-event", self._do_key_press_event)
         self.connect("key-release-event", self._do_key_release_event)
@@ -151,6 +150,7 @@ class TimelinePage(Gtk.Box):
             activity_entries = activity_entry_repository.get_all_by_date(db_connection, self._current_date)
 
         self.timeline_canvas.set_entries(self._current_date, logged_entries, tagged_entries, activity_entries)
+        self.timeline_minimap.set_entries(self._current_date, logged_entries, tagged_entries)
 
         self.logged_entries_list_store.clear()
         for le in logged_entries:
