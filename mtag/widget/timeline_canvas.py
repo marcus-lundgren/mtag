@@ -255,8 +255,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         for ae in self.visible_activity_entries:
             r, g, b = ae.color
             cr.set_source_rgba(r, g, b, 0.4)
-            cr.rectangle(ae.start_x, 0,
-                         ae.stop_x - ae.start_x, drawing_area_height)
+            cr.rectangle(ae.start_x, 0, ae.stop_x - ae.start_x, drawing_area_height)
             cr.fill()
 
         # Logged entries
@@ -284,8 +283,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             start_x = self.datetime_to_pixel(self.current_tagged_entry.start, canvas_width)
             stop_x = self.datetime_to_pixel(self.current_tagged_entry.stop, canvas_width)
             cr.set_source_rgba(0.2, 0.2, 0.2, 0.4)
-            cr.rectangle(start_x, 0,
-                         stop_x - start_x, drawing_area_height)
+            cr.rectangle(start_x, 0, stop_x - start_x, drawing_area_height)
             cr.fill()
 
         # Draw the sides

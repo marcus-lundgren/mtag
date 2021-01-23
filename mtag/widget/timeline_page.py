@@ -34,7 +34,8 @@ class TimelinePage(Gtk.Box):
         self.timeline_canvas = TimelineCanvas(parent=parent)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
-        self.timeline_canvas.connect("timeline-boundary-changed", lambda _, start, stop: mm.set_boundaries(start, stop))
+        self.timeline_canvas.connect("timeline-boundary-changed",
+                                     lambda _, start, stop: self.timeline_minimap.set_boundaries(start, stop))
         canvas_overlay = Gtk.Overlay()
         canvas_overlay.add_overlay(self.timeline_canvas)
         canvas_overlay.add_overlay(TimelineOverlay(timeline_canvas=self.timeline_canvas))
