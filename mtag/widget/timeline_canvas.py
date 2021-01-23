@@ -60,10 +60,14 @@ class TimelineCanvas(Gtk.DrawingArea):
         self._update_timeline_stop()
 
         self._current_date = self.timeline_start
-        self.current_tagged_entry = None
-        self.tagged_entries = []
-        self.logged_entries = []
-        self.activity_entries = []
+        self.current_tagged_entry: Optional[entity.TaggedEntry] = None
+        self.tagged_entries: List[entity.TaggedEntry] = []
+        self.logged_entries: List[entity.LoggedEntry] = []
+        self.activity_entries: List[entity.ActivityEntry] = []
+
+        self.visible_activity_entries: List[VisibleEntry] = []
+        self.visible_tagged_entries: List[VisibleEntry] = []
+        self.visible_logged_entries: List[VisibleEntry] = []
         self.time_text_extents = {}
 
         self.context_menu = TimelineContextPopover(relative_to=self)
