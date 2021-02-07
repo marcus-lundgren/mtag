@@ -60,6 +60,7 @@ class CategoryPage(Gtk.Box):
         url_title.set_xalign(1)
         grid.attach(url_title, 0, 2, 1, 1)
         self.url_entry = Gtk.Entry()
+        self.url_entry.set_tooltip_text("Tags are supported.\n{{date}} will expand to the chosen date as YYYY-MM-DD.")
         grid.attach(self.url_entry, 1, 2, 2, 1)
 
         save_button = Gtk.Button("Save")

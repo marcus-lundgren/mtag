@@ -3,7 +3,7 @@ from itertools import groupby
 import webbrowser
 
 from mtag.entity import TaggedEntry
-from mtag.helper import datetime_helper, database_helper
+from mtag.helper import datetime_helper, database_helper, link_helper
 from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository, CategoryRepository
 from . import CalendarPanel, TimelineCanvas, TimelineMinimap, TimelineOverlay
 
@@ -172,8 +172,9 @@ class TimelinePage(Gtk.Box):
             total_duration += duration
 
             category = te_list[0].category
+            expanded_url = link_helper.expand_tags(url=category.url, dt=self._current_date)
             self.tagged_entries_list_store.append([datetime_helper.to_duration_str(duration),
                                                    te_category,
-                                                   category.url])
+                                                   expanded_url])
         self.tagged_entries_tree_view.columns_autosize()
         self.tagged_time_label.set_label(datetime_helper.to_duration_str(total_duration))
