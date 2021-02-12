@@ -13,7 +13,9 @@ class CategoryPage(Gtk.Box):
 
         self.category_store = Gtk.ListStore(str, int)
         self.categories_tree_view: Gtk.TreeView = Gtk.TreeView.new_with_model(self.category_store)
-        self.categories_tree_view.connect("button-press-event", self._do_button_press)
+        cat_tree_selection: Gtk.TreeSelection = self.categories_tree_view.get_selection()
+        cat_tree_selection.set_mode(Gtk.SelectionMode.BROWSE)
+        cat_tree_selection.connect("changed", self._do_changed)
 
         for i, title in enumerate(["Name"]):
             renderer = Gtk.CellRendererText()
@@ -102,17 +104,19 @@ class CategoryPage(Gtk.Box):
 
         self.update_page()
 
-    def _do_button_press(self, w: Gtk.TreeView, e):
-        item_at_path = w.get_path_at_pos(e.x, e.y)
-        if item_at_path is None:
-            return
-
-        p, *_ = item_at_path
-        self._update_details_pane_by_row(p)
-
     def _update_details_pane_by_row(self, row: int):
         i = self.category_store.get_iter(row)
         v = self.category_store.get_value(i, 1)
+        self._update_details_pane(v)
+
+    def _do_changed(self, selection: Gtk.TreeSelection, *_):
+        _, selected = selection.get_selected()
+
+        # Ensure that we have a valid selection
+        if selected is None:
+            return
+
+        v = self.category_store.get_value(selected, 1)
         self._update_details_pane(v)
 
     def _update_details_pane(self, category_db_id: int):
