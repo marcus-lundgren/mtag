@@ -40,8 +40,8 @@ class CategoryChoiceDialog(Gtk.Dialog):
         cat_tree_selection.connect("changed", self._do_selection_changed)
 
         renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Category", renderer, text=1)
-        column.set_sort_column_id(1)
+        column = Gtk.TreeViewColumn("Category", renderer, text=0)
+        column.set_sort_column_id(0)
         self.categories_tree_view.append_column(column)
 
         swctv = Gtk.ScrolledWindow()
