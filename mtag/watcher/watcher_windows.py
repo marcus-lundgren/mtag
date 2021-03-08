@@ -1,6 +1,9 @@
 from ctypes import *
 import subprocess
 import logging
+from ctypes import wintypes, cast
+from ctypes.wintypes import HANDLE, MAX_PATH, LPWSTR, DWORD
+
 from . import watcher_helper
 
 
@@ -9,6 +12,12 @@ class LASTINPUTINFO(Structure):
         ('cbSize', c_uint),
         ('dwTime', c_uint),
     ]
+
+
+class LANGANDCODEPAGE(Structure):
+    _fields_ = [
+        ("wLanguage", c_uint16),
+        ("wCodePage", c_uint16)]
 
 
 # https://stackoverflow.com/a/912223
@@ -35,26 +44,65 @@ def get_locked_state():
         return False
 
 
+PROCESS_QUERY_INFORMATION = 0x0400
+
+
 def watch():
     logging.info("== STARTED ==")
 
     pid_param = c_ulong()
     idle_period = get_idle_duration()
     locked_state = get_locked_state()
+
+    # Get foreground window handle
     window_handle = windll.user32.GetForegroundWindow()
     logging.debug(f"Got window handle: {window_handle}")
 
-    windll.user32.GetWindowThreadProcessId(windll.user32.GetForegroundWindow(), byref(pid_param))
-    logging.debug(f"Got process ID: {pid_param}")
-
+    # Get the window title length
     window_title_size = windll.user32.GetWindowTextLengthW(window_handle) + 1
-    logging.debug("Length of window title:", window_title_size)
+    logging.debug("Length of window title: {window_title_size}")
 
+    # Get the window title
     unicode_buffer = create_unicode_buffer(window_title_size)
     windll.user32.GetWindowTextW(window_handle, unicode_buffer, window_title_size)
     active_window_title = unicode_buffer.value
     logging.debug(unicode_buffer.value)
 
+    # Get the process id
+    windll.user32.GetWindowThreadProcessId(windll.user32.GetForegroundWindow(), byref(pid_param))
+    logging.debug(f"Got process ID: {pid_param}")
+
+    # Get the path of the process exe
+    process_handle: HANDLE = windll.kernel32.OpenProcess(PROCESS_QUERY_INFORMATION, False, pid_param)
+    image_name = create_unicode_buffer(MAX_PATH)
+    max_path_as_dword = DWORD(MAX_PATH*16)
+    result = windll.kernel32.QueryFullProcessImageNameW(process_handle, 0, image_name, byref(max_path_as_dword))
+    if result == 0:
+        # Error handle
+        pass
+
+    path = image_name.value
+
+    # Get the file version info
+    file_version_info_size = windll.version.GetFileVersionInfoSizeW(image_name, None)
+    file_version_info_data = create_string_buffer(file_version_info_size)
+    windll.version.GetFileVersionInfoW(image_name, None, file_version_info_size, byref(file_version_info_data))
+    logging.debug(file_version_info_data)
+
+    query_value_p = c_void_p(0)
+    query_value_length = c_uint()
+    windll.version.VerQueryValueW(file_version_info_data, "\\VarFileInfo\Translation", byref(query_value_p), byref(query_value_length))
+    value_as_lacp = cast(query_value_p, POINTER(LANGANDCODEPAGE))
+    language = f"{value_as_lacp.contents.wLanguage:04x}{value_as_lacp.contents.wCodePage:04x}"
+
+    query_value_p = c_uint()
+    for info in ["ProductName", "FileDescription", "OriginalFilename"]:
+        windll.version.VerQueryValueW(file_version_info_data, f"\\StringFileInfo\\{language}\\{info}",
+                                      byref(query_value_p), byref(query_value_length))
+        logging.debug(wstring_at(query_value_p.value, query_value_length.value))
+    logging.debug(image_name.value)
+
+    return
     sui = subprocess.STARTUPINFO()
     sui.dwFlags = subprocess.STARTF_USESTDHANDLES | subprocess.STARTF_USESHOWWINDOW
     with subprocess.Popen(["powershell.exe",
