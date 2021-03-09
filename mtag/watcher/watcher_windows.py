@@ -30,7 +30,6 @@ def get_idle_duration():
 
 
 def get_locked_state():
-    global session_id
     locked_hint = subprocess.run(["tasklist", '/FI', "IMAGENAME eq LogonUI.exe"],
                                  stdout=subprocess.PIPE).stdout.strip()
     if locked_hint == b"INFO: No tasks are running which match the specified criteria.":
