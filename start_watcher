@@ -16,8 +16,8 @@ def watcher_main():
     while True:
         try:
             watcher.watch()
-        except:
-            print("An exception was throwned from the watcher.")
+        except Exception as ex:
+            print(f"An exception was throw from the watcher: {ex}")
 
         time.sleep(2)
 
