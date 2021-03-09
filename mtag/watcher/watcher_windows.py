@@ -1,8 +1,8 @@
 from ctypes import *
 import subprocess
 import logging
-from ctypes import wintypes, cast
-from ctypes.wintypes import HANDLE, MAX_PATH, LPWSTR, DWORD
+from ctypes import cast
+from ctypes.wintypes import HANDLE, MAX_PATH, DWORD
 
 from . import watcher_helper
 
@@ -53,110 +53,88 @@ def watch():
     pid_param = c_ulong()
     idle_period = get_idle_duration()
     locked_state = get_locked_state()
+    application_path = None
+    application_name = None
+    active_window_title = None
 
-    # Get foreground window handle
-    window_handle = windll.user32.GetForegroundWindow()
-    logging.debug(f"Got window handle: {window_handle}")
-
-    # Get the window title length
-    window_title_size = windll.user32.GetWindowTextLengthW(window_handle) + 1
-    logging.debug("Length of window title: {window_title_size}")
-
-    # Get the window title
-    unicode_buffer = create_unicode_buffer(window_title_size)
-    windll.user32.GetWindowTextW(window_handle, unicode_buffer, window_title_size)
-    active_window_title = unicode_buffer.value
-    logging.debug(unicode_buffer.value)
-
-    # Get the process id
-    windll.user32.GetWindowThreadProcessId(windll.user32.GetForegroundWindow(), byref(pid_param))
-    logging.debug(f"Got process ID: {pid_param}")
-
-    # Get the path of the process exe
-    process_handle: HANDLE = windll.kernel32.OpenProcess(PROCESS_QUERY_INFORMATION, False, pid_param)
-    image_name = create_unicode_buffer(MAX_PATH)
-    max_path_as_dword = DWORD(MAX_PATH*16)
-    result = windll.kernel32.QueryFullProcessImageNameW(process_handle, 0, image_name, byref(max_path_as_dword))
-    if result == 0:
-        # Error handle
-        pass
-
-    path = image_name.value
-
-    # Get the file version info
-    file_version_info_size = windll.version.GetFileVersionInfoSizeW(image_name, None)
-    file_version_info_data = create_string_buffer(file_version_info_size)
-    windll.version.GetFileVersionInfoW(image_name, None, file_version_info_size, byref(file_version_info_data))
-    logging.debug(file_version_info_data)
-
-    query_value_p = c_void_p(0)
-    query_value_length = c_uint()
-    windll.version.VerQueryValueW(file_version_info_data, "\\VarFileInfo\Translation", byref(query_value_p), byref(query_value_length))
-    value_as_lacp = cast(query_value_p, POINTER(LANGANDCODEPAGE))
-    language = f"{value_as_lacp.contents.wLanguage:04x}{value_as_lacp.contents.wCodePage:04x}"
-
-    query_value_p = c_uint()
-    for info in ["ProductName", "FileDescription", "OriginalFilename"]:
-        windll.version.VerQueryValueW(file_version_info_data, f"\\StringFileInfo\\{language}\\{info}",
-                                      byref(query_value_p), byref(query_value_length))
-        logging.debug(wstring_at(query_value_p.value, query_value_length.value))
-    logging.debug(image_name.value)
-
-    return
-    sui = subprocess.STARTUPINFO()
-    sui.dwFlags = subprocess.STARTF_USESTDHANDLES | subprocess.STARTF_USESHOWWINDOW
-    with subprocess.Popen(["powershell.exe",
-                           "Get-Process -Id " + str(pid_param.value)
-                           + " | Format-List Name, Description, Path, Product"],
-                          stdout=subprocess.PIPE,
-                          startupinfo=sui,
-                          shell=False,
-                          creationflags=subprocess.CREATE_NEW_CONSOLE) as proc:
-        ps_output_as_bytes, _ = proc.communicate()
-        logging.debug(ps_output_as_bytes)
-
-    ps_output = ps_output_as_bytes.decode('utf-8', errors="backslashreplace")
-    logging.debug(ps_output)
-    ps_values = {}
-
-    if "Get-Process : Cannot find a process with the process identifier" in ps_output:
-        logging.warning("Unable to find process data. Register what we have.")
+    if locked_state:
         watcher_helper.register(window_title=active_window_title,
-                                application_name=None,
-                                application_path=None,
+                                application_name=application_name,
+                                application_path=application_path,
                                 idle_period=idle_period,
                                 locked_state=locked_state)
         return
 
-    for line in ps_output.splitlines():
-        stripped_line = line.strip()
-        if len(stripped_line) == 0:
-            continue
+    try:
+        # Get foreground window handle
+        window_handle = windll.user32.GetForegroundWindow()
+        logging.debug(f"Got window handle: {window_handle}")
 
-        try:
-            colon_index = stripped_line.index(":")
-            key = line[:colon_index].strip()
-            value = line[colon_index + 1:].strip()
-            ps_values[key] = value
-        except:
-            logging.error(ps_output)
-            logging.error("Unable to parse ps_output line:")
-            logging.error(stripped_line)
-            logging.error(f"The following PID was found: {pid_param.value}")
-            logging.error("Window title: {active_window_title}")
+        # Get the window title length
+        window_title_size = windll.user32.GetWindowTextLengthW(window_handle) + 1
+        logging.debug("Length of window title: {window_title_size}")
 
-    path = ps_values["Path"]
+        # Get the window title
+        unicode_buffer = create_unicode_buffer(window_title_size)
+        windll.user32.GetWindowTextW(window_handle, unicode_buffer, window_title_size)
+        active_window_title = unicode_buffer.value
+        logging.debug(unicode_buffer.value)
 
-    application_name = "N/A"
-    naming_priority = ["Description", "Name", "Product"]
-    for np in naming_priority:
-        np_value = ps_values[np]
-        if len(np_value) > 0:
-            application_name = np_value
-            break
+        # Get the process id
+        windll.user32.GetWindowThreadProcessId(window_handle, byref(pid_param))
+        logging.debug(f"Got process ID: {pid_param.value}")
+
+        # Get the path of the process exe
+        process_handle: HANDLE = windll.kernel32.OpenProcess(PROCESS_QUERY_INFORMATION,
+                                                             False, pid_param)
+        image_name = create_unicode_buffer(MAX_PATH)
+        max_path_as_dword = DWORD(MAX_PATH*16)
+        result = windll.kernel32.QueryFullProcessImageNameW(process_handle, 0,
+                                                            image_name, byref(max_path_as_dword))
+        if result == 0:
+            # Error handle
+            pass
+
+        logging.debug(image_name.value)
+
+        application_path = image_name.value
+
+        # Get the file version info
+        file_version_info_size = windll.version.GetFileVersionInfoSizeW(image_name, None)
+        file_version_info_data = create_string_buffer(file_version_info_size)
+        windll.version.GetFileVersionInfoW(image_name, None,
+                                           file_version_info_size, byref(file_version_info_data))
+
+        query_value_p = c_void_p(0)
+        query_value_length = c_uint()
+        windll.version.VerQueryValueW(file_version_info_data, "\\\\VarFileInfo\\Translation",
+                                      byref(query_value_p), byref(query_value_length))
+        value_as_lacp = cast(query_value_p, POINTER(LANGANDCODEPAGE))
+        language = f"{value_as_lacp.contents.wLanguage:04x}{value_as_lacp.contents.wCodePage:04x}"
+
+        query_value_p = c_void_p(0)
+        for info in ["FileDescription", "OriginalFilename", "ProductName"]:
+            ver_res = windll.version.VerQueryValueW(file_version_info_data,
+                                                    f"\\StringFileInfo\\{language}\\{info}",
+                                                    byref(query_value_p), byref(query_value_length))
+            current_value = wstring_at(query_value_p.value, query_value_length.value)
+            # We really shouldn't need to, but I've seen some names with
+            # a NUL character in them which then also includes e.g. the file version.
+            # This happened with e.g. IBM Notes.
+            if "\0" in current_value:
+                current_value = current_value[0:current_value.index("\0")]
+
+            logging.debug(current_value)
+            if ver_res != 0 and application_name is None:
+                application_name = current_value
+                break
+
+        logging.debug(application_name)
+    except Exception as ex:
+        logging.error(f"An unhandled error occurred in the Windows watcher: {ex}")
 
     watcher_helper.register(window_title=active_window_title,
                             application_name=application_name,
-                            application_path=path,
+                            application_path=application_path,
                             idle_period=idle_period,
                             locked_state=locked_state)
