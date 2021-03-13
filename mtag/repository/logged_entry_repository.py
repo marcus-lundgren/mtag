@@ -42,12 +42,7 @@ class LoggedEntryRepository:
                                "to_date": datetime_helper.datetime_to_timestamp(to_datetime)})
         db_logged_entries = cursor.fetchall()
 
-        logged_entries = []
-        for db_le in db_logged_entries:
-            le = self._from_dbo(conn=conn, db_le=db_le)
-            logged_entries.append(le)
-
-        return logged_entries
+        return [self._from_dbo(conn=conn, db_le=db_le) for db_le in db_logged_entries]
 
     def _from_dbo(self, conn: sqlite3.Connection, db_le: Dict) -> LoggedEntry:
         application_window = self._get_application_window(conn, db_le["le_application_window_id"])

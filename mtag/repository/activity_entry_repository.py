@@ -37,8 +37,7 @@ class ActivityEntryRepository:
                                "to_date": datetime_helper.datetime_to_timestamp(to_datetime)})
         db_activity_entries = cursor.fetchall()
 
-        activity_entries = [self._from_dbo(db_ae=db_ae) for db_ae in db_activity_entries]
-        return activity_entries
+        return [self._from_dbo(db_ae=db_ae) for db_ae in db_activity_entries]
 
     def _from_dbo(self, db_ae: dict) -> ActivityEntry:
         return ActivityEntry(db_id=db_ae["ae_id"],

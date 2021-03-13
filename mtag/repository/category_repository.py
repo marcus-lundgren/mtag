@@ -14,12 +14,7 @@ class CategoryRepository:
         cursor = conn.execute("SELECT * FROM category ORDER BY lower(c_name) ASC")
         db_categories = cursor.fetchall()
 
-        categories = []
-        for db_c in db_categories:
-            c = self._from_dbo(db_c)
-            categories.append(c)
-
-        return categories
+        return [self._from_dbo(db_c) for db_c in db_categories]
 
     def get(self, conn: sqlite3.Connection, db_id: int) -> Category:
         cursor = conn.execute("SELECT * FROM category WHERE c_id=:db_id", {"db_id": db_id})

@@ -72,12 +72,7 @@ class TaggedEntryRepository:
                                "to_date": datetime_helper.datetime_to_timestamp(to_datetime)})
         db_tagged_entries = cursor.fetchall()
 
-        tagged_entries = []
-        for db_te in db_tagged_entries:
-            le = self._from_dbo(conn=conn, db_te=db_te)
-            tagged_entries.append(le)
-
-        return tagged_entries
+        return [self._from_dbo(conn=conn, db_te=db_te) for db_te in db_tagged_entries]
 
     def total_time_by_category(self, conn: sqlite3.Connection, category_name: str) -> int:
         cursor = conn.execute("SELECT SUM(te_end - te_start) AS total_time"
