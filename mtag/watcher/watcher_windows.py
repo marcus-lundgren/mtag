@@ -77,7 +77,7 @@ def watch():
         unicode_buffer = create_unicode_buffer(window_title_size)
         windll.user32.GetWindowTextW(window_handle, unicode_buffer, window_title_size)
         active_window_title = unicode_buffer.value
-        logging.debug(unicode_buffer.value)
+        logging.debug(active_window_title)
 
         # Get the process id
         windll.user32.GetWindowThreadProcessId(window_handle, byref(pid_param))
@@ -91,12 +91,10 @@ def watch():
         result = windll.kernel32.QueryFullProcessImageNameW(process_handle, 0,
                                                             image_name, byref(max_path_as_dword))
         if result == 0:
-            # Error handle
-            pass
-
-        logging.debug(image_name.value)
+            raise OSError("Unable to find the application path")
 
         application_path = image_name.value
+        logging.debug(application_path)
 
         # Get the file version info
         file_version_info_size = windll.version.GetFileVersionInfoSizeW(image_name, None)
@@ -116,6 +114,10 @@ def watch():
             ver_res = windll.version.VerQueryValueW(file_version_info_data,
                                                     f"\\StringFileInfo\\{language}\\{info}",
                                                     byref(query_value_p), byref(query_value_length))
+            # Go to the next potential value if we got an error
+            if ver_res == 0:
+                continue
+
             current_value = wstring_at(query_value_p.value, query_value_length.value)
             # We really shouldn't need to, but I've seen some names with
             # a NUL character in them which then also includes e.g. the file version.
@@ -123,8 +125,9 @@ def watch():
             if "\0" in current_value:
                 current_value = current_value[0:current_value.index("\0")]
 
-            logging.debug(current_value)
-            if ver_res != 0 and application_name is None:
+            # Ensure that we've got at least something as a value
+            if 0 < len(current_value):
+                logging.debug(f"Setting application name to {current_value}, fetched from {info}")
                 application_name = current_value
                 break
 
