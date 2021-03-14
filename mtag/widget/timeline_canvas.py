@@ -95,6 +95,42 @@ class TimelineCanvas(Gtk.DrawingArea):
         self._update_canvas_constants()
         self.queue_draw()
 
+    def zoom_to_fit(self) -> None:
+        logged_entries_exists = len(self.logged_entries) > 0
+        tagged_entries_exists = len(self.tagged_entries) > 0
+
+        # Nothing to do if we don't have any entries
+        if not logged_entries_exists and not tagged_entries_exists:
+            return
+
+        starts = []
+        stops = []
+        if logged_entries_exists:
+            starts.append(self.logged_entries[0].start)
+            stops.append(next(reversed(self.logged_entries)).stop)
+
+        if tagged_entries_exists:
+            starts.append(self.tagged_entries[0].start)
+            stops.append(next(reversed(self.tagged_entries)).stop)
+
+        current_date_as_datetime = datetime.datetime(year=self._current_date.year,
+                                                     month=self._current_date.month,
+                                                     day=self._current_date.day)
+
+        # Choose the earliest start, but ensure that we are within
+        # today's date
+        new_start = max(current_date_as_datetime, min(starts))
+
+        # Choose the latest stop, but ensure that we are within
+        # today's date
+        new_stop = min(current_date_as_datetime.replace(hour=23, minute=59, second=59), max(stops))
+
+        self.timeline_start = new_start
+        self.timeline_delta = new_stop - new_start
+        self._update_timeline_stop()
+        self._update_canvas_constants()
+        self.queue_draw()
+
     def move(self, move_right: bool) -> None:
         new_start, new_stop = timeline_helper.move(boundary_start=self.timeline_start,
                                                    boundary_stop=self.timeline_end,

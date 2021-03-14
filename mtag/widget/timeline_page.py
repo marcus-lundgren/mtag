@@ -24,6 +24,8 @@ class TimelinePage(Gtk.Box):
         self.calendar_panel.connect("day-selected", self._on_new_day_selected)
         self.calendar_panel.set_halign(Gtk.Align.START)
         top_bar.pack_start(self.calendar_panel, expand=True, fill=True, padding=0)
+        zoom_to_fit_button = Gtk.Button("Zoom to fit")
+        top_bar.pack_start(zoom_to_fit_button, expand=False, fill=False, padding=0)
         top_bar.pack_start(Gtk.Label(label="Tagged time:"), expand=False, fill=False, padding=10)
         top_bar.pack_start(self.tagged_time_label, expand=False, fill=False, padding=10)
         self.pack_start(top_bar, expand=False, fill=False, padding=0)
@@ -39,6 +41,7 @@ class TimelinePage(Gtk.Box):
         canvas_overlay = Gtk.Overlay()
         canvas_overlay.add_overlay(self.timeline_canvas)
         canvas_overlay.add_overlay(TimelineOverlay(timeline_canvas=self.timeline_canvas))
+        zoom_to_fit_button.connect("clicked", lambda *_: self.timeline_canvas.zoom_to_fit())
 
         self.pack_start(canvas_overlay, expand=True, fill=True, padding=10)
 
