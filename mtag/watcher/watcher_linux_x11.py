@@ -6,6 +6,7 @@ import subprocess
 
 from . import watcher_helper
 
+
 class XScreenSaverInfo(ctypes.Structure):
     _fields_ = [('window', ctypes.c_ulong),  # screen saver window
                 ('state', ctypes.c_int),  # off,on,disabled
