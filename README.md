@@ -17,8 +17,6 @@ The supported platforms are Linux (X11 and Logind are required) and Windows (onl
 * Linux
   * Logind (to determine screen lock state)
   * X11 (to determine active window and its PID)
-* Windows
-  * Powershell (to determine process information)
 
 ## File locations
 
