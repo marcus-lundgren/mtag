@@ -26,7 +26,7 @@ def create_connection() -> sqlite3.Connection:
     return conn
 
 
-def _update_if_needed(conn=sqlite3.Connection):
+def _update_if_needed(conn: sqlite3.Connection):
     cursor = conn.execute("SELECT COUNT(*) as version_exist FROM sqlite_master WHERE type='table' AND name='version'")
     version_table_exists = cursor.fetchone()["version_exist"] == 1
     if not version_table_exists:
