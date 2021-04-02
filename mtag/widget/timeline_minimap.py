@@ -119,7 +119,6 @@ class TimelineMinimap(Gtk.DrawingArea):
     def _do_draw(self, _: Gtk.DrawingArea, cr: cairo.Context):
         width = self.get_allocated_width()
         height = self.get_allocated_height()
-        self.pixels_per_second = (width - self.side_padding * 2) / (23 * 60 * 60 + 59 * 60 + 60)
 
         current_dt = self.current_date
         cr.set_font_size(16)
