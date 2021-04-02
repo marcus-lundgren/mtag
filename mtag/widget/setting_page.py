@@ -23,7 +23,7 @@ class SettingPage(Gtk.Bin):
         idle_label.set_xalign(1)
         grid.attach(idle_label, 0, 0, 1, 1)
         adjustment = Gtk.Adjustment(value=configuration.inactive_after_idle_seconds, lower=1, upper=6000,
-                                                                 step_incr=1, page_incr=1, page_size=1)
+                                    step_incr=1, page_incr=1, page_size=1)
         self.inactive_after_idle_sec = Gtk.SpinButton(adjustment=adjustment)
         self.inactive_after_idle_sec.set_value(adjustment.get_value())
         self.inactive_after_idle_sec.connect("value-changed", self._save_configuration)
