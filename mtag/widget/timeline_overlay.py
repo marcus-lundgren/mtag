@@ -74,7 +74,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 3, 0, 6, height)
         self.dirty_rectangles.append(current_guidingline_rectangle)
 
-        # Hightlight the hovered over entry
+        # Highlight the hovered over entry
         moused_entry = None if self.moused_over_entity is None else self.moused_over_entity.entry
         if type(moused_entry) is LoggedEntry:
             le = self.moused_over_entity
