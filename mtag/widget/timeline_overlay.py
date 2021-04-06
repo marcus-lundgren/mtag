@@ -24,12 +24,14 @@ class TimelineOverlay(Gtk.DrawingArea):
         self.add_events(Gdk.EventMask.POINTER_MOTION_MASK
                         | Gdk.EventMask.BUTTON_PRESS_MASK
                         | Gdk.EventMask.BUTTON_RELEASE_MASK
-                        | Gdk.EventMask.SCROLL_MASK)
+                        | Gdk.EventMask.SCROLL_MASK
+                        | Gdk.EventMask.LEAVE_NOTIFY_MASK)
         self.connect("draw", self._do_draw)
         self.connect("motion_notify_event", self._on_motion_notify)
         self.connect("button-release-event", self._do_button_release)
         self.connect("button-press-event", self._do_button_press)
         self.connect("scroll_event", self._do_scroll_event)
+        self.connect("leave-notify-event", self._do_leave_notify_event)
 
         self.timeline_canvas = timeline_canvas
         self.current_moused_datetime = datetime.datetime.now()
@@ -58,21 +60,29 @@ class TimelineOverlay(Gtk.DrawingArea):
     def _do_button_press(self, _, e: Gdk.EventButton):
         self.timeline_canvas.do_button_press(e, self.current_moused_datetime)
 
+    def _do_leave_notify_event(self, *_):
+        self.moused_over_entity = None
+        self.tooltip_attributes = None
+        self.current_moused_datetime = None
+        self.queue_draw()
+
     def _do_draw(self, _, cr: cairo.Context):
         height = self.get_allocated_height()
         width = self.get_allocated_width()
         timeline_canvas = self.timeline_canvas
-        timeline_x = timeline_canvas.datetime_to_pixel(self.current_moused_datetime, width)
 
         # Show a guiding line under the mouse
-        cr.set_source_rgb(0.5, 0.5, 0.5)
-        cr.new_path()
-        cr.move_to(timeline_x, 0)
-        cr.line_to(timeline_x, height)
-        cr.stroke()
+        if self.current_moused_datetime is not None:
+            timeline_x = timeline_canvas.datetime_to_pixel(self.current_moused_datetime, width)
 
-        current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 3, 0, 6, height)
-        self.dirty_rectangles.append(current_guidingline_rectangle)
+            cr.set_source_rgb(0.5, 0.5, 0.5)
+            cr.new_path()
+            cr.move_to(timeline_x, 0)
+            cr.line_to(timeline_x, height)
+            cr.stroke()
+
+            current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 3, 0, 6, height)
+            self.dirty_rectangles.append(current_guidingline_rectangle)
 
         # Highlight the hovered over entry
         moused_entry = None if self.moused_over_entity is None else self.moused_over_entity.entry
