@@ -60,11 +60,17 @@ def get_locked_state():
         return False
 
 
+# Ensure that we get the value on the right. As a double quote might be escaped
+# inside of the left hand side, ensure that we match the correct double quote characters.
+wm_class_name_pattern = re.compile(r'[^\\]",\s*"\s*(.*)\s*"$')
+
+
 def watch() -> None:
     logging.info("== STARTED ==")
 
     active_window_id_information = subprocess.run(["xprop", "-root", "_NET_ACTIVE_WINDOW"],
-                                                  stdout=subprocess.PIPE, universal_newlines=True).stdout
+                                                  stdout=subprocess.PIPE, universal_newlines=True,
+                                                  encoding="UTF-8").stdout
     logging.debug(active_window_id_information)
 
     active_window_id = active_window_id_information[active_window_id_information.rfind(" ") + 1:].strip()
@@ -85,7 +91,8 @@ def watch() -> None:
 
     active_window_x11_information = subprocess.run(["xprop", "-id", active_window_id,
                                                     "_NET_WM_PID", "WM_CLASS", "WM_NAME", "_NET_WM_NAME"],
-                                                   stdout=subprocess.PIPE, universal_newlines=True).stdout.strip()
+                                                   stdout=subprocess.PIPE, universal_newlines=True,
+                                                   encoding="UTF-8").stdout.strip()
     logging.debug(active_window_x11_information)
 
     application_pid = None
@@ -106,9 +113,7 @@ def watch() -> None:
             application_window_title = line[line.find("=") + 2:].strip('"')
             logging.debug(application_window_title)
         elif line.startswith("WM_CLASS"):
-            # Ensure that we get the value on the right. As a double quote might be escaped
-            # inside of the left hand side, ensure that we match the correct double quote characters.
-            wm_class_name_pattern = re.compile(r'[^\\]",\s*"\s*(.*)\s*"$')
+            global wm_class_name_pattern
             pattern_matches = wm_class_name_pattern.findall(line)
             if len(pattern_matches) > 0:
                 application_name = pattern_matches[0]
@@ -121,7 +126,8 @@ def watch() -> None:
     if application_pid.isdigit() and application_pid != 0:
         logging.debug(f"We have an application id: {application_pid}")
         application_path = subprocess.run(["cat", f"/proc/{int(application_pid)}/cmdline"],
-                                          stdout=subprocess.PIPE, universal_newlines=True).stdout
+                                          stdout=subprocess.PIPE, universal_newlines=True,
+                                          encoding="UTF-8").stdout
         application_path = application_path.replace("\0", " ")
         application_path = application_path.strip()
 
