@@ -120,7 +120,11 @@ class TimelinePage(Gtk.Box):
 
     def _do_button_press_te(self, w: Gtk.TreeView, e):
         if e.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
-            p, c, *_ = w.get_path_at_pos(e.x, e.y)
+            path = w.get_path_at_pos(e.x, e.y)
+            if path is None:
+                return
+
+            p, c, *_ = path
             i = self.tagged_entries_list_store.get_iter(p)
             v = self.tagged_entries_list_store.get_value(i, 2)
 
