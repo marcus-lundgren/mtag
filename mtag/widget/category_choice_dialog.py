@@ -16,6 +16,8 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.vbox.set_margin_top(10)
         self.vbox.set_margin_bottom(10)
 
+        self.chosen_category_text = ""
+
         time_text = datetime_helper.to_time_text(tagged_entry.start, tagged_entry.stop, tagged_entry.duration)
         time_text_label = Gtk.Label(label=time_text)
 
@@ -34,6 +36,7 @@ class CategoryChoiceDialog(Gtk.Dialog):
             self.list_store.append([c.name])
 
         self.categories_tree_view: Gtk.TreeView = Gtk.TreeView.new_with_model(self.tree_model_filter)
+        self.categories_tree_view.connect("button-press-event", self._do_button_press)
         self.categories_tree_view.show_all()
         cat_tree_selection: Gtk.TreeSelection = self.categories_tree_view.get_selection()
         cat_tree_selection.set_mode(Gtk.SelectionMode.BROWSE)
@@ -57,7 +60,7 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.show_all()
 
     def get_chosen_category_value(self) -> str:
-        return self.search_box.get_text()
+        return self.chosen_category_text
 
     def _do_selection_changed(self, selection: Gtk.TreeSelection, *_):
         _, selected = selection.get_selected()
@@ -66,8 +69,13 @@ class CategoryChoiceDialog(Gtk.Dialog):
         if selected is None:
             return
 
-        v = self.tree_model_filter.get_value(selected, 0)
-        self.search_box.set_text(v)
+        self.chosen_category_text = self.tree_model_filter.get_value(selected, 0)
+
+    def _do_button_press(self, w: Gtk.TreeView, e: Gdk.EventButton):
+        if e.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
+            path = w.get_path_at_pos(e.x, e.y)
+            if path is not None:
+                self.response(Gtk.ResponseType.OK)
 
     def _do_entry_changed(self, entry: Gtk.Entry):
         self._update_statistics(entry.get_text())
@@ -83,7 +91,7 @@ class CategoryChoiceDialog(Gtk.Dialog):
             self.response(Gtk.ResponseType.OK)
 
     def _filter_func(self, model, p_iter, _):
-        text = self.get_chosen_category_value()
+        text = self.search_box.get_text()
         if text == "":
             return True
 
