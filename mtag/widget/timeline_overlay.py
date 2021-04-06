@@ -118,9 +118,9 @@ class TimelineOverlay(Gtk.DrawingArea):
         current_tagged_entry = timeline_canvas.current_tagged_entry
         current_tagged_entry_dirty_rectangle = None
         if current_tagged_entry is not None:
-            datetime_used = timeline_canvas._set_tagged_entry_stop_date(current_moused_dt,
-                                                                        current_tagged_entry,
-                                                                        timeline_canvas.tagged_entries)
+            datetime_used = timeline_canvas.set_tagged_entry_stop_date(current_moused_dt,
+                                                                       current_tagged_entry,
+                                                                       timeline_canvas.tagged_entries)
             start_x = int(timeline_canvas.datetime_to_pixel(current_tagged_entry.start, canvas_width))
             stop_x = int(timeline_canvas.datetime_to_pixel(current_tagged_entry.stop, canvas_width))
             current_tagged_entry_dirty_rectangle = cairo.RectangleInt(start_x - 5, 0,
