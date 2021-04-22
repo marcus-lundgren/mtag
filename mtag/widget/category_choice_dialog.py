@@ -16,8 +16,6 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.vbox.set_margin_top(10)
         self.vbox.set_margin_bottom(10)
 
-        self.chosen_category_text = ""
-
         time_text = datetime_helper.to_time_text(tagged_entry.start, tagged_entry.stop, tagged_entry.duration)
         time_text_label = Gtk.Label(label=time_text)
 
@@ -39,7 +37,7 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.categories_tree_view.connect("button-press-event", self._do_button_press)
         self.categories_tree_view.show_all()
         cat_tree_selection: Gtk.TreeSelection = self.categories_tree_view.get_selection()
-        cat_tree_selection.set_mode(Gtk.SelectionMode.BROWSE)
+        cat_tree_selection.set_mode(Gtk.SelectionMode.SINGLE)
         cat_tree_selection.connect("changed", self._do_selection_changed)
 
         renderer = Gtk.CellRendererText()
@@ -60,7 +58,7 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.show_all()
 
     def get_chosen_category_value(self) -> str:
-        return self.chosen_category_text
+        return self.search_box.get_text()
 
     def _do_selection_changed(self, selection: Gtk.TreeSelection, *_):
         _, selected = selection.get_selected()
@@ -69,7 +67,8 @@ class CategoryChoiceDialog(Gtk.Dialog):
         if selected is None:
             return
 
-        self.chosen_category_text = self.tree_model_filter.get_value(selected, 0)
+        selected_category = self.tree_model_filter.get_value(selected, 0)
+        self.search_box.set_text(selected_category)
 
     def _do_button_press(self, w: Gtk.TreeView, e: Gdk.EventButton):
         if e.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
@@ -77,12 +76,12 @@ class CategoryChoiceDialog(Gtk.Dialog):
             if path is not None:
                 self.response(Gtk.ResponseType.OK)
 
-    def _do_entry_changed(self, entry: Gtk.Entry):
-        self._update_statistics(entry.get_text())
+    def _do_entry_changed(self, _):
+        self._update_statistics()
         self.tree_model_filter.refilter()
 
-    def _update_statistics(self, category_name: str):
-        total_time = statistics_helper.get_total_category_tagged_time(category_name)
+    def _update_statistics(self):
+        total_time = statistics_helper.get_total_category_tagged_time(self.search_box.get_text())
         hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_time)
         self.total_tagged_time_label.set_label(f"{hours} hours, {minutes} minutes, {seconds} seconds")
 
