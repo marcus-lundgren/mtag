@@ -1,12 +1,13 @@
 import datetime
 import math
-from collections import namedtuple
 from typing import List
-
-from mtag.helper import timeline_helper
 
 import cairo
 import gi
+
+from mtag.helper import timeline_helper
+
+
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
@@ -15,8 +16,7 @@ from gi.repository import Gtk, Gdk, GObject
 class TimelineEntry:
     def __init__(self, start_x: float, stop_x: float):
         self.start_x = math.floor(start_x)
-        self.stop_x = math.ceil(stop_x)
-        self.width = self.stop_x - self.start_x
+        self.width = math.ceil(stop_x) - self.start_x
 
 
 class TimelineMinimap(Gtk.DrawingArea):
