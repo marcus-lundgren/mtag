@@ -1,11 +1,13 @@
 import datetime
+import math
 from collections import namedtuple
-from typing import List, Optional
+from typing import List, Optional, Union, Tuple
 
 import cairo
 import gi
 
 from mtag import entity
+from mtag.entity import TaggedEntry, LoggedEntry, ActivityEntry
 from mtag.helper import color_helper, database_helper, timeline_helper
 from mtag.repository import CategoryRepository
 from mtag.widget import CategoryChoiceDialog, TimelineContextPopover
@@ -14,8 +16,16 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 
 
-VisibleEntry = namedtuple("VisibleEntry", ["entry", "start_x", "stop_x", "color"])
 TimelineTimeline = namedtuple("TimelineTimeline", ["time", "x", "text", "text_extents"])
+
+
+class VisibleEntry:
+    def __init__(self, entry: Union[TaggedEntry, LoggedEntry, ActivityEntry], start_x: float, stop_x: float, color: Tuple):
+        self.entry = entry
+        self.start_x = math.floor(start_x)
+        self.stop_x = math.ceil(stop_x)
+        self.width = self.stop_x - self.start_x
+        self.color = color
 
 
 class TimelineCanvas(Gtk.DrawingArea):
@@ -291,7 +301,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         for ae in self.visible_activity_entries:
             r, g, b = ae.color
             cr.set_source_rgba(r, g, b, 0.4)
-            cr.rectangle(ae.start_x, 0, ae.stop_x - ae.start_x, drawing_area_height)
+            cr.rectangle(ae.start_x, 0, ae.width, drawing_area_height)
             cr.fill()
 
         # Logged entries
@@ -299,10 +309,10 @@ class TimelineCanvas(Gtk.DrawingArea):
             r, g, b = le.color
             cr.set_source_rgb(r, g, b)
             cr.rectangle(le.start_x, self.le_start_y,
-                         le.stop_x - le.start_x, self.timeline_height)
+                         le.width, self.timeline_height)
             cr.fill()
             cr.set_source_rgb(0.2, 0.2, 0.8)
-            cr.rectangle(le.start_x, self.le_start_y, le.stop_x - le.start_x, 10)
+            cr.rectangle(le.start_x, self.le_start_y, le.width, 10)
             cr.fill()
 
         for te in self.visible_tagged_entries:

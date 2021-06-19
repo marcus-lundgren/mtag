@@ -1,5 +1,7 @@
 import datetime
+import math
 from collections import namedtuple
+from typing import List
 
 from mtag.helper import timeline_helper
 
@@ -10,7 +12,11 @@ gi.require_version("Gdk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 
 
-TimelineEntry = namedtuple("TimelineEntry", ["start_x", "stop_x"])
+class TimelineEntry:
+    def __init__(self, start_x: float, stop_x: float):
+        self.start_x = math.floor(start_x)
+        self.stop_x = math.ceil(stop_x)
+        self.width = self.stop_x - self.start_x
 
 
 class TimelineMinimap(Gtk.DrawingArea):
@@ -41,8 +47,8 @@ class TimelineMinimap(Gtk.DrawingArea):
         self.button_is_pressed = False
         self.logged_entries = []
         self.tagged_entries = []
-        self.logged_timeline_entries = []
-        self.tagged_timeline_entries = []
+        self.logged_timeline_entries: List[TimelineEntry] = []
+        self.tagged_timeline_entries: List[TimelineEntry] = []
 
         self.set_size_request(-1, 80)
         self.show_all()
@@ -135,12 +141,12 @@ class TimelineMinimap(Gtk.DrawingArea):
 
         for te in self.tagged_timeline_entries:
             cr.set_source_rgb(1, 0.64, 0)
-            cr.rectangle(te.start_x, 10, te.stop_x - te.start_x, 20)
+            cr.rectangle(te.start_x, 10, te.width, 20)
             cr.fill()
 
         for le in self.logged_timeline_entries:
             cr.set_source_rgb(0.2, 0.2, 0.8)
-            cr.rectangle(le.start_x, 50, le.stop_x - le.start_x, 20)
+            cr.rectangle(le.start_x, 50, le.width, 20)
             cr.fill()
 
         start_x = self._datetime_to_pixel(dt=self.boundary_start, canvas_width=width)
