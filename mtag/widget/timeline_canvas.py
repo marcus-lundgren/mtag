@@ -318,10 +318,10 @@ class TimelineCanvas(Gtk.DrawingArea):
         for te in self.visible_tagged_entries:
             r, g, b = te.color
             cr.set_source_rgb(r, g, b)
-            cr.rectangle(te.start_x, self.te_start_y, te.stop_x - te.start_x, self.timeline_height)
+            cr.rectangle(te.start_x, self.te_start_y, te.width, self.timeline_height)
             cr.fill()
             cr.set_source_rgb(1, 0.64, 0)
-            cr.rectangle(te.start_x, self.te_end_y - 10, te.stop_x - te.start_x, 10)
+            cr.rectangle(te.start_x, self.te_end_y - 10, te.width, 10)
             cr.fill()
 
         if self.current_tagged_entry is not None:
