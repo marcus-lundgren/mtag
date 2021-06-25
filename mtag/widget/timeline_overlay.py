@@ -90,14 +90,12 @@ class TimelineOverlay(Gtk.DrawingArea):
         if type(moused_entry) is LoggedEntry:
             le = self.moused_over_entity
             cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
-            cr.rectangle(le.start_x, timeline_canvas.le_start_y,
-                         le.stop_x - le.start_x, timeline_canvas.timeline_height)
+            cr.rectangle(le.start_x, timeline_canvas.le_start_y, le.width, timeline_canvas.timeline_height)
             cr.fill()
         elif type(moused_entry) is TaggedEntry:
             te = self.moused_over_entity
             cr.set_source_rgba(0.7, 0.7, 0.7, 0.2)
-            cr.rectangle(te.start_x, timeline_canvas.te_start_y,
-                         te.stop_x - te.start_x, timeline_canvas.timeline_height)
+            cr.rectangle(te.start_x, timeline_canvas.te_start_y, te.width, timeline_canvas.timeline_height)
             cr.fill()
 
         # Show the tooltip
@@ -173,7 +171,7 @@ class TimelineOverlay(Gtk.DrawingArea):
 
                     highlight_rectangle = cairo.RectangleInt(int(le.start_x) - 5,
                                                              int(timeline_canvas.le_start_y) - 5,
-                                                             int(le.stop_x - le.start_x) + 10,
+                                                             int(le.width) + 10,
                                                              int(timeline_canvas.timeline_height) + 10)
                     self.dirty_rectangles.append(highlight_rectangle)
                     break
@@ -188,7 +186,7 @@ class TimelineOverlay(Gtk.DrawingArea):
 
                     highlight_rectangle = cairo.RectangleInt(int(te.start_x) - 5,
                                                              int(timeline_canvas.te_start_y) - 5,
-                                                             int(te.stop_x - te.start_x) + 10,
+                                                             int(te.width) + 10,
                                                              int(timeline_canvas.timeline_height) + 10)
                     self.dirty_rectangles.append(highlight_rectangle)
                     break
