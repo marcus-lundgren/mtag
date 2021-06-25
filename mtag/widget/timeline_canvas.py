@@ -272,44 +272,43 @@ class TimelineCanvas(Gtk.DrawingArea):
         drawing_area_height = self.get_allocated_height()
         canvas_width = self.get_allocated_width()
 
+        # Show the activity as a background for the time area
+        for ae in self.visible_activity_entries:
+            r, g, b = ae.color
+            cr.set_source_rgb(r, g, b)
+            cr.rectangle(ae.start_x, 0, ae.width, drawing_area_height)
+            cr.fill()
+
         # Draw the hour lines
         cr.set_font_size(16)
-        cr.set_source_rgb(0.4, 0.4, 0.4)
+        cr.set_source_rgb(0.35, 0.35, 0.35)
         cr.rectangle(0, 0, canvas_width, self.guidingline_on_timeline_start + 10)
         cr.fill()
         for timeline_timeline in self.timeline_timelines:
             # Hour line
-            time = timeline_timeline.time
-            if time.minute == 0:
-                cr.set_source_rgb(0.5, 0.5, 0.5)
-            else:
-                cr.set_source_rgb(0.8, 0.8, 0.8)
-
             hx = timeline_timeline.x
+            cr.set_source_rgb(0.7, 0.7, 0.7)
             cr.new_path()
             cr.move_to(hx, self.guidingline_on_timeline_start)
-            cr.line_to(hx, drawing_area_height)
+            cr.line_to(hx, self.guidingline_on_timeline_start + 10)
             cr.stroke()
 
             # Hour text
-            cr.set_source_rgb(0.8, 0.8, 0.8)
+            time = timeline_timeline.time
+            if time.minute == 0:
+                cr.set_source_rgb(0.9, 0.9, 0.3)
+            else:
+                cr.set_source_rgb(0.2, 0.8, 1)
+
             tx, hour_text_width = timeline_timeline.text_extents
             cr.move_to(hx - tx - (hour_text_width / 2), self.time_guidingline_text_height)
             cr.show_text(timeline_timeline.text)
-
-        # Show the activity as a background for the time area
-        for ae in self.visible_activity_entries:
-            r, g, b = ae.color
-            cr.set_source_rgba(r, g, b, 0.4)
-            cr.rectangle(ae.start_x, 0, ae.width, drawing_area_height)
-            cr.fill()
 
         # Logged entries
         for le in self.visible_logged_entries:
             r, g, b = le.color
             cr.set_source_rgb(r, g, b)
-            cr.rectangle(le.start_x, self.le_start_y,
-                         le.width, self.timeline_height)
+            cr.rectangle(le.start_x, self.le_start_y, le.width, self.timeline_height)
             cr.fill()
             cr.set_source_rgb(0.2, 0.2, 0.8)
             cr.rectangle(le.start_x, self.le_start_y, le.width, 10)

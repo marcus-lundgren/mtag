@@ -4,7 +4,7 @@ from typing import Tuple
 
 
 def activity_to_color_floats(active: bool) -> Tuple[float, float, float]:
-    return (0.12, 0.93, 0.12) if active else (0.5, 0.5, 0.5)
+    return (0.14, 0.78, 0.14) if active else (0.5, 0.5, 0.5)
 
 
 def activity_to_text_color_floats(active: bool) -> Tuple[float, float, float]:
