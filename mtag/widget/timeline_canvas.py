@@ -305,7 +305,13 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.show_text(timeline_timeline.text)
 
         # Logged entries
+        last_stop_x = -1
         for le in self.visible_logged_entries:
+            # If we end at the same x-position as before, there is no need to draw this entry
+            if last_stop_x == le.stop_x:
+                continue
+
+            last_stop_x = le.stop_x
             r, g, b = le.color
             cr.set_source_rgb(r, g, b)
             cr.rectangle(le.start_x, self.le_start_y, le.width, self.timeline_height)
