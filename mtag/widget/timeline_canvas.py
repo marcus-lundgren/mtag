@@ -177,19 +177,32 @@ class TimelineCanvas(Gtk.DrawingArea):
         if timelines_end.day != self._current_date.day:
             timelines_end = self.timeline_end
 
+        # Gather the visible activity entries
         self.visible_activity_entries = [VisibleEntry(ae,
                                                       self.datetime_to_pixel(ae.start, canvas_width),
                                                       self.datetime_to_pixel(ae.stop, canvas_width),
                                                       color_helper.activity_to_color_floats(ae.active))
                                          for ae in self.activity_entries
                                          if timelines_start <= ae.stop and ae.start <= timelines_end]
-        self.visible_logged_entries = [VisibleEntry(le,
-                                                    self.datetime_to_pixel(le.start, canvas_width),
-                                                    self.datetime_to_pixel(le.stop, canvas_width),
-                                                    color_helper.to_color_floats(
-                                                            le.application_window.application.name))
-                                       for le in self.logged_entries
-                                       if timelines_start <= le.stop and le.start <= timelines_end]
+
+        # Gather the visible logged entries
+        last_stop_x = None
+        self.visible_logged_entries = []
+        for le in self.logged_entries:
+            # Ensure that the entry is within the viewport
+            if le.stop < timelines_start or timelines_end < le.start:
+                continue
+
+            ve = VisibleEntry(le, self.datetime_to_pixel(le.start, canvas_width),
+                              self.datetime_to_pixel(le.stop, canvas_width),
+                              color_helper.to_color_floats(le.application_window.application.name))
+
+            # If we end at the same x-position as before, there is no need to draw this entry as it would be hidden
+            if ve.stop_x != last_stop_x:
+                self.visible_logged_entries.append(ve)
+                last_stop_x = ve.stop_x
+
+        # Gather the visible tagged entries
         self.visible_tagged_entries = [VisibleEntry(te,
                                                     self.datetime_to_pixel(te.start, canvas_width),
                                                     self.datetime_to_pixel(te.stop, canvas_width),
@@ -305,13 +318,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.show_text(timeline_timeline.text)
 
         # Logged entries
-        last_stop_x = -1
         for le in self.visible_logged_entries:
-            # If we end at the same x-position as before, there is no need to draw this entry
-            if last_stop_x == le.stop_x:
-                continue
-
-            last_stop_x = le.stop_x
             r, g, b = le.color
             cr.set_source_rgb(r, g, b)
             cr.rectangle(le.start_x, self.le_start_y, le.width, self.timeline_height)
