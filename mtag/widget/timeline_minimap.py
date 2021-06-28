@@ -128,10 +128,9 @@ class TimelineMinimap(Gtk.DrawingArea):
 
         current_dt = self.current_date
         cr.set_font_size(16)
+        cr.set_source_rgb(0.5, 0.5, 0.5)
         for h in range(24):
             hx = self._datetime_to_pixel(dt=current_dt, canvas_width=width)
-            cr.set_source_rgb(0.3, 0.3, 0.3)
-
             hour_string = str(current_dt.hour).rjust(2, '0')
             (tx, _, hour_text_width, hour_text_height, dx, _) = cr.text_extents(hour_string)
             cr.move_to(hx - tx - (hour_text_width / 2), (height + hour_text_height) / 2)
@@ -145,14 +144,14 @@ class TimelineMinimap(Gtk.DrawingArea):
             cr.fill()
 
         for le in self.logged_timeline_entries:
-            cr.set_source_rgb(0.2, 0.2, 0.8)
+            cr.set_source_rgb(0.3, 0.3, 0.8)
             cr.rectangle(le.start_x, 50, le.width, 20)
             cr.fill()
 
         start_x = self._datetime_to_pixel(dt=self.boundary_start, canvas_width=width)
         stop_x = self._datetime_to_pixel(dt=self.boundary_stop, canvas_width=width)
 
-        cr.set_source_rgba(0.2, 0.6, 0.0, 0.5)
+        cr.set_source_rgba(0.4, 0.4, 0.4, 0.5)
         cr.rectangle(start_x, 0, stop_x - start_x, height)
         cr.fill()
 

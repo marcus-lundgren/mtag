@@ -323,7 +323,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.set_source_rgb(r, g, b)
             cr.rectangle(le.start_x, self.le_start_y, le.width, self.timeline_height)
             cr.fill()
-            cr.set_source_rgb(0.2, 0.2, 0.8)
+            cr.set_source_rgb(0.3, 0.3, 0.8)
             cr.rectangle(le.start_x, self.le_start_y, le.width, 10)
             cr.fill()
 
