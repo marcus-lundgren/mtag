@@ -442,6 +442,24 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.queue_draw()
 
+    def find_visible_logged_entry_by_x_position(self, x: float) -> Optional[VisibleEntry]:
+        number_of_visible_logged_entries = len(self.visible_logged_entries)
+        if number_of_visible_logged_entries == 0:
+            return None
+
+        current_start = 0
+        current_end = number_of_visible_logged_entries - 1
+        while current_start <= current_end:
+            middle = (current_start + current_end) // 2
+            current_entry = self.visible_logged_entries[middle]
+            if current_entry.start_x <= x <= current_entry.stop_x:
+                return current_entry
+            elif x < current_entry.start_x:
+                current_end = middle - 1
+            else:
+                current_start = middle + 1
+        return None
+
     def datetime_to_pixel(self, dt: datetime, canvas_width: int) -> float:
         return timeline_helper.datetime_to_pixel(dt=dt,
                                                  canvas_width=canvas_width,

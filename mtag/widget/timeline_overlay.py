@@ -160,21 +160,20 @@ class TimelineOverlay(Gtk.DrawingArea):
             time_texts = [current_te_time_text]
 
         if timeline_canvas.le_start_y <= mouse_y <= timeline_canvas.le_end_y or current_tagged_entry is not None:
-            for le in timeline_canvas.visible_logged_entries:
-                if le.start_x <= mouse_x <= le.stop_x:
-                    self.moused_over_entity = le
-                    if current_tagged_entry is None:
-                        time_details = datetime_helper.to_time_text(le.entry.start, le.entry.stop, le.entry.duration)
-                        time_texts.append(time_details)
-                    desc_texts.append(le.entry.application_window.application.name)
-                    desc_texts.append(le.entry.application_window.title)
+            le = self.timeline_canvas.find_visible_logged_entry_by_x_position(mouse_x)
+            if le is not None:
+                self.moused_over_entity = le
+                if current_tagged_entry is None:
+                    time_details = datetime_helper.to_time_text(le.entry.start, le.entry.stop, le.entry.duration)
+                    time_texts.append(time_details)
+                desc_texts.append(le.entry.application_window.application.name)
+                desc_texts.append(le.entry.application_window.title)
 
-                    highlight_rectangle = cairo.RectangleInt(int(le.start_x) - 5,
-                                                             int(timeline_canvas.le_start_y) - 5,
-                                                             int(le.width) + 10,
-                                                             int(timeline_canvas.timeline_height) + 10)
-                    self.dirty_rectangles.append(highlight_rectangle)
-                    break
+                highlight_rectangle = cairo.RectangleInt(int(le.start_x) - 5,
+                                                         int(timeline_canvas.le_start_y) - 5,
+                                                         int(le.width) + 10,
+                                                         int(timeline_canvas.timeline_height) + 10)
+                self.dirty_rectangles.append(highlight_rectangle)
         elif timeline_canvas.te_start_y <= mouse_y <= timeline_canvas.te_end_y:
             for te in timeline_canvas.visible_tagged_entries:
                 if te.start_x <= mouse_x <= te.stop_x:
