@@ -271,17 +271,11 @@ class TimelineOverlay(Gtk.DrawingArea):
 
         # Draw rectangle
         cr.set_source_rgba(0.2, 0.2, 0.8, 0.8)
-        cr.rectangle(x,
-                     y,
-                     tooltip_attributes.width,
-                     tooltip_attributes.height)
+        cr.rectangle(x, y, tooltip_attributes.width, tooltip_attributes.height)
         cr.fill()
 
         cr.set_source_rgba(0.8, 0.6, 0.2, 0.6)
-        cr.rectangle(x,
-                     y,
-                     tooltip_attributes.width,
-                     tooltip_attributes.height)
+        cr.rectangle(x, y, tooltip_attributes.width, tooltip_attributes.height)
         cr.stroke()
 
         # The texts
