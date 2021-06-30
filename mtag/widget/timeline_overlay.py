@@ -203,7 +203,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         self.dirty_rectangles.append(dirty_new_tooltip_rect)
 
         timeline_x = self.timeline_canvas.datetime_to_pixel(self.current_moused_datetime, canvas_width)
-        current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 3, 0, 6, canvas_height)
+        current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x), 0, 1, canvas_height)
         self.dirty_rectangles.append(current_guidingline_rectangle)
 
         for r in self.dirty_rectangles:
