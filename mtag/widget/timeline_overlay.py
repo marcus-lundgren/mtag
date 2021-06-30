@@ -82,7 +82,7 @@ class TimelineOverlay(Gtk.DrawingArea):
             cr.line_to(timeline_x, height)
             cr.stroke()
 
-            current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 3, 0, 6, height)
+            current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x) - 2, 0, 4, height)
             self.dirty_rectangles.append(current_guidingline_rectangle)
 
         # Highlight the hovered over entry
