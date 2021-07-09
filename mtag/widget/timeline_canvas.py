@@ -319,8 +319,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         # Logged entries
         for le in self.visible_logged_entries:
-            r, g, b = le.color
-            cr.set_source_rgb(r, g, b)
+            cr.set_source_rgb(*le.color)
             cr.rectangle(le.start_x, self.le_start_y, le.width, self.timeline_height)
             cr.fill()
             cr.set_source_rgb(0.3, 0.3, 0.8)
@@ -328,8 +327,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.fill()
 
         for te in self.visible_tagged_entries:
-            r, g, b = te.color
-            cr.set_source_rgb(r, g, b)
+            cr.set_source_rgb(*te.color)
             cr.rectangle(te.start_x, self.te_start_y, te.width, self.timeline_height)
             cr.fill()
             cr.set_source_rgb(1, 0.64, 0)
