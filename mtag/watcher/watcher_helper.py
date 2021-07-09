@@ -35,17 +35,18 @@ def register(window_title: Optional[str], application_name: Optional[str],
     application_window = insert_if_needed_and_get_application_window(application=application,
                                                                      window_title=window_title_to_use)
 
+    datetime_now = datetime.datetime.now()
+
     # Logged entry
-    register_logged_entry(application_window=application_window)
+    register_logged_entry(application_window=application_window, datetime_now=datetime_now)
 
     # Activity entry
-    register_activity_entry(idle_period=idle_period_to_use, locked_state=locked_state)
+    register_activity_entry(idle_period=idle_period_to_use, locked_state=locked_state, datetime_now=datetime_now)
 
 
-def register_activity_entry(idle_period: int, locked_state: bool):
+def register_activity_entry(idle_period: int, locked_state: bool, datetime_now: datetime.datetime):
     configuration = configuration_helper.get_configuration()
     activity_entry_repository = ActivityEntryRepository()
-    datetime_now = datetime.datetime.now()
     was_active = not locked_state and idle_period < configuration.inactive_after_idle_seconds
 
     with database_helper.create_connection() as db_connection:
@@ -83,9 +84,8 @@ def register_activity_entry(idle_period: int, locked_state: bool):
         db_connection.commit()
 
 
-def register_logged_entry(application_window: ApplicationWindow):
+def register_logged_entry(application_window: ApplicationWindow, datetime_now: datetime.datetime):
     logged_entry_repository = LoggedEntryRepository()
-    datetime_now = datetime.datetime.now()
 
     with database_helper.create_connection() as db_connection:
         last_logged_entry = logged_entry_repository.get_latest_entry(conn=db_connection)
