@@ -76,7 +76,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         if self.current_moused_datetime is not None:
             timeline_x = timeline_canvas.datetime_to_pixel(self.current_moused_datetime, width)
 
-            cr.set_source_rgb(0.5, 0.5, 0.5)
+            cr.set_source_rgb(0.55, 0.55, 0.55)
             cr.new_path()
             cr.move_to(timeline_x, 0)
             cr.line_to(timeline_x, height)
