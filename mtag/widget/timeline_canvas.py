@@ -121,12 +121,12 @@ class TimelineCanvas(Gtk.DrawingArea):
         starts = []
         stops = []
         if number_of_logged_entries > 0:
-            starts.append(self.logged_entries[0].start)
-            stops.append(self.logged_entries[number_of_logged_entries - 1].stop)
+            starts.append(self.logged_entries[0].entry.start)
+            stops.append(self.logged_entries[number_of_logged_entries - 1].entry.stop)
 
         if number_of_tagged_entries > 0:
-            starts.append(self.tagged_entries[0].start)
-            stops.append(self.tagged_entries[number_of_tagged_entries - 1].stop)
+            starts.append(self.tagged_entries[0].entry.start)
+            stops.append(self.tagged_entries[number_of_tagged_entries - 1].entry.stop)
 
         current_date_as_datetime = datetime.datetime(year=self._current_date.year,
                                                      month=self._current_date.month,
