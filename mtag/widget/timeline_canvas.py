@@ -369,19 +369,19 @@ class TimelineCanvas(Gtk.DrawingArea):
     @staticmethod
     def set_tagged_entry_stop_date(stop_date: datetime,
                                    tagged_entry: entity.TaggedEntry,
-                                   tagged_entries: List[entity.TaggedEntry]) -> datetime.datetime:
+                                   tagged_entries: List[TimelineEntry]) -> datetime.datetime:
         tagged_entry.stop = stop_date
 
         creation_is_right = stop_date == tagged_entry.stop
         date_to_use = None
         for t in tagged_entries:
             if creation_is_right:
-                if t.start < stop_date and t.stop > tagged_entry.start:
-                    date_to_use = t.start
+                if t.entry.start < stop_date and t.entry.stop > tagged_entry.start:
+                    date_to_use = t.entry.start
                     break
             else:
-                if stop_date < t.stop and t.start < tagged_entry.stop:
-                    date_to_use = t.stop
+                if stop_date < t.entry.stop and t.entry.start < tagged_entry.stop:
+                    date_to_use = t.entry.stop
 
         if date_to_use is not None:
             tagged_entry.stop = date_to_use
