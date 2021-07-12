@@ -141,12 +141,12 @@ class TimelineMinimap(Gtk.DrawingArea):
         cr.set_source_rgb(1, 0.64, 0)
         for te in self.tagged_timeline_entries:
             cr.rectangle(te.start_x, 10, te.width, 20)
-            cr.fill()
+        cr.fill()
 
         cr.set_source_rgb(0.3, 0.3, 0.8)
         for le in self.logged_timeline_entries:
             cr.rectangle(le.start_x, 50, le.width, 20)
-            cr.fill()
+        cr.fill()
 
         start_x = self._datetime_to_pixel(dt=self.boundary_start, canvas_width=width)
         stop_x = self._datetime_to_pixel(dt=self.boundary_stop, canvas_width=width)
