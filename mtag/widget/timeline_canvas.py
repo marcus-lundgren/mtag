@@ -106,22 +106,22 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.queue_draw()
 
     def zoom_to_fit(self) -> None:
-        logged_entries_exists = len(self.logged_entries) > 0
-        tagged_entries_exists = len(self.tagged_entries) > 0
+        number_of_logged_entries = len(self.logged_entries)
+        number_of_tagged_entries = len(self.tagged_entries)
 
         # Nothing to do if we don't have any entries
-        if not logged_entries_exists and not tagged_entries_exists:
+        if number_of_logged_entries == 0 and number_of_tagged_entries == 0:
             return
 
         starts = []
         stops = []
-        if logged_entries_exists:
+        if number_of_logged_entries > 0:
             starts.append(self.logged_entries[0].start)
-            stops.append(next(reversed(self.logged_entries)).stop)
+            stops.append(self.logged_entries[number_of_logged_entries - 1].stop)
 
-        if tagged_entries_exists:
+        if number_of_tagged_entries > 0:
             starts.append(self.tagged_entries[0].start)
-            stops.append(next(reversed(self.tagged_entries)).stop)
+            stops.append(self.tagged_entries[number_of_tagged_entries - 1].stop)
 
         current_date_as_datetime = datetime.datetime(year=self._current_date.year,
                                                      month=self._current_date.month,
