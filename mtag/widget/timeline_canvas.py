@@ -1,7 +1,7 @@
 import datetime
 import math
-from collections import namedtuple
-from typing import List, Optional, Union, Tuple
+from collections import namedtuple, defaultdict
+from typing import List, Optional, Union, Tuple, DefaultDict
 
 import cairo
 import gi
@@ -11,6 +11,7 @@ from mtag.entity import TaggedEntry, LoggedEntry, ActivityEntry
 from mtag.helper import color_helper, database_helper, timeline_helper
 from mtag.repository import CategoryRepository
 from mtag.widget import CategoryChoiceDialog, TimelineContextPopover
+
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
@@ -31,6 +32,9 @@ class TimelineEntry:
         self.start_x = math.floor(start_x)
         self.stop_x = math.ceil(stop_x)
         self.width = self.stop_x - self.start_x
+
+
+DrawDataEntry = namedtuple("DrawDataEntry", ["x", "y", "width", "height"])
 
 
 class TimelineCanvas(Gtk.DrawingArea):
@@ -84,6 +88,8 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.visible_tagged_entries: List[TimelineEntry] = []
         self.visible_logged_entries: List[TimelineEntry] = []
         self.time_text_extents = {}
+
+        self.draw_data_entries_by_color: DefaultDict = defaultdict(list)
 
         self.context_menu = TimelineContextPopover(relative_to=self)
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
@@ -182,9 +188,11 @@ class TimelineCanvas(Gtk.DrawingArea):
         if timelines_end.day != self._current_date.day:
             timelines_end = self.timeline_end
 
+        # Reset the viewport states
         self.visible_activity_entries.clear()
         self.visible_logged_entries.clear()
         self.visible_tagged_entries.clear()
+        self.draw_data_entries_by_color.clear()
 
         # Gather the visible activity entries
         for ae in self.activity_entries:
@@ -212,6 +220,8 @@ class TimelineCanvas(Gtk.DrawingArea):
             # If we end at the same x-position as before, there is no need to draw this entry as it would be hidden
             if le.stop_x != last_stop_x:
                 self.visible_logged_entries.append(le)
+                self.draw_data_entries_by_color[le.color].append(DrawDataEntry(le.start_x, self.le_start_y,
+                                                                               le.width, self.timeline_height))
                 last_stop_x = le.stop_x
 
         # Gather the visible tagged entries
@@ -223,6 +233,8 @@ class TimelineCanvas(Gtk.DrawingArea):
             te.set_x_positions(self.datetime_to_pixel(te_entry.start, canvas_width),
                                self.datetime_to_pixel(te_entry.stop, canvas_width))
             self.visible_tagged_entries.append(te)
+            self.draw_data_entries_by_color[te.color].append(DrawDataEntry(te.start_x, self.te_start_y,
+                                                                           te.width, self.timeline_height))
 
         window: Gdk.Window = self.get_root_window()
         cr: cairo.Context = window.cairo_create()
@@ -335,22 +347,24 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.move_to(hx - tx - (hour_text_width / 2), self.time_guidingline_text_height)
             cr.show_text(timeline_timeline.text)
 
-        # Logged entries
-        for le in self.visible_logged_entries:
-            cr.set_source_rgb(*le.color)
-            cr.rectangle(le.start_x, self.le_start_y, le.width, self.timeline_height)
-            cr.fill()
-            cr.set_source_rgb(0.3, 0.3, 0.8)
-            cr.rectangle(le.start_x, self.le_start_y, le.width, 10)
+        # Draw the rectangles for the entries by colors
+        for color, drawing_entries in self.draw_data_entries_by_color.items():
+            cr.set_source_rgb(*color)
+            for drawing_entry in drawing_entries:
+                cr.rectangle(drawing_entry.x, drawing_entry.y, drawing_entry.width, drawing_entry.height)
             cr.fill()
 
+        # The marker for the logged entries
+        cr.set_source_rgb(0.3, 0.3, 0.8)
+        for le in self.visible_logged_entries:
+            cr.rectangle(le.start_x, self.le_start_y, le.width, 10)
+        cr.fill()
+
+        # The marker for the tagged entries
+        cr.set_source_rgb(1, 0.64, 0)
         for te in self.visible_tagged_entries:
-            cr.set_source_rgb(*te.color)
-            cr.rectangle(te.start_x, self.te_start_y, te.width, self.timeline_height)
-            cr.fill()
-            cr.set_source_rgb(1, 0.64, 0)
             cr.rectangle(te.start_x, self.te_end_y - 10, te.width, 10)
-            cr.fill()
+        cr.fill()
 
         if self.current_tagged_entry is not None:
             start_x = self.datetime_to_pixel(self.current_tagged_entry.start, canvas_width)
