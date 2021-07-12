@@ -19,13 +19,18 @@ from gi.repository import Gtk, Gdk, GObject
 TimelineTimeline = namedtuple("TimelineTimeline", ["time", "x", "text", "text_extents"])
 
 
-class VisibleEntry:
-    def __init__(self, entry: Union[TaggedEntry, LoggedEntry, ActivityEntry], start_x: float, stop_x: float, color: Tuple):
+class TimelineEntry:
+    def __init__(self, entry: Union[TaggedEntry, LoggedEntry, ActivityEntry], color: Tuple):
         self.entry = entry
+        self.color = color
+        self.start_x = 0
+        self.stop_x = 0
+        self.width = 0
+
+    def set_x_positions(self, start_x: float, stop_x: float):
         self.start_x = math.floor(start_x)
         self.stop_x = math.ceil(stop_x)
         self.width = self.stop_x - self.start_x
-        self.color = color
 
 
 class TimelineCanvas(Gtk.DrawingArea):
@@ -71,13 +76,13 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self._current_date = self.timeline_start
         self.current_tagged_entry: Optional[entity.TaggedEntry] = None
-        self.tagged_entries: List[entity.TaggedEntry] = []
-        self.logged_entries: List[entity.LoggedEntry] = []
-        self.activity_entries: List[entity.ActivityEntry] = []
+        self.tagged_entries: List[TimelineEntry] = []
+        self.logged_entries: List[TimelineEntry] = []
+        self.activity_entries: List[TimelineEntry] = []
 
-        self.visible_activity_entries: List[VisibleEntry] = []
-        self.visible_tagged_entries: List[VisibleEntry] = []
-        self.visible_logged_entries: List[VisibleEntry] = []
+        self.visible_activity_entries: List[TimelineEntry] = []
+        self.visible_tagged_entries: List[TimelineEntry] = []
+        self.visible_logged_entries: List[TimelineEntry] = []
         self.time_text_extents = {}
 
         self.context_menu = TimelineContextPopover(relative_to=self)
@@ -177,38 +182,47 @@ class TimelineCanvas(Gtk.DrawingArea):
         if timelines_end.day != self._current_date.day:
             timelines_end = self.timeline_end
 
+        self.visible_activity_entries.clear()
+        self.visible_logged_entries.clear()
+        self.visible_tagged_entries.clear()
+
         # Gather the visible activity entries
-        self.visible_activity_entries = [VisibleEntry(ae,
-                                                      self.datetime_to_pixel(ae.start, canvas_width),
-                                                      self.datetime_to_pixel(ae.stop, canvas_width),
-                                                      color_helper.activity_to_color_floats(ae.active))
-                                         for ae in self.activity_entries
-                                         if timelines_start <= ae.stop and ae.start <= timelines_end]
+        for ae in self.activity_entries:
+            ae_entry = ae.entry
+            if ae_entry.stop < timelines_start or timelines_end < ae_entry.start:
+                continue
+
+            ae.set_x_positions(self.datetime_to_pixel(ae_entry.start, canvas_width),
+                               self.datetime_to_pixel(ae_entry.stop, canvas_width))
+            self.visible_activity_entries.append(ae)
 
         # Gather the visible logged entries
         last_stop_x = None
         self.visible_logged_entries = []
         for le in self.logged_entries:
+            le_entry = le.entry
+
             # Ensure that the entry is within the viewport
-            if le.stop < timelines_start or timelines_end < le.start:
+            if le_entry.stop < timelines_start or timelines_end < le_entry.start:
                 continue
 
-            ve = VisibleEntry(le, self.datetime_to_pixel(le.start, canvas_width),
-                              self.datetime_to_pixel(le.stop, canvas_width),
-                              color_helper.to_color_floats(le.application_window.application.name))
+            le.set_x_positions(self.datetime_to_pixel(le_entry.start, canvas_width),
+                               self.datetime_to_pixel(le_entry.stop, canvas_width))
 
             # If we end at the same x-position as before, there is no need to draw this entry as it would be hidden
-            if ve.stop_x != last_stop_x:
-                self.visible_logged_entries.append(ve)
-                last_stop_x = ve.stop_x
+            if le.stop_x != last_stop_x:
+                self.visible_logged_entries.append(le)
+                last_stop_x = le.stop_x
 
         # Gather the visible tagged entries
-        self.visible_tagged_entries = [VisibleEntry(te,
-                                                    self.datetime_to_pixel(te.start, canvas_width),
-                                                    self.datetime_to_pixel(te.stop, canvas_width),
-                                                    color_helper.to_color_floats(te.category.name))
-                                       for te in self.tagged_entries
-                                       if timelines_start <= te.stop and te.start <= timelines_end]
+        for te in self.tagged_entries:
+            te_entry = te.entry
+            if te_entry.stop < timelines_start or timelines_end < te_entry.start:
+                continue
+
+            te.set_x_positions(self.datetime_to_pixel(te_entry.start, canvas_width),
+                               self.datetime_to_pixel(te_entry.stop, canvas_width))
+            self.visible_tagged_entries.append(te)
 
         window: Gdk.Window = self.get_root_window()
         cr: cairo.Context = window.cairo_create()
@@ -257,10 +271,14 @@ class TimelineCanvas(Gtk.DrawingArea):
             minute_increment = 1
         return minute_increment
 
-    def set_entries(self, dt: datetime.datetime, logged_entries, tagged_entries, activity_entries) -> None:
-        self.logged_entries = logged_entries
-        self.tagged_entries = tagged_entries
-        self.activity_entries = activity_entries
+    def set_entries(self, dt: datetime.datetime, logged_entries: List[LoggedEntry],
+                    tagged_entries: List[TaggedEntry], activity_entries: List[ActivityEntry]) -> None:
+        self.logged_entries = [TimelineEntry(le, color_helper.to_color_floats(le.application_window.application.name))
+                               for le in logged_entries]
+        self.tagged_entries = [TimelineEntry(te, color_helper.to_color_floats(te.category.name))
+                               for te in tagged_entries]
+        self.activity_entries = [TimelineEntry(ae, color_helper.activity_to_color_floats(ae.active))
+                                 for ae in activity_entries]
         self._current_date = dt
 
         self.timeline_start = self.timeline_start.replace(year=dt.year, month=dt.month, day=dt.day)
@@ -440,7 +458,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.queue_draw()
 
-    def find_visible_logged_entry_by_x_position(self, x: float) -> Optional[VisibleEntry]:
+    def find_visible_logged_entry_by_x_position(self, x: float) -> Optional[TimelineEntry]:
         number_of_visible_logged_entries = len(self.visible_logged_entries)
         if number_of_visible_logged_entries == 0:
             return None
