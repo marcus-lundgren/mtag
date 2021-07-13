@@ -1,4 +1,3 @@
-from ..entity import Category
 from ..helper import database_helper, statistics_helper, datetime_helper
 from ..repository import CategoryRepository
 
@@ -112,7 +111,7 @@ class CategoryPage(Gtk.Box):
 
         self.update_page()
 
-    def _do_delete_button_clicked(self, w: Gtk.Button):
+    def _do_delete_button_clicked(self, _):
         with database_helper.create_connection() as conn:
             CategoryRepository().delete(conn, self.current_category)
         self.update_page()
