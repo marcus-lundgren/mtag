@@ -1,3 +1,4 @@
+from ..entity import Category
 from ..helper import database_helper, statistics_helper, datetime_helper
 from ..repository import CategoryRepository
 
@@ -42,8 +43,8 @@ class CategoryPage(Gtk.Box):
         grid.attach(name_title, 0, 0, 1, 1)
 
         self.cb_name = Gtk.CheckButton(label="Edit")
-        self.cb_name.connect("toggled", self._do_toggle)
         self.name_entry = Gtk.Entry()
+        self.cb_name.connect("toggled", lambda w: self.name_entry.set_sensitive(w.get_active()))
         self.name_entry.set_text("-")
         self.name_entry.set_sensitive(False)
         name_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -64,6 +65,16 @@ class CategoryPage(Gtk.Box):
         self.url_entry = Gtk.Entry()
         self.url_entry.set_tooltip_text("Tags are supported.\n{{date}} will expand to the chosen date as YYYY-MM-DD.")
         grid.attach(self.url_entry, 1, 2, 2, 1)
+
+        self.cb_delete = Gtk.CheckButton(label="Unlock delete")
+        self.delete_button = Gtk.Button(label="Delete")
+        self.cb_delete.connect("toggled", lambda w: self.delete_button.set_sensitive(w.get_active()))
+        self.delete_button.set_sensitive(False)
+        self.delete_button.connect("clicked", self._do_delete_button_clicked)
+        delete_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        delete_box.pack_start(self.delete_button, expand=False, fill=False, padding=0)
+        delete_box.pack_start(self.cb_delete, expand=False, fill=False, padding=0)
+        grid.attach(delete_box, 1, 3, 2, 1)
 
         save_button = Gtk.Button("Save")
         save_button.connect("clicked", self._do_save_clicked)
@@ -89,9 +100,6 @@ class CategoryPage(Gtk.Box):
             self.total_time_label.set_label("-")
             self.url_entry.set_text("-")
 
-    def _do_toggle(self, w: Gtk.CheckButton):
-        self.name_entry.set_sensitive(w.get_active())
-
     def _do_save_clicked(self, _):
         if self.current_category is None:
             return
@@ -102,6 +110,11 @@ class CategoryPage(Gtk.Box):
             self.current_category.url = self.url_entry.get_text()
             cr.update(conn=conn, category=self.current_category)
 
+        self.update_page()
+
+    def _do_delete_button_clicked(self, w: Gtk.Button):
+        with database_helper.create_connection() as conn:
+            CategoryRepository().delete(conn, self.current_category)
         self.update_page()
 
     def _update_details_pane_by_row(self, row: int):
@@ -132,3 +145,7 @@ class CategoryPage(Gtk.Box):
         self.total_time_label.set_label(total_time_str)
         self.url_entry.set_text(category.url)
         self.cb_name.set_active(False)
+        self.cb_delete.set_active(False)
+
+        # Only allow deletions when we don't have any tagged time
+        self.cb_delete.set_sensitive(seconds == 0)

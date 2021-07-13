@@ -27,5 +27,11 @@ class CategoryRepository:
         conn.commit()
         cursor.close()
 
+    def delete(self, conn: sqlite3.Connection, category: Category) -> None:
+        cursor = conn.execute("DELETE FROM category WHERE c_id=:db_id",
+                              {"db_id": category.db_id})
+        conn.commit()
+        cursor.close()
+
     def _from_dbo(self, db_c: Dict) -> Category:
         return Category(name=db_c["c_name"], db_id=db_c["c_id"], url=db_c["c_url"])
