@@ -27,14 +27,18 @@ class TimelineEntry:
         self.start_x = 0
         self.stop_x = 0
         self.width = 0
+        self.start_y = 0
+        self.height = 0
 
     def set_x_positions(self, start_x: float, stop_x: float):
         self.start_x = math.floor(start_x)
         self.stop_x = math.ceil(stop_x)
         self.width = self.stop_x - self.start_x
 
-
-DrawDataEntry = namedtuple("DrawDataEntry", ["x", "y", "width", "height"])
+    def set_draw_positions(self, start_x: float, stop_x: float, start_y: float, height: float):
+        self.set_x_positions(start_x, stop_x)
+        self.start_y = start_y
+        self.height = height
 
 
 class TimelineCanvas(Gtk.DrawingArea):
@@ -89,7 +93,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.visible_logged_entries: List[TimelineEntry] = []
         self.time_text_extents = {}
 
-        self.draw_data_entries_by_color: DefaultDict = defaultdict(list)
+        self.timeline_entries_by_color: DefaultDict = defaultdict(list)
 
         self.context_menu = TimelineContextPopover(relative_to=self)
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
@@ -192,7 +196,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.visible_activity_entries.clear()
         self.visible_logged_entries.clear()
         self.visible_tagged_entries.clear()
-        self.draw_data_entries_by_color.clear()
+        self.timeline_entries_by_color.clear()
 
         # Gather the visible activity entries
         for ae in self.activity_entries:
@@ -214,14 +218,14 @@ class TimelineCanvas(Gtk.DrawingArea):
             if le_entry.stop < timelines_start or timelines_end < le_entry.start:
                 continue
 
-            le.set_x_positions(self.datetime_to_pixel(le_entry.start, canvas_width),
-                               self.datetime_to_pixel(le_entry.stop, canvas_width))
+            le.set_draw_positions(self.datetime_to_pixel(le_entry.start, canvas_width),
+                                  self.datetime_to_pixel(le_entry.stop, canvas_width),
+                                  self.le_start_y, self.timeline_height)
 
             # If we end at the same x-position as before, there is no need to draw this entry as it would be hidden
             if le.stop_x != last_stop_x:
                 self.visible_logged_entries.append(le)
-                self.draw_data_entries_by_color[le.color].append(DrawDataEntry(le.start_x, self.le_start_y,
-                                                                               le.width, self.timeline_height))
+                self.timeline_entries_by_color[le.color].append(le)
                 last_stop_x = le.stop_x
 
         # Gather the visible tagged entries
@@ -230,11 +234,11 @@ class TimelineCanvas(Gtk.DrawingArea):
             if te_entry.stop < timelines_start or timelines_end < te_entry.start:
                 continue
 
-            te.set_x_positions(self.datetime_to_pixel(te_entry.start, canvas_width),
-                               self.datetime_to_pixel(te_entry.stop, canvas_width))
+            te.set_draw_positions(self.datetime_to_pixel(te_entry.start, canvas_width),
+                                  self.datetime_to_pixel(te_entry.stop, canvas_width),
+                                  self.te_start_y, self.timeline_height)
             self.visible_tagged_entries.append(te)
-            self.draw_data_entries_by_color[te.color].append(DrawDataEntry(te.start_x, self.te_start_y,
-                                                                           te.width, self.timeline_height))
+            self.timeline_entries_by_color[te.color].append(te)
 
         window: Gdk.Window = self.get_root_window()
         cr: cairo.Context = window.cairo_create()
@@ -315,8 +319,13 @@ class TimelineCanvas(Gtk.DrawingArea):
         drawing_area_height = self.get_allocated_height()
         canvas_width = self.get_allocated_width()
 
+        clip_start_x, _, clip_stop_x, _ = cr.clip_extents()
+
         # Show the activity as a background for the time area
         for ae in self.visible_activity_entries:
+            if ae.stop_x < clip_start_x or clip_stop_x < ae.start_x:
+                continue
+
             r, g, b = ae.color
             cr.set_source_rgb(r, g, b)
             cr.rectangle(ae.start_x, 0, ae.width, drawing_area_height)
@@ -348,21 +357,27 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.show_text(timeline_timeline.text)
 
         # Draw the rectangles for the entries by colors
-        for color, drawing_entries in self.draw_data_entries_by_color.items():
+        for color, drawing_entries in self.timeline_entries_by_color.items():
             cr.set_source_rgb(*color)
             for drawing_entry in drawing_entries:
-                cr.rectangle(drawing_entry.x, drawing_entry.y, drawing_entry.width, drawing_entry.height)
+                if drawing_entry.stop_x < clip_start_x or clip_stop_x < drawing_entry.start_x:
+                    continue
+                cr.rectangle(drawing_entry.start_x, drawing_entry.start_y, drawing_entry.width, drawing_entry.height)
             cr.fill()
 
         # The marker for the logged entries
         cr.set_source_rgb(0.3, 0.3, 0.8)
         for le in self.visible_logged_entries:
+            if le.stop_x < clip_start_x or clip_stop_x < le.start_x:
+                continue
             cr.rectangle(le.start_x, self.le_start_y, le.width, 10)
         cr.fill()
 
         # The marker for the tagged entries
         cr.set_source_rgb(1, 0.64, 0)
         for te in self.visible_tagged_entries:
+            if te.stop_x < clip_start_x or clip_stop_x < te.start_x:
+                continue
             cr.rectangle(te.start_x, self.te_end_y - 10, te.width, 10)
         cr.fill()
 
