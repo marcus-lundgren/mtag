@@ -5,7 +5,7 @@ from typing import List
 import cairo
 import gi
 
-from mtag.helper import timeline_helper
+from mtag.helper.timeline_helper import TimelineHelper
 
 
 gi.require_version("Gtk", "3.0")
@@ -50,6 +50,11 @@ class TimelineMinimap(Gtk.DrawingArea):
         self.logged_timeline_entries: List[TimelineEntry] = []
         self.tagged_timeline_entries: List[TimelineEntry] = []
 
+        self.timeline_helper = TimelineHelper(canvas_width=self.get_allocated_width(),
+                                              timeline_start_dt=self.current_date,
+                                              timeline_stop_dt=self.end_of_current_date,
+                                              timeline_side_padding=self.side_padding)
+
         self.set_size_request(-1, 80)
         self.show_all()
 
@@ -74,7 +79,7 @@ class TimelineMinimap(Gtk.DrawingArea):
         self.queue_draw()
 
     def _set_boundaries_and_fire_new_boundary(self, actual_x: float):
-        moused_dt = self._pixel_to_datetime(actual_x)
+        moused_dt = self.timeline_helper.pixel_to_datetime(actual_x)
         current_delta = self.boundary_stop - self.boundary_start
 
         new_start = moused_dt - (current_delta / 2)
@@ -103,34 +108,33 @@ class TimelineMinimap(Gtk.DrawingArea):
             self._set_boundaries_and_fire_new_boundary(e.x)
 
     def _do_scroll_event(self, _, e: Gdk.EventScroll):
-        mouse_datetime = self._pixel_to_datetime(e.x)
+        mouse_datetime = self.timeline_helper.pixel_to_datetime(e.x)
 
         # Zoom in or out
         if e.direction == Gdk.ScrollDirection.UP or e.direction == Gdk.ScrollDirection.DOWN:
             zoom_in = e.direction == Gdk.ScrollDirection.UP
-            self.boundary_start, self.boundary_stop = timeline_helper.zoom(mouse_datetime=mouse_datetime,
-                                                                           boundary_start=self.boundary_start,
-                                                                           boundary_stop=self.boundary_stop,
-                                                                           zoom_in=zoom_in)
+            self.boundary_start, self.boundary_stop = TimelineHelper.zoom(mouse_datetime=mouse_datetime,
+                                                                          boundary_start=self.boundary_start,
+                                                                          boundary_stop=self.boundary_stop,
+                                                                          zoom_in=zoom_in)
         # Move right or left
         elif e.direction == Gdk.ScrollDirection.RIGHT or e.direction == Gdk.ScrollDirection.LEFT:
             move_right = e.direction == Gdk.ScrollDirection.RIGHT
-            self.boundary_start, self.boundary_stop = timeline_helper.move(boundary_start=self.boundary_start,
-                                                                           boundary_stop=self.boundary_stop,
-                                                                           move_right=move_right)
+            self.boundary_start, self.boundary_stop = TimelineHelper.move(boundary_start=self.boundary_start,
+                                                                          boundary_stop=self.boundary_stop,
+                                                                          move_right=move_right)
 
         self.queue_draw()
         self.emit("timeline-boundary-changed", self.boundary_start, self.boundary_stop)
 
     def _do_draw(self, _: Gtk.DrawingArea, cr: cairo.Context):
-        width = self.get_allocated_width()
         height = self.get_allocated_height()
 
         current_dt = self.current_date
         cr.set_font_size(16)
         cr.set_source_rgb(0.5, 0.5, 0.5)
         for h in range(24):
-            hx = self._datetime_to_pixel(dt=current_dt, canvas_width=width)
+            hx = self.timeline_helper.datetime_to_pixel(current_dt)
             hour_string = str(current_dt.hour).rjust(2, '0')
             (tx, _, hour_text_width, hour_text_height, dx, _) = cr.text_extents(hour_string)
             cr.move_to(hx - tx - (hour_text_width / 2), (height + hour_text_height) / 2)
@@ -148,32 +152,21 @@ class TimelineMinimap(Gtk.DrawingArea):
             cr.rectangle(le.start_x, 50, le.width, 20)
         cr.fill()
 
-        start_x = self._datetime_to_pixel(dt=self.boundary_start, canvas_width=width)
-        stop_x = self._datetime_to_pixel(dt=self.boundary_stop, canvas_width=width)
+        start_x = self.timeline_helper.datetime_to_pixel(dt=self.boundary_start)
+        stop_x = self.timeline_helper.datetime_to_pixel(dt=self.boundary_stop)
 
         cr.set_source_rgba(0.4, 0.4, 0.4, 0.5)
         cr.rectangle(start_x, 0, stop_x - start_x, height)
         cr.fill()
 
-    def _pixel_to_datetime(self, x_position: float) -> datetime:
-        return timeline_helper.pixel_to_datetime(x_position=x_position,
-                                                 timeline_side_padding=self.side_padding,
-                                                 canvas_width=self.get_allocated_width(),
-                                                 timeline_start_datetime=self.current_date,
-                                                 timeline_stop_datetime=self.end_of_current_date)
-
-    def _datetime_to_pixel(self, dt: datetime.datetime, canvas_width: int):
-        return timeline_helper.datetime_to_pixel(dt=dt,
-                                                 canvas_width=canvas_width,
-                                                 timeline_side_padding=self.side_padding,
-                                                 timeline_start_dt=self.current_date,
-                                                 timeline_stop_dt=self.end_of_current_date)
-
     def _update_timeline_entries(self):
-        canvas_width = self.get_allocated_width()
-        self.logged_timeline_entries = [TimelineEntry(self._datetime_to_pixel(le.start, canvas_width),
-                                                      self._datetime_to_pixel(le.stop, canvas_width))
+        self.timeline_helper = TimelineHelper(canvas_width=self.get_allocated_width(),
+                                              timeline_start_dt=self.current_date,
+                                              timeline_stop_dt=self.end_of_current_date,
+                                              timeline_side_padding=self.side_padding)
+        self.logged_timeline_entries = [TimelineEntry(self.timeline_helper.datetime_to_pixel(le.start),
+                                                      self.timeline_helper.datetime_to_pixel(le.stop))
                                         for le in self.logged_entries]
-        self.tagged_timeline_entries = [TimelineEntry(self._datetime_to_pixel(te.start, canvas_width),
-                                                      self._datetime_to_pixel(te.stop, canvas_width))
+        self.tagged_timeline_entries = [TimelineEntry(self.timeline_helper.datetime_to_pixel(te.start),
+                                                      self.timeline_helper.datetime_to_pixel(te.stop))
                                         for te in self.tagged_entries]

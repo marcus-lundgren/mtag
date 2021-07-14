@@ -8,7 +8,8 @@ import gi
 
 from mtag import entity
 from mtag.entity import TaggedEntry, LoggedEntry, ActivityEntry
-from mtag.helper import color_helper, database_helper, timeline_helper
+from mtag.helper import color_helper, database_helper
+from mtag.helper.timeline_helper import TimelineHelper
 from mtag.repository import CategoryRepository
 from mtag.widget import CategoryChoiceDialog, TimelineContextPopover
 
@@ -79,7 +80,7 @@ class TimelineCanvas(Gtk.DrawingArea):
 
         self.timeline_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.timeline_delta = datetime.timedelta(hours=23, minutes=59, seconds=59)
-        self.timeline_end = None
+        self.timeline_end = self.timeline_start
         self._update_timeline_stop()
 
         self._current_date = self.timeline_start
@@ -99,6 +100,12 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
         self._update_canvas_constants()
 
+    def _create_timeline_helper(self) -> TimelineHelper:
+        return TimelineHelper(canvas_width=self.get_allocated_width(),
+                              timeline_start_dt=self.timeline_start,
+                              timeline_stop_dt=self.timeline_end,
+                              timeline_side_padding=self.timeline_side_padding)
+
     def _do_context_menu_delete(self, _: TimelineContextPopover, te: entity.TaggedEntry) -> None:
         self.emit("tagged-entry-deleted", te)
 
@@ -109,10 +116,10 @@ class TimelineCanvas(Gtk.DrawingArea):
             middle_dt = self.pixel_to_datetime(middle_x)
             dt_to_use = middle_dt
 
-        new_start, new_stop = timeline_helper.zoom(mouse_datetime=dt_to_use,
-                                                   boundary_start=self.timeline_start,
-                                                   boundary_stop=self.timeline_end,
-                                                   zoom_in=zoom_in)
+        new_start, new_stop = self.timeline_helper.zoom(mouse_datetime=dt_to_use,
+                                                        boundary_start=self.timeline_start,
+                                                        boundary_stop=self.timeline_end,
+                                                        zoom_in=zoom_in)
         self.timeline_start = new_start
         self.timeline_delta = new_stop - new_start
 
@@ -157,9 +164,9 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.queue_draw()
 
     def move(self, move_right: bool) -> None:
-        new_start, new_stop = timeline_helper.move(boundary_start=self.timeline_start,
-                                                   boundary_stop=self.timeline_end,
-                                                   move_right=move_right)
+        new_start, new_stop = self.timeline_helper.move(boundary_start=self.timeline_start,
+                                                        boundary_stop=self.timeline_end,
+                                                        move_right=move_right)
         self.timeline_start = new_start
         self.timeline_delta = new_stop - new_start
 
@@ -169,7 +176,6 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     def _update_canvas_constants(self) -> None:
         canvas_height = self.get_allocated_height()
-        canvas_width = self.get_allocated_width()
 
         self.guidingline_on_timeline_start = self.time_guidingline_text_height + (self.timeline_top_padding / 2)
 
@@ -198,14 +204,16 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.visible_tagged_entries.clear()
         self.timeline_entries_by_color.clear()
 
+        self.timeline_helper = self._create_timeline_helper()
+
         # Gather the visible activity entries
         for ae in self.activity_entries:
             ae_entry = ae.entry
             if ae_entry.stop < timelines_start or timelines_end < ae_entry.start:
                 continue
 
-            ae.set_x_positions(self.datetime_to_pixel(ae_entry.start, canvas_width),
-                               self.datetime_to_pixel(ae_entry.stop, canvas_width))
+            ae.set_x_positions(self.timeline_helper.datetime_to_pixel(ae_entry.start),
+                               self.timeline_helper.datetime_to_pixel(ae_entry.stop))
             self.visible_activity_entries.append(ae)
 
         # Gather the visible logged entries
@@ -218,8 +226,8 @@ class TimelineCanvas(Gtk.DrawingArea):
             if le_entry.stop < timelines_start or timelines_end < le_entry.start:
                 continue
 
-            le.set_draw_positions(self.datetime_to_pixel(le_entry.start, canvas_width),
-                                  self.datetime_to_pixel(le_entry.stop, canvas_width),
+            le.set_draw_positions(self.timeline_helper.datetime_to_pixel(le_entry.start),
+                                  self.timeline_helper.datetime_to_pixel(le_entry.stop),
                                   self.le_start_y, self.timeline_height)
 
             # If we end at the same x-position as before, there is no need to draw this entry as it would be hidden
@@ -234,8 +242,8 @@ class TimelineCanvas(Gtk.DrawingArea):
             if te_entry.stop < timelines_start or timelines_end < te_entry.start:
                 continue
 
-            te.set_draw_positions(self.datetime_to_pixel(te_entry.start, canvas_width),
-                                  self.datetime_to_pixel(te_entry.stop, canvas_width),
+            te.set_draw_positions(self.timeline_helper.datetime_to_pixel(te_entry.start),
+                                  self.timeline_helper.datetime_to_pixel(te_entry.stop),
                                   self.te_start_y, self.timeline_height)
             self.visible_tagged_entries.append(te)
             self.timeline_entries_by_color[te.color].append(te)
@@ -259,8 +267,7 @@ class TimelineCanvas(Gtk.DrawingArea):
                     text_extents = (tx, hour_text_width)
                     self.time_text_extents[text] = text_extents
                 self.timeline_timelines.append(TimelineTimeline(time=current_timeline_time,
-                                                                x=self.datetime_to_pixel(dt=current_timeline_time,
-                                                                                         canvas_width=canvas_width),
+                                                                x=self.timeline_helper.datetime_to_pixel(current_timeline_time),
                                                                 text=text,
                                                                 text_extents=text_extents))
                 current_timeline_time += minute_increment_as_delta
@@ -382,8 +389,8 @@ class TimelineCanvas(Gtk.DrawingArea):
         cr.fill()
 
         if self.current_tagged_entry is not None:
-            start_x = self.datetime_to_pixel(self.current_tagged_entry.start, canvas_width)
-            stop_x = self.datetime_to_pixel(self.current_tagged_entry.stop, canvas_width)
+            start_x = self.timeline_helper.datetime_to_pixel(self.current_tagged_entry.start)
+            stop_x = self.timeline_helper.datetime_to_pixel(self.current_tagged_entry.stop)
             cr.set_source_rgba(0.2, 0.2, 0.2, 0.4)
             cr.rectangle(start_x, 0, stop_x - start_x, drawing_area_height)
             cr.fill()
@@ -504,17 +511,3 @@ class TimelineCanvas(Gtk.DrawingArea):
             else:
                 current_start = middle + 1
         return None
-
-    def datetime_to_pixel(self, dt: datetime, canvas_width: int) -> float:
-        return timeline_helper.datetime_to_pixel(dt=dt,
-                                                 canvas_width=canvas_width,
-                                                 timeline_side_padding=self.timeline_side_padding,
-                                                 timeline_start_dt=self.timeline_start,
-                                                 timeline_stop_dt=self.timeline_end)
-
-    def pixel_to_datetime(self, x_position: float) -> datetime:
-        return timeline_helper.pixel_to_datetime(x_position,
-                                                 self.timeline_side_padding,
-                                                 self.get_allocated_width(),
-                                                 self.timeline_start,
-                                                 self.timeline_end)

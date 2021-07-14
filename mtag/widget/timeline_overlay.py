@@ -45,7 +45,7 @@ class TimelineOverlay(Gtk.DrawingArea):
         # Zoom in or out
         if e.direction == Gdk.ScrollDirection.UP or e.direction == Gdk.ScrollDirection.DOWN:
             x_to_use = self.actual_mouse_pos["x"]
-            dt = self.timeline_canvas.pixel_to_datetime(x_to_use)
+            dt = self.timeline_canvas.timeline_helper.pixel_to_datetime(x_to_use)
             zoom_in = e.direction == Gdk.ScrollDirection.UP
             self.timeline_canvas.zoom(zoom_in, dt)
             self._update_state(e.x, e.y)
@@ -74,7 +74,7 @@ class TimelineOverlay(Gtk.DrawingArea):
 
         # Show a guiding line under the mouse
         if self.current_moused_datetime is not None:
-            timeline_x = timeline_canvas.datetime_to_pixel(self.current_moused_datetime, width)
+            timeline_x = timeline_canvas.timeline_helper.datetime_to_pixel(self.current_moused_datetime)
 
             cr.set_source_rgb(0.55, 0.55, 0.55)
             cr.new_path()
@@ -108,7 +108,8 @@ class TimelineOverlay(Gtk.DrawingArea):
 
     def _update_state(self, mouse_x: float, mouse_y: float):
         timeline_canvas = self.timeline_canvas
-        current_moused_dt = timeline_canvas.pixel_to_datetime(mouse_x)
+        timeline_helper = timeline_canvas.timeline_helper
+        current_moused_dt = timeline_helper.pixel_to_datetime(mouse_x)
         next_moused_datetime = current_moused_dt
 
         canvas_height = self.get_allocated_height()
@@ -120,8 +121,8 @@ class TimelineOverlay(Gtk.DrawingArea):
             datetime_used = timeline_canvas.set_tagged_entry_stop_date(current_moused_dt,
                                                                        current_tagged_entry,
                                                                        timeline_canvas.tagged_entries)
-            start_x = int(timeline_canvas.datetime_to_pixel(current_tagged_entry.start, canvas_width))
-            stop_x = int(timeline_canvas.datetime_to_pixel(current_tagged_entry.stop, canvas_width))
+            start_x = int(timeline_helper.datetime_to_pixel(current_tagged_entry.start))
+            stop_x = int(timeline_helper.datetime_to_pixel(current_tagged_entry.stop))
             current_tagged_entry_dirty_rectangle = cairo.RectangleInt(start_x - 5, 0,
                                                                       stop_x - start_x + 10, canvas_height)
             self.dirty_rectangles.append(current_tagged_entry_dirty_rectangle)
@@ -201,7 +202,7 @@ class TimelineOverlay(Gtk.DrawingArea):
                                                     int(self.tooltip_attributes.height) + 4)
         self.dirty_rectangles.append(dirty_new_tooltip_rect)
 
-        timeline_x = self.timeline_canvas.datetime_to_pixel(self.current_moused_datetime, canvas_width)
+        timeline_x = timeline_helper.datetime_to_pixel(self.current_moused_datetime)
         current_guidingline_rectangle = cairo.RectangleInt(int(timeline_x), 0, 1, canvas_height)
         self.dirty_rectangles.append(current_guidingline_rectangle)
 
