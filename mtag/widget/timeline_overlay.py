@@ -69,7 +69,6 @@ class TimelineOverlay(Gtk.DrawingArea):
 
     def _do_draw(self, _, cr: cairo.Context):
         height = self.get_allocated_height()
-        width = self.get_allocated_width()
         timeline_canvas = self.timeline_canvas
 
         # Show a guiding line under the mouse

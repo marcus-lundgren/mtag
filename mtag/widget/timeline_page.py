@@ -169,7 +169,6 @@ class TimelinePage(Gtk.Box):
                                                    le.application_window.title])
         self.logged_entries_tree_view.columns_autosize()
 
-        cr = CategoryRepository()
         self.tagged_entries_list_store.clear()
         total_duration = datetime.timedelta()
         for te_category, te_group in groupby(sorted(tagged_entries, key=lambda x: x.category.db_id),
