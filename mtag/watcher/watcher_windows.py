@@ -1,3 +1,5 @@
+import datetime
+from collections import namedtuple
 from ctypes import *
 import subprocess
 import logging
@@ -10,7 +12,7 @@ from . import watcher_helper
 class LASTINPUTINFO(Structure):
     _fields_ = [
         ('cbSize', c_uint),
-        ('dwTime', c_uint),
+        ('dwTime', DWORD),
     ]
 
 
@@ -20,13 +22,20 @@ class LANGANDCODEPAGE(Structure):
         ("wCodePage", c_uint16)]
 
 
+LastInputTimeTuple = namedtuple("LastInputTimeTuple", ["tick", "dt"])
+last_input_time = LastInputTimeTuple(tick=None, dt=None)
+
+
 # https://stackoverflow.com/a/912223
-def get_idle_duration():
+def get_idle_duration() -> int:
+    global last_input_time
     last_input_info = LASTINPUTINFO()
     last_input_info.cbSize = sizeof(last_input_info)
     windll.user32.GetLastInputInfo(byref(last_input_info))
-    millis = windll.kernel32.GetTickCount() - last_input_info.dwTime
-    return millis // 1000
+    now = datetime.datetime.now()
+    if last_input_info.dwTime != last_input_time.tick:
+        last_input_time = LastInputTimeTuple(tick=last_input_info.dwTime, dt=now)
+    return int((now - last_input_time.dt).total_seconds())
 
 
 def get_locked_state():
