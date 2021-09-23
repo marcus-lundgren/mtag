@@ -9,19 +9,11 @@ class TaggedEntry:
         self.start = start
         self._stop = stop
         self.initial_position = self.start
-        self._category = category
+        self.category = category
 
     @property
     def duration(self):
         return self._stop - self.start
-
-    @property
-    def category(self):
-        return self._category
-
-    @category.setter
-    def category(self, value):
-        self._category = value
 
     @property
     def stop(self):
