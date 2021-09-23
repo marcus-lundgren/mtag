@@ -94,4 +94,4 @@ class CategoryChoiceDialog(Gtk.Dialog):
         if text == "":
             return True
 
-        return text in model[p_iter][0].lower()
+        return text.lower() in model[p_iter][0].lower()
