@@ -81,7 +81,9 @@ class TimelinePage(Gtk.Box):
         self.logged_entries_tree_view.set_headers_clickable(True)
 
         notebook = Gtk.Notebook()
-        notebook.append_page(self.tagged_entries_tree_view, Gtk.Label(label="Tagged entries"))
+        tatv_container = Gtk.ScrolledWindow()
+        tatv_container.add(self.tagged_entries_tree_view)
+        notebook.append_page(tatv_container, Gtk.Label(label="Tagged entries"))
         letw_container = Gtk.ScrolledWindow()
         letw_container.add(self.logged_entries_tree_view)
         notebook.append_page(letw_container, Gtk.Label(label="Logged entries"))
