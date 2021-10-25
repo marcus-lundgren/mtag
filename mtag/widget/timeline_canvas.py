@@ -149,12 +149,10 @@ class TimelineCanvas(Gtk.DrawingArea):
                                                      month=self._current_date.month,
                                                      day=self._current_date.day)
 
-        # Choose the earliest start, but ensure that we are within
-        # today's date
+        # Choose the earliest start, but ensure that we are within today's date
         new_start = max(current_date_as_datetime, min(starts))
 
-        # Choose the latest stop, but ensure that we are within
-        # today's date
+        # Choose the latest stop, but ensure that we are within today's date
         new_stop = min(current_date_as_datetime.replace(hour=23, minute=59, second=59), max(stops))
 
         self.timeline_start = new_start
