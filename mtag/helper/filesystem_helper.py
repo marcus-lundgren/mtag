@@ -1,5 +1,10 @@
 import os
 import sys
+from typing import Optional
+
+
+user_configuration_path: Optional[str] = None
+user_data_path: Optional[str] = None
 
 
 def is_windows():
@@ -10,7 +15,11 @@ def is_linux():
     return sys.platform.startswith("linux")
 
 
-def get_userconfiguration_path():
+def get_userconfiguration_path() -> str:
+    global user_configuration_path
+    if user_configuration_path is not None:
+        return user_configuration_path
+
     if is_linux():
         home_path = os.environ["HOME"]
         xdg_config_home = "XDG_CONFIG_HOME"
@@ -21,10 +30,15 @@ def get_userconfiguration_path():
     else:
         raise OSError("Incompatible operative system")
 
-    return get_mtag_path(base_path)
+    user_configuration_path = get_mtag_path(base_path)
+    return user_configuration_path
 
 
-def get_userdata_path():
+def get_userdata_path() -> str:
+    global user_data_path
+    if user_data_path is not None:
+        return user_data_path
+
     if is_linux():
         home_path = os.environ["HOME"]
         xdg_data_home = "XDG_DATA_HOME"
@@ -36,7 +50,8 @@ def get_userdata_path():
     else:
         raise OSError("Incompatible operative system")
 
-    return get_mtag_path(base_path)
+    user_data_path = get_mtag_path(base_path)
+    return user_data_path
 
 
 def get_mtag_path(base_path: str) -> str:
