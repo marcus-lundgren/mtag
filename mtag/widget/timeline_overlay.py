@@ -115,18 +115,27 @@ class TimelineOverlay(Gtk.DrawingArea):
         canvas_width = self.get_allocated_width()
 
         current_tagged_entry = timeline_canvas.current_tagged_entry
-        current_tagged_entry_dirty_rectangle = None
+        state_overlay_dirty_rectangle = None
         if current_tagged_entry is not None:
             datetime_used = timeline_canvas.set_tagged_entry_stop_date(current_moused_dt,
                                                                        current_tagged_entry,
                                                                        timeline_canvas.tagged_entries)
             start_x = int(timeline_helper.datetime_to_pixel(current_tagged_entry.start))
             stop_x = int(timeline_helper.datetime_to_pixel(current_tagged_entry.stop))
-            current_tagged_entry_dirty_rectangle = cairo.RectangleInt(start_x - 5, 0,
-                                                                      stop_x - start_x + 10, canvas_height)
-            self.dirty_rectangles.append(current_tagged_entry_dirty_rectangle)
+            state_overlay_dirty_rectangle = cairo.RectangleInt(start_x - 5, 0,
+                                                               stop_x - start_x + 10, canvas_height)
+            self.dirty_rectangles.append(state_overlay_dirty_rectangle)
             if datetime_used is not None:
                 next_moused_datetime = datetime_used
+        elif self.timeline_canvas.zoom_state is not None:
+            zoom_state = self.timeline_canvas.zoom_state
+            self.timeline_canvas.zoom_state.set_moving(current_moused_dt)
+
+            start_x = int(timeline_helper.datetime_to_pixel(zoom_state.get_start()))
+            stop_x = int(timeline_helper.datetime_to_pixel(zoom_state.get_stop()))
+            state_overlay_dirty_rectangle = cairo.RectangleInt(start_x - 5, 0,
+                                                               stop_x - start_x + 10, canvas_height)
+            self.dirty_rectangles.append(state_overlay_dirty_rectangle)
         else:
             for t in self.timeline_canvas.visible_tagged_entries:
                 if mouse_x < t.start_x:
@@ -213,8 +222,8 @@ class TimelineOverlay(Gtk.DrawingArea):
         if highlight_rectangle is not None:
             self.dirty_rectangles.append(highlight_rectangle)
 
-        if current_tagged_entry_dirty_rectangle is not None:
-            self.dirty_rectangles.append(current_tagged_entry_dirty_rectangle)
+        if state_overlay_dirty_rectangle is not None:
+            self.dirty_rectangles.append(state_overlay_dirty_rectangle)
 
     def _get_tooltip_attributes(self, mouse_x: float, mouse_y: float,
                                 canvas_width, canvas_height, cr: cairo.Context,

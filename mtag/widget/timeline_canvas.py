@@ -42,6 +42,32 @@ class TimelineEntry:
         self.height = height
 
 
+class ZoomState:
+    MINIMUM_DELTA = datetime.timedelta(seconds=10)
+
+    def __init__(self, initial: datetime.datetime, moving: datetime.datetime):
+        self.initial = initial
+        self.moving = moving
+
+    def set_moving(self, moving: datetime.datetime) -> None:
+        if moving < self.initial:
+            if self.initial - moving > ZoomState.MINIMUM_DELTA:
+                self.moving = moving
+            else:
+                self.moving = self.initial - ZoomState.MINIMUM_DELTA
+        else:
+            if moving - self.initial > ZoomState.MINIMUM_DELTA:
+                self.moving = moving
+            else:
+                self.moving = self.initial + ZoomState.MINIMUM_DELTA
+
+    def get_start(self) -> datetime.datetime:
+        return self.initial if self.initial <= self.moving else self.moving
+
+    def get_stop(self) -> datetime.datetime:
+        return self.initial if self.initial > self.moving else self.moving
+
+
 class TimelineCanvas(Gtk.DrawingArea):
     @GObject.Signal(name="tagged-entry-created",
                     flags=GObject.SignalFlags.RUN_LAST,
@@ -89,6 +115,8 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.logged_entries: List[TimelineEntry] = []
         self.activity_entries: List[TimelineEntry] = []
 
+        self.zoom_state: Optional[ZoomState] = None
+
         self.visible_activity_entries: List[TimelineEntry] = []
         self.visible_tagged_entries: List[TimelineEntry] = []
         self.visible_logged_entries: List[TimelineEntry] = []
@@ -120,12 +148,7 @@ class TimelineCanvas(Gtk.DrawingArea):
                                                         boundary_start=self.timeline_start,
                                                         boundary_stop=self.timeline_end,
                                                         zoom_in=zoom_in)
-        self.timeline_start = new_start
-        self.timeline_delta = new_stop - new_start
-
-        self._update_timeline_stop()
-        self._update_canvas_constants()
-        self.queue_draw()
+        self._set_zoom_boundaries(new_start, new_stop)
 
     def zoom_to_fit(self) -> None:
         number_of_logged_entries = len(self.logged_entries)
@@ -155,22 +178,13 @@ class TimelineCanvas(Gtk.DrawingArea):
         # Choose the latest stop, but ensure that we are within today's date
         new_stop = min(current_date_as_datetime.replace(hour=23, minute=59, second=59), max(stops))
 
-        self.timeline_start = new_start
-        self.timeline_delta = new_stop - new_start
-        self._update_timeline_stop()
-        self._update_canvas_constants()
-        self.queue_draw()
+        self._set_zoom_boundaries(new_start, new_stop)
 
     def move(self, move_right: bool) -> None:
         new_start, new_stop = self.timeline_helper.move(boundary_start=self.timeline_start,
                                                         boundary_stop=self.timeline_end,
                                                         move_right=move_right)
-        self.timeline_start = new_start
-        self.timeline_delta = new_stop - new_start
-
-        self._update_timeline_stop()
-        self._update_canvas_constants()
-        self.queue_draw()
+        self._set_zoom_boundaries(new_start, new_stop)
 
     def _update_canvas_constants(self) -> None:
         canvas_height = self.get_allocated_height()
@@ -392,6 +406,12 @@ class TimelineCanvas(Gtk.DrawingArea):
             cr.set_source_rgba(0.2, 0.2, 0.2, 0.4)
             cr.rectangle(start_x, 0, stop_x - start_x, drawing_area_height)
             cr.fill()
+        elif self.zoom_state is not None:
+            start_x = self.timeline_helper.datetime_to_pixel(self.zoom_state.get_start())
+            stop_x = self.timeline_helper.datetime_to_pixel(self.zoom_state.get_stop())
+            cr.set_source_rgba(0.2, 0.6, 0.2, 0.4)
+            cr.rectangle(start_x, 0, stop_x - start_x, drawing_area_height)
+            cr.fill()
 
         # Draw the sides
         cr.set_source_rgba(0.5, 0.5, 0.5, 0.5)
@@ -451,10 +471,20 @@ class TimelineCanvas(Gtk.DrawingArea):
                         break
             return
 
+        if event.button == Gdk.BUTTON_PRIMARY and event.state & Gdk.ModifierType.SHIFT_MASK:
+            self.zoom_state = ZoomState(current_moused_datetime, current_moused_datetime)
+            return
+
         start_date = current_moused_datetime
         self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_date, stop=start_date)
 
     def do_button_release(self):
+        # Handle the zoom state if relevant
+        if self.zoom_state is not None:
+            self._set_zoom_boundaries(self.zoom_state.get_start(), self.zoom_state.get_stop())
+            self.zoom_state = None
+            return
+
         # Ensure that an entry is being created.
         if self.current_tagged_entry is None:
             return
@@ -509,3 +539,10 @@ class TimelineCanvas(Gtk.DrawingArea):
             else:
                 current_start = middle + 1
         return None
+
+    def _set_zoom_boundaries(self, start: datetime.datetime, stop: datetime.datetime):
+        self.timeline_start = start
+        self.timeline_delta = stop - start
+        self._update_timeline_stop()
+        self._update_canvas_constants()
+        self.queue_draw()
