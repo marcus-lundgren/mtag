@@ -107,8 +107,8 @@ def register_logged_entry(application_window: ApplicationWindow, datetime_now: d
             if max_delta_period < datetime_now - old_end:
                 logging.info("Too long since last update. Create a new entry.")
 
-                start_datetime = datetime_now + datetime.timedelta(seconds=-1)
-                logged_entry = LoggedEntry(start=start_datetime, stop=datetime_now, application_window=application_window)
+                new_update = datetime_now + datetime.timedelta(seconds=1)
+                logged_entry = LoggedEntry(start=datetime_now, stop=new_update, application_window=application_window)
                 logged_entry_repository.insert(db_connection, logged_entry)
             elif last_logged_entry.application_window.db_id == application_window.db_id:
                 logging.info("Still same window. Update existing logged entry")
