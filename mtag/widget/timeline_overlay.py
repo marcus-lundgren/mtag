@@ -36,7 +36,6 @@ class TimelineOverlay(Gtk.DrawingArea):
 
         self.timeline_canvas = timeline_canvas
         self.current_moused_datetime = datetime.datetime.now()
-        self.actual_mouse_pos = {"x": 0, "y": 0}
         self.tooltip_attributes = None
         self.dirty_rectangles = []
         self.moused_over_entity = None
@@ -44,8 +43,7 @@ class TimelineOverlay(Gtk.DrawingArea):
     def _do_scroll_event(self, _, e: Gdk.EventScroll):
         # Zoom in or out
         if e.direction == Gdk.ScrollDirection.UP or e.direction == Gdk.ScrollDirection.DOWN:
-            x_to_use = self.actual_mouse_pos["x"]
-            dt = self.timeline_canvas.timeline_helper.pixel_to_datetime(x_to_use)
+            dt = self.timeline_canvas.timeline_helper.pixel_to_datetime(e.x)
             zoom_in = e.direction == Gdk.ScrollDirection.UP
             self.timeline_canvas.zoom(zoom_in, dt)
             self._update_state(e.x, e.y)
@@ -154,7 +152,6 @@ class TimelineOverlay(Gtk.DrawingArea):
                 break
 
         self.current_moused_datetime = next_moused_datetime
-        self.actual_mouse_pos["x"], self.actual_mouse_pos["y"] = mouse_x, mouse_y
 
         time_texts = [datetime_helper.to_time_str(current_moused_dt)]
         desc_texts = []
