@@ -471,10 +471,13 @@ class TimelineCanvas(Gtk.DrawingArea):
                         break
             return
 
+        # We are beginning a zoom state
         if event.button == Gdk.BUTTON_PRIMARY and event.state & Gdk.ModifierType.SHIFT_MASK:
-            self.zoom_state = ZoomState(current_moused_datetime, current_moused_datetime)
+            moused_dt = self.timeline_helper.pixel_to_datetime(event.x)
+            self.zoom_state = ZoomState(moused_dt, moused_dt)
             return
 
+        # We are beginning the creation a new tagged entry
         start_date = current_moused_datetime
         self.current_tagged_entry = entity.TaggedEntry(category=None, start=start_date, stop=start_date)
 
