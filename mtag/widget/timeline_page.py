@@ -4,7 +4,7 @@ import webbrowser
 
 from mtag.entity import TaggedEntry
 from mtag.helper import datetime_helper, database_helper, link_helper
-from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository, CategoryRepository
+from mtag.repository import LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
 from . import CalendarPanel, TimelineCanvas, TimelineMinimap, TimelineOverlay
 
 import gi
@@ -91,34 +91,10 @@ class TimelinePage(Gtk.Box):
         self.pack_end(notebook, expand=True, fill=True, padding=10)
         self._reload_logged_entries_from_date()
 
-        self.connect("key-press-event", self._do_key_press_event)
-        self.connect("key-release-event", self._do_key_release_event)
         self.show_all()
 
     def update_page(self):
         self._reload_logged_entries_from_date()
-
-    def _do_key_press_event(self, _, e: Gdk.EventKey):
-        # Handle canvas zoom and movement
-        if e.state & Gdk.ModifierType.CONTROL_MASK:
-            if e.keyval == Gdk.KEY_Up:
-                self.timeline_canvas.zoom(True)
-            elif e.keyval == Gdk.KEY_Down:
-                self.timeline_canvas.zoom(False)
-            elif e.keyval == Gdk.KEY_Left:
-                self.timeline_canvas.move(False)
-            elif e.keyval == Gdk.KEY_Right:
-                self.timeline_canvas.move(True)
-            return True
-
-    def _do_key_release_event(self, _, e: Gdk.EventKey):
-        # Handle date switching
-        if e.state & Gdk.ModifierType.MOD1_MASK:
-            if e.keyval == Gdk.KEY_Left:
-                self.calendar_panel.previous_day()
-            elif e.keyval == Gdk.KEY_Right:
-                self.calendar_panel.next_day()
-            return True
 
     def _do_button_press_te(self, w: Gtk.TreeView, e):
         if e.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
