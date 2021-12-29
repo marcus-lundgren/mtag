@@ -141,7 +141,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         dt_to_use = dt
         if dt_to_use is None:
             middle_x = (self.get_allocated_width() - (self.timeline_side_padding * 2)) / 2
-            middle_dt = self.pixel_to_datetime(middle_x)
+            middle_dt = self.timeline_helper.pixel_to_datetime(middle_x)
             dt_to_use = middle_dt
 
         new_start, new_stop = self.timeline_helper.zoom(mouse_datetime=dt_to_use,
