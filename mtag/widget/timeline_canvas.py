@@ -345,8 +345,7 @@ class TimelineCanvas(Gtk.DrawingArea):
             if ae.stop_x < clip_start_x or clip_stop_x < ae.start_x:
                 continue
 
-            r, g, b = ae.color
-            cr.set_source_rgb(r, g, b)
+            cr.set_source_rgb(*ae.color)
             cr.rectangle(ae.start_x, 0, ae.width, drawing_area_height)
             cr.fill()
 

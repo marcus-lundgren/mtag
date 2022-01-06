@@ -299,8 +299,7 @@ class TimelineOverlay(Gtk.DrawingArea):
             elif i < number_of_texts:
                 cr.set_source_rgb(0.9, 0.9, 0.9)
             else:
-                r, g, b = color_helper.activity_to_text_color_floats(tooltip_attributes.is_active)
-                cr.set_source_rgb(r, g, b)
+                cr.set_source_rgb(*color_helper.activity_to_text_color_floats(tooltip_attributes.is_active))
 
             cr.move_to(x + padding, current_y)
             cr.show_text(t)
