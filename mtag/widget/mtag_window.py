@@ -27,7 +27,7 @@ class MTagWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
 
         timeline_page = TimelinePage(parent=self)
-        category_page = CategoryPage()
+        category_page = CategoryPage(parent=self)
         setting_page = SettingPage()
 
         outer_nb = Gtk.Notebook()

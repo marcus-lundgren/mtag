@@ -1,23 +1,32 @@
+from ..entity import Category
 from ..helper import database_helper, statistics_helper, datetime_helper
 from ..repository import CategoryRepository
+from .new_category_dialog import NewCategoryDialog
+from typing import Dict
+from collections import namedtuple
+
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
+CategoryHolder = namedtuple("CategoryHolder", ["main", "subs"])
 
 class CategoryPage(Gtk.Box):
-    def __init__(self):
+    def __init__(self, parent: Gtk.Window):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, name="category_view")
-        self.current_category = None
+        self.current_category_holder = None
+        self.categories: Dict[int, CategoryHolder] = {}
+        self.parent = parent
 
+        # Main category list
         self.category_store = Gtk.ListStore(str, int)
         self.categories_tree_view: Gtk.TreeView = Gtk.TreeView.new_with_model(self.category_store)
         cat_tree_selection: Gtk.TreeSelection = self.categories_tree_view.get_selection()
         cat_tree_selection.set_mode(Gtk.SelectionMode.BROWSE)
-        cat_tree_selection.connect("changed", self._do_changed)
+        cat_tree_selection.connect("changed", self._do_main_changed)
 
-        for i, title in enumerate(["Name"]):
+        for i, title in enumerate(["Main"]):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=i)
             column.set_sort_column_id(i)
@@ -28,9 +37,37 @@ class CategoryPage(Gtk.Box):
         ctw_sw = Gtk.ScrolledWindow()
         ctw_sw.set_size_request(200, -1)
         ctw_sw.add(self.categories_tree_view)
-
         self.add(ctw_sw)
 
+        # Subcategory list
+        sub_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.sub_category_store = Gtk.ListStore(str, int)
+        self.sub_categories_tree_view: Gtk.TreeView = Gtk.TreeView.new_with_model(self.sub_category_store)
+        cat_tree_selection: Gtk.TreeSelection = self.sub_categories_tree_view.get_selection()
+        cat_tree_selection.set_mode(Gtk.SelectionMode.BROWSE)
+        cat_tree_selection.connect("changed", self._do_sub_changed)
+
+        for i, title in enumerate(["Sub"]):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(title, renderer, text=i)
+            column.set_sort_column_id(i)
+            self.sub_categories_tree_view.append_column(column)
+
+        self.sub_categories_tree_view.set_headers_clickable(True)
+        self.sub_categories_tree_view.show_all()
+        ctw_sw = Gtk.ScrolledWindow()
+        ctw_sw.set_size_request(200, -1)
+        ctw_sw.add(self.sub_categories_tree_view)
+
+        new_sub_category_button = Gtk.Button(label="Create new")
+        new_sub_category_button.connect("clicked", self._on_new_sub_clicked)
+
+        sub_box.pack_start(ctw_sw, expand=True, fill=True, padding=0)
+        sub_box.pack_end(new_sub_category_button, expand=False, fill=False, padding=0)
+
+        self.add(sub_box)
+
+        # Details
         grid = Gtk.Grid()
         grid.set_column_homogeneous(homogeneous=True)
         grid.set_row_spacing(5)
@@ -83,21 +120,35 @@ class CategoryPage(Gtk.Box):
         self.show_all()
 
     def update_page(self):
+        # Clear the stores
+        self.category_store.clear()
+        self.sub_category_store.clear()
+        self.categories.clear()
+
+        # Fetch all main categories
         with database_helper.create_connection() as conn:
             categories = CategoryRepository().get_all(conn)
-        self.category_store.clear()
-        for c in categories:
-            self.category_store.append([c.name, c.db_id])
 
-        if any(categories):
-            s: Gtk.TreeSelection = self.categories_tree_view.get_selection()
-            s.select_path("0")
-            self._update_details_pane_by_row(0)
-        else:
+        for c_main, c_subs in categories:
+            self.categories[c_main.db_id] = CategoryHolder(c_main, c_subs)
+
+        for key, holder in self.categories.items():
+            self.category_store.append([holder.main.name, key])
+
+        # No main categories in the database
+        if len(self.categories) == 0:
             self.current_category = None
             self.name_entry.set_text("-")
             self.total_time_label.set_label("-")
             self.url_entry.set_text("-")
+            return
+
+        # At least one main category exist
+        s: Gtk.TreeSelection = self.categories_tree_view.get_selection()
+        s.select_path("0")
+        v = self.category_store.get_value(s.get_selected()[1], 1)
+        self.current_category_holder = self.categories[v]
+        self._update_details_pane_by_row(0)
 
     def _do_save_clicked(self, _):
         if self.current_category is None:
@@ -111,6 +162,20 @@ class CategoryPage(Gtk.Box):
 
         self.update_page()
 
+    def _on_new_sub_clicked(self, _):
+        new_category_dialog = NewCategoryDialog(window=self.parent)
+        dialog_response = new_category_dialog.run()
+        new_category_name = new_category_dialog.get_new_category_name()
+        new_category_dialog.destroy()
+
+        if dialog_response == Gtk.ResponseType.OK:
+            with database_helper.create_connection() as conn:
+                new_category = Category(name=new_category_name, parent_id=self.current_category_holder.main.db_id)
+                cr = CategoryRepository()
+                cr.insert_sub(conn=conn, category=new_category)
+                self._update_sub_category_list()
+                self.update_page()
+
     def _do_delete_button_clicked(self, _):
         with database_helper.create_connection() as conn:
             CategoryRepository().delete(conn, self.current_category)
@@ -121,7 +186,7 @@ class CategoryPage(Gtk.Box):
         v = self.category_store.get_value(i, 1)
         self._update_details_pane(v)
 
-    def _do_changed(self, selection: Gtk.TreeSelection, *_):
+    def _do_main_changed(self, selection: Gtk.TreeSelection, *_):
         _, selected = selection.get_selected()
 
         # Ensure that we have a valid selection
@@ -129,20 +194,48 @@ class CategoryPage(Gtk.Box):
             return
 
         v = self.category_store.get_value(selected, 1)
+        self.current_category_holder = self.categories[v]
+        self._update_sub_category_list()
+
+    def _do_sub_changed(self, selection: Gtk.TreeSelection, *_):
+        _, selected = selection.get_selected()
+
+        # Ensure that we have a valid selection
+        if selected is None:
+            return
+
+        v = self.sub_category_store.get_value(selected, 1)
         self._update_details_pane(v)
+
+    def _update_sub_category_list(self):
+        self.sub_category_store.clear()
+        c_main = self.current_category_holder.main
+        self.sub_category_store.append(["[Main]", c_main.db_id])
+        for c in self.current_category_holder.subs:
+            self.sub_category_store.append([c.name, c.db_id])
+        self._update_details_pane(c_main.db_id)
 
     def _update_details_pane(self, category_db_id: int):
         cr = CategoryRepository()
-        with database_helper.create_connection() as conn:
-            category = cr.get(conn=conn, db_id=category_db_id)
+        if category_db_id == self.current_category_holder.main.db_id:
+            self.current_category = self.current_category_holder.main
+        else:
+            subs = [c for c in self.current_category_holder.subs if c.db_id == category_db_id]
 
-        self.current_category = category
-        seconds = statistics_helper.get_total_category_tagged_time(category.name)
+            # Verify that we've found the category amongst the sub categories.
+            # If not, then we've probably gotten an event for the main category
+            # we switched from.
+            if len(subs) == 1:
+                self.current_category = subs[0]
+            else:
+                return
+
+        seconds = statistics_helper.get_total_category_tagged_time(self.current_category.name)
         h, m, s = datetime_helper.seconds_to_hour_minute_second(seconds)
         total_time_str = f"{h} hours, {m} minutes, {s} seconds"
-        self.name_entry.set_text(category.name)
+        self.name_entry.set_text(self.current_category.name)
         self.total_time_label.set_label(total_time_str)
-        self.url_entry.set_text(category.url)
+        self.url_entry.set_text(self.current_category.url)
         self.cb_name.set_active(False)
         self.cb_delete.set_active(False)
 
