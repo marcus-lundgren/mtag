@@ -498,28 +498,18 @@ class TimelineCanvas(Gtk.DrawingArea):
             return
 
         # Choose category
-        with database_helper.create_connection() as conn:
-            category_repository = CategoryRepository()
-            categories = category_repository.get_all(conn=conn)
-
-        dialog = CategoryChoiceDialog(window=self.parent, categories=categories, tagged_entry=tagged_entry_to_create)
+        dialog = CategoryChoiceDialog(window=self.parent, tagged_entry=tagged_entry_to_create)
         r = dialog.run()
         self.current_tagged_entry = None
-        chosen_category_name = dialog.get_chosen_category_value()
+        (main_category, sub_category) = dialog.get_chosen_category_value()
         dialog.destroy()
 
         if r == Gtk.ResponseType.OK:
             # Set chosen category
-            chosen_category = [c for c in categories if c.name.lower() == chosen_category_name.lower()]
-            if len(chosen_category) == 1:
-                chosen_category = chosen_category[0]
-            else:
-                new_category = entity.Category(name=chosen_category_name)
-                with database_helper.create_connection() as conn:
-                    new_category.db_id = category_repository.insert(conn=conn, category=new_category)
-                chosen_category = new_category
+            with database_helper.create_connection() as conn:
+                category_repository = CategoryRepository()
+                tagged_entry_to_create.category = category_repository.insert(conn=conn, main_name=main_category, sub_name=sub_category)
 
-            tagged_entry_to_create.category = chosen_category
             self.emit("tagged-entry-created", tagged_entry_to_create)
 
         self.queue_draw()

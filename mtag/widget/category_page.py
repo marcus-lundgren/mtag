@@ -170,9 +170,8 @@ class CategoryPage(Gtk.Box):
 
         if dialog_response == Gtk.ResponseType.OK:
             with database_helper.create_connection() as conn:
-                new_category = Category(name=new_category_name, parent_id=self.current_category_holder.main.db_id)
                 cr = CategoryRepository()
-                cr.insert_sub(conn=conn, category=new_category)
+                cr.insert_sub(conn=conn, name=new_category_name, parent_id=self.current_category_holder.main.db_id)
                 self._update_sub_category_list()
                 self.update_page()
 

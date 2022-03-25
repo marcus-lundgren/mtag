@@ -1,5 +1,7 @@
-from mtag.entity import TaggedEntry
-from mtag.helper import statistics_helper, datetime_helper
+from ..entity import TaggedEntry, Category
+from ..helper import statistics_helper, datetime_helper, database_helper
+from ..repository import CategoryRepository
+from typing import List, Tuple, Optional
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -7,7 +9,9 @@ from gi.repository import Gtk, Gdk
 
 
 class CategoryChoiceDialog(Gtk.Dialog):
-    def __init__(self, window: Gtk.Window, categories: list, tagged_entry: TaggedEntry):
+    MAIN_SUB_SEPARATOR: str = ">>"
+
+    def __init__(self, window: Gtk.Window, tagged_entry: TaggedEntry):
         super().__init__(title="Choose category", parent=window, destroy_with_parent=True, modal=True)
         self.set_size_request(400, 400)
         self.add_button(Gtk.STOCK_OK, Gtk.ResponseType.OK)
@@ -30,8 +34,15 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.list_store = Gtk.ListStore(str)
         self.tree_model_filter: Gtk.TreeModelFilter = self.list_store.filter_new()
         self.tree_model_filter.set_visible_func(self._filter_func)
-        for c in categories:
-            self.list_store.append([c.name])
+
+        with database_helper.create_connection() as conn:
+            category_repository = CategoryRepository()
+            categories = category_repository.get_all(conn=conn)
+
+        for (c_main, c_subs) in categories:
+            self.list_store.append([f"{c_main.name}"])
+            for c_sub in c_subs:
+                self.list_store.append([f"{c_main.name} {CategoryChoiceDialog.MAIN_SUB_SEPARATOR} {c_sub.name}"])
 
         self.categories_tree_view: Gtk.TreeView = Gtk.TreeView.new_with_model(self.tree_model_filter)
         self.categories_tree_view.connect("button-press-event", self._do_button_press)
@@ -57,8 +68,13 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.vbox.pack_start(self.total_tagged_time_label, expand=False, fill=True, padding=0)
         self.show_all()
 
-    def get_chosen_category_value(self) -> str:
-        return self.search_box.get_text()
+    def get_chosen_category_value(self) -> Tuple[str, Optional[str]]:
+        main, sub = self.search_box.get_text().strip(), None
+        if CategoryChoiceDialog.MAIN_SUB_SEPARATOR in main:
+            main, sub = main.split(sep=CategoryChoiceDialog.MAIN_SUB_SEPARATOR, maxsplit=1)
+            main, sub = main.strip(), sub.strip()
+
+        return main, sub
 
     def _do_selection_changed(self, selection: Gtk.TreeSelection, *_):
         _, selected = selection.get_selected()
