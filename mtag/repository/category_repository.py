@@ -12,7 +12,7 @@ class CategoryRepository:
         if main_category is not None:
             main_category_id = main_category.db_id
         else:
-            main_category_id = self.insert_main(conn=conn, name=main_category)
+            main_category_id = self.insert_main(conn=conn, name=main_name)
 
         if sub_name is None:
             return self.get(conn=conn, db_id=main_category_id)
@@ -21,7 +21,7 @@ class CategoryRepository:
         if sub_category is not None:
             return sub_category
 
-        sub_category_id = self.insert_sub(conn=conn, name=sub_category, parent_id=main_category_id)
+        sub_category_id = self.insert_sub(conn=conn, name=sub_name, parent_id=main_category_id)
         return self.get(conn=conn, db_id=sub_category_id)
 
     def insert_main(self, conn: sqlite3.Connection, name: str) -> int:
