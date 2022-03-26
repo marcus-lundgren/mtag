@@ -187,7 +187,7 @@ class TimelineOverlay(Gtk.DrawingArea):
                     if current_tagged_entry is None:
                         time_details = datetime_helper.to_time_text(te.entry.start, te.entry.stop, te.entry.duration)
                         time_texts.append(time_details)
-                    desc_texts.append(te.entry.category.name)
+                    desc_texts.append(te.entry.category_str)
 
                     highlight_rectangle = cairo.RectangleInt(int(te.start_x) - 5,
                                                              int(timeline_canvas.te_start_y) - 5,

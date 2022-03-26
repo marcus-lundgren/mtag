@@ -86,9 +86,15 @@ class TaggedEntryRepository:
 
     def _from_dbo(self, conn: sqlite3.Connection, db_te: dict) -> TaggedEntry:
         category = self._get_category(conn=conn, c_id=db_te["te_category_id"])
+        if category.parent_id is not None:
+            main_category = self._get_category(conn=conn, c_id=category.parent_id)
+            category_str = f"{main_category.name} >> {category.name}"
+        else:
+            category_str = category.name
         return TaggedEntry(start=datetime_helper.timestamp_to_datetime(db_te["te_start"]),
                            stop=datetime_helper.timestamp_to_datetime(db_te["te_end"]),
                            category=category,
+                           category_str=category_str,
                            db_id=db_te["te_id"])
 
     def _get_category(self, conn: sqlite3.Connection, c_id: int) -> Category:

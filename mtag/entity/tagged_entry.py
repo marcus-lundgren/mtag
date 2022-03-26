@@ -4,12 +4,13 @@ from mtag.entity import Category
 
 
 class TaggedEntry:
-    def __init__(self, start: datetime, stop: datetime, category: Optional[Category], db_id: int = None):
+    def __init__(self, start: datetime, stop: datetime, category: Optional[Category], category_str: Optional[str] = None, db_id: int = None):
         self.db_id = db_id
         self.start = start
         self._stop = stop
         self.initial_position = self.start
         self.category = category
+        self.category_str = category_str
 
     @property
     def duration(self):
