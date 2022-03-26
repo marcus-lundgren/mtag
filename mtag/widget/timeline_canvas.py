@@ -310,7 +310,7 @@ class TimelineCanvas(Gtk.DrawingArea):
                     tagged_entries: List[TaggedEntry], activity_entries: List[ActivityEntry]) -> None:
         self.logged_entries = [TimelineEntry(le, color_helper.to_color_floats(le.application_window.application.name))
                                for le in logged_entries]
-        self.tagged_entries = [TimelineEntry(te, color_helper.to_color_floats(te.category.name))
+        self.tagged_entries = [TimelineEntry(te, color_helper.to_color_floats(te.category_str))
                                for te in tagged_entries]
         self.activity_entries = [TimelineEntry(ae, color_helper.activity_to_color_floats(ae.active))
                                  for ae in activity_entries]
