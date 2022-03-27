@@ -32,7 +32,7 @@ class CategoryPage(Gtk.Box):
             column.set_sort_column_id(i)
             self.categories_tree_view.append_column(column)
 
-        self.categories_tree_view.set_headers_clickable(True)
+        self.categories_tree_view.set_headers_clickable(False)
         self.categories_tree_view.show_all()
         ctw_sw = Gtk.ScrolledWindow()
         ctw_sw.set_size_request(200, -1)
@@ -53,7 +53,7 @@ class CategoryPage(Gtk.Box):
             column.set_sort_column_id(i)
             self.sub_categories_tree_view.append_column(column)
 
-        self.sub_categories_tree_view.set_headers_clickable(True)
+        self.sub_categories_tree_view.set_headers_clickable(False)
         self.sub_categories_tree_view.show_all()
         ctw_sw = Gtk.ScrolledWindow()
         ctw_sw.set_size_request(200, -1)
