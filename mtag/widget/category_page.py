@@ -258,7 +258,7 @@ class CategoryPage(Gtk.Box):
         self.cb_delete.set_active(False)
 
         self.parent_list.remove_all()
-        if self.current_category.parent_id is not None:
+        if self.current_category.parent_id is not None or len(self.categories[self.current_category.db_id].subs) == 0:
             self.parent_list.set_active(True)
             current_main_id = self.current_category_holder.main.db_id
             for (main_id, holder) in self.categories.items():
