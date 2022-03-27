@@ -248,7 +248,7 @@ class CategoryPage(Gtk.Box):
             else:
                 return
 
-        seconds = statistics_helper.get_total_category_tagged_time(self.current_category.name)
+        seconds = statistics_helper.get_total_category_tagged_time_by_id(self.current_category.db_id)
         h, m, s = datetime_helper.seconds_to_hour_minute_second(seconds)
         total_time_str = f"{h} hours, {m} minutes, {s} seconds"
         self.name_entry.set_text(self.current_category.name)

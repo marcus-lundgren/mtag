@@ -74,12 +74,31 @@ class TaggedEntryRepository:
 
         return [self._from_dbo(conn=conn, db_te=db_te) for db_te in db_tagged_entries]
 
-    def total_time_by_category(self, conn: sqlite3.Connection, category_name: str) -> int:
+    def total_time_by_category_by_name(self, conn: sqlite3.Connection, main_name: str, sub_name: str) -> int:
+        query = "SELECT SUM(te_end - te_start) AS total_time"
+        query += " FROM tagged_entry"
+        params = {"main_name": main_name}
+
+        if sub_name is not None:
+            query += " INNER JOIN category sub ON tagged_entry.te_category_id == sub.c_id"
+            query += " INNER JOIN category main ON sub.c_parent_id == main.c_id"
+            query += " WHERE sub.c_name=:sub_name"
+            query += " AND main.c_name=:main_name"
+            params["sub_name"] = sub_name
+        else:
+            query += " INNER JOIN category main ON tagged_entry.te_category_id == main.c_id"
+            query += " WHERE main.c_name=:main_name"
+
+        cursor = conn.execute(query, params)
+        row = cursor.fetchone()
+        total_seconds = row["total_time"]
+        return 0 if total_seconds is None else total_seconds
+
+    def total_time_by_category_by_id(self, conn: sqlite3.Connection, category_id: id) -> int:
         cursor = conn.execute("SELECT SUM(te_end - te_start) AS total_time"
                               " FROM tagged_entry"
-                              " INNER JOIN category ON tagged_entry.te_category_id == category.c_id"
-                              " WHERE c_name=:c_name",
-                              {"c_name": category_name})
+                              " WHERE tagged_entry.te_category_id=:id",
+                              {"id": category_id})
         row = cursor.fetchone()
         total_seconds = row["total_time"]
         return 0 if total_seconds is None else total_seconds

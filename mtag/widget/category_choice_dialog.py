@@ -97,7 +97,8 @@ class CategoryChoiceDialog(Gtk.Dialog):
         self.tree_model_filter.refilter()
 
     def _update_statistics(self):
-        total_time = statistics_helper.get_total_category_tagged_time(self.search_box.get_text())
+        main_name, sub_name = self.get_chosen_category_value()
+        total_time = statistics_helper.get_total_category_tagged_time(main_name=main_name, sub_name=sub_name)
         hours, minutes, seconds = datetime_helper.seconds_to_hour_minute_second(total_seconds=total_time)
         self.total_tagged_time_label.set_label(f"{hours} hours, {minutes} minutes, {seconds} seconds")
 
