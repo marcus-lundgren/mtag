@@ -150,7 +150,7 @@ class TimelinePage(Gtk.Box):
         self.tagged_entries_list_store.clear()
         total_duration = datetime.timedelta()
         for te_category, te_group in groupby(sorted(tagged_entries, key=lambda x: x.category.db_id),
-                                             key=lambda x: x.category.name):
+                                             key=lambda x: x.category_str):
             te_list = list(te_group)
             duration = sum([te.duration for te in te_list], start=datetime.timedelta())
             total_duration += duration
