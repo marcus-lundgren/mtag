@@ -102,6 +102,14 @@ class CategoryPage(Gtk.Box):
         self.url_entry.set_tooltip_text("Tags are supported.\n{{date}} will expand to the chosen date as YYYY-MM-DD.")
         grid.attach(self.url_entry, 1, 2, 2, 1)
 
+        grid.attach(Gtk.Label(label=""), 0, 3, 1, 1)
+
+        change_main_title = Gtk.Label(label="Change parent")
+        change_main_title.set_xalign(1)
+        grid.attach(change_main_title, 0, 4, 1, 1)
+        self.parent_list = Gtk.ComboBoxText.new()
+        grid.attach(self.parent_list, 1, 4, 2, 1)
+
         self.cb_delete = Gtk.CheckButton(label="Unlock delete")
         self.delete_button = Gtk.Button(label="Delete")
         self.cb_delete.connect("toggled", lambda w: self.delete_button.set_sensitive(w.get_active()))
@@ -110,11 +118,11 @@ class CategoryPage(Gtk.Box):
         delete_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         delete_box.pack_start(self.delete_button, expand=False, fill=False, padding=0)
         delete_box.pack_start(self.cb_delete, expand=False, fill=False, padding=0)
-        grid.attach(delete_box, 1, 3, 2, 1)
+        grid.attach(delete_box, 1, 5, 2, 1)
 
         save_button = Gtk.Button("Save")
         save_button.connect("clicked", self._do_save_clicked)
-        grid.attach(save_button, 2, 4, 1, 1)
+        grid.attach(save_button, 2, 6, 1, 1)
 
         self.pack_end(grid, expand=True, fill=True, padding=20)
         self.show_all()
@@ -154,10 +162,18 @@ class CategoryPage(Gtk.Box):
         if self.current_category is None:
             return
 
+        chosen_parent_name = self.parent_list.get_active_text()
+        if chosen_parent_name is not None:
+            for (_, holder) in self.categories.items():
+                if holder.main.name == chosen_parent_name:
+                    self.current_category.parent_id = holder.main.db_id
+                    break
+
+        self.current_category.name = self.name_entry.get_text()
+        self.current_category.url = self.url_entry.get_text()
+
         cr = CategoryRepository()
         with database_helper.create_connection() as conn:
-            self.current_category.name = self.name_entry.get_text()
-            self.current_category.url = self.url_entry.get_text()
             cr.update(conn=conn, category=self.current_category)
 
         self.update_page()
@@ -240,6 +256,16 @@ class CategoryPage(Gtk.Box):
         self.url_entry.set_text(self.current_category.url)
         self.cb_name.set_active(False)
         self.cb_delete.set_active(False)
+
+        self.parent_list.remove_all()
+        if self.current_category.parent_id is not None:
+            self.parent_list.set_active(True)
+            current_main_id = self.current_category_holder.main.db_id
+            for (main_id, holder) in self.categories.items():
+                if current_main_id != main_id:
+                    self.parent_list.append_text(holder.main.name)
+        else:
+            self.parent_list.set_active(False)
 
         # Only allow deletions when we don't have any tagged time
         self.cb_delete.set_sensitive(seconds == 0)
