@@ -212,7 +212,10 @@ class CategoryPage(Gtk.Box):
         self.sub_category_store.append(["[Main]", c_main.db_id])
         for c in self.current_category_holder.subs:
             self.sub_category_store.append([c.name, c.db_id])
-        self._update_details_pane(c_main.db_id)
+
+        # We are guarenteed at least one sub category
+        s: Gtk.TreeSelection = self.sub_categories_tree_view.get_selection()
+        s.select_path("0")
 
     def _update_details_pane(self, category_db_id: int):
         cr = CategoryRepository()
