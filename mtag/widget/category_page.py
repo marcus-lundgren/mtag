@@ -229,7 +229,7 @@ class CategoryPage(Gtk.Box):
         for c in self.current_category_holder.subs:
             self.sub_category_store.append([c.name, c.db_id])
 
-        # We are guarenteed at least one sub category
+        # We are guaranteed at least one sub category
         s: Gtk.TreeSelection = self.sub_categories_tree_view.get_selection()
         s.select_path("0")
 
