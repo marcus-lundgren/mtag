@@ -154,10 +154,18 @@ class TimelineCanvas(Gtk.DrawingArea):
         number_of_logged_entries = len(self.logged_entries)
         number_of_tagged_entries = len(self.tagged_entries)
 
-        # Nothing to do if we don't have any entries
+        current_date_as_datetime = datetime.datetime(year=self._current_date.year,
+                                                     month=self._current_date.month,
+                                                     day=self._current_date.day)
+
+        # If we don't have any entries, then show the whole day
         if number_of_logged_entries == 0 and number_of_tagged_entries == 0:
+            new_start = current_date_as_datetime
+            new_stop = current_date_as_datetime.replace(hour=23, minute=59, second=59)
+            self._set_zoom_boundaries(new_start, new_stop)
             return
 
+        # We have at least one entry in the timeline
         starts = []
         stops = []
         if number_of_logged_entries > 0:
@@ -167,10 +175,6 @@ class TimelineCanvas(Gtk.DrawingArea):
         if number_of_tagged_entries > 0:
             starts.append(self.tagged_entries[0].entry.start)
             stops.append(self.tagged_entries[number_of_tagged_entries - 1].entry.stop)
-
-        current_date_as_datetime = datetime.datetime(year=self._current_date.year,
-                                                     month=self._current_date.month,
-                                                     day=self._current_date.day)
 
         # Choose the earliest start, but ensure that we are within today's date
         new_start = max(current_date_as_datetime, min(starts))
