@@ -164,9 +164,24 @@ class TimelineMinimap(Gtk.DrawingArea):
                                               timeline_start_dt=self.current_date,
                                               timeline_stop_dt=self.end_of_current_date,
                                               timeline_side_padding=self.side_padding)
-        self.logged_timeline_entries = [TimelineEntry(self.timeline_helper.datetime_to_pixel(le.start),
-                                                      self.timeline_helper.datetime_to_pixel(le.stop))
-                                        for le in self.logged_entries]
-        self.tagged_timeline_entries = [TimelineEntry(self.timeline_helper.datetime_to_pixel(te.start),
-                                                      self.timeline_helper.datetime_to_pixel(te.stop))
-                                        for te in self.tagged_entries]
+        TimelineMinimap._add_visible_timeline_entries(timeline_helper=self.timeline_helper,
+                                                      from_collection=self.logged_entries,
+                                                      visible_collection=self.logged_timeline_entries)
+        TimelineMinimap._add_visible_timeline_entries(timeline_helper=self.timeline_helper,
+                                                      from_collection=self.tagged_entries,
+                                                      visible_collection=self.tagged_timeline_entries)
+
+    @staticmethod
+    def _add_visible_timeline_entries(timeline_helper: TimelineHelper, from_collection: List, visible_collection: List) -> None:
+        visible_collection.clear()
+        last_stop_x = None
+        for from_entry in from_collection:
+            timeline_entry = TimelineEntry(timeline_helper.datetime_to_pixel(from_entry.start),
+                                           timeline_helper.datetime_to_pixel(from_entry.stop))
+            new_stop_x = timeline_entry.start_x + timeline_entry.width
+
+            # Only create a new object if we've got a new stop x-position
+            if last_stop_x != new_stop_x:
+                last_stop_x = new_stop_x
+                visible_collection.append(timeline_entry)
+
