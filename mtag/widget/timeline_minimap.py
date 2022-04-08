@@ -16,8 +16,13 @@ from gi.repository import Gtk, Gdk, GObject
 class TimelineEntry:
     def __init__(self, start_x: float, stop_x: float):
         self.start_x = math.floor(start_x)
-        self.width = math.ceil(stop_x) - self.start_x
+        self.stop_x = math.ceil(stop_x)
+        self.width = 0
+        self.update_stop_x(self.stop_x)
 
+    def update_stop_x(self, new_stop_x: int) -> None:
+        self.stop_x = new_stop_x
+        self.width = self.stop_x - self.start_x
 
 class TimelineMinimap(Gtk.DrawingArea):
     @GObject.Signal(name="timeline-boundary-changed",
@@ -174,14 +179,23 @@ class TimelineMinimap(Gtk.DrawingArea):
     @staticmethod
     def _add_visible_timeline_entries(timeline_helper: TimelineHelper, from_collection: List, visible_collection: List) -> None:
         visible_collection.clear()
-        last_stop_x = None
+        previous_entry = None
         for from_entry in from_collection:
             timeline_entry = TimelineEntry(timeline_helper.datetime_to_pixel(from_entry.start),
                                            timeline_helper.datetime_to_pixel(from_entry.stop))
-            new_stop_x = timeline_entry.start_x + timeline_entry.width
+            # First iteration case
+            if previous_entry is None:
+                previous_entry = timeline_entry
+                visible_collection.append(previous_entry)
+                continue
 
-            # Only create a new object if we've got a new stop x-position
-            if last_stop_x != new_stop_x:
-                last_stop_x = new_stop_x
-                visible_collection.append(timeline_entry)
+            # Reuse the previous entry if the next one starts where it ended
+            if timeline_entry.start_x <= previous_entry.stop_x:
+                previous_entry.update_stop_x(timeline_entry.stop_x)
+                continue
+
+            # The current entry didn't start where the other ended.
+            # Insert it and use it as the new previous entry.
+            previous_entry = timeline_entry
+            visible_collection.append(previous_entry)
 
