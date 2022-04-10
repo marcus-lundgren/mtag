@@ -12,12 +12,6 @@ class MTagWindow(Gtk.Window):
     def __init__(self):
         super().__init__(title="MTag")
         self.set_default_size(720, 500)
-        try:
-            it = Gtk.IconTheme()
-            icon = it.load_icon(Gtk.STOCK_FIND, 256, Gtk.IconLookupFlags.GENERIC_FALLBACK)
-            self.set_icon(icon)
-        except:
-            logging.warning("Unable to load window icon")
 
         css = Gtk.CssProvider()
         css.load_from_data(b"#nb > * { background-color: transparent; } ")
