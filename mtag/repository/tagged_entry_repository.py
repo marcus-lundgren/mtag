@@ -15,15 +15,15 @@ class TaggedEntryRepository:
     def insert(self, conn: sqlite3.Connection, tagged_entry: TaggedEntry) -> None:
         cursor = conn.execute("SELECT te_id, te_start"
                               " FROM tagged_entry"
-                              " WHERE te_end==:new_te_start"
-                              " AND te_category_id==:new_te_category_id",
+                              " WHERE te_end=:new_te_start"
+                              " AND te_category_id=:new_te_category_id",
                               {"new_te_start": datetime_helper.datetime_to_timestamp(tagged_entry.start),
                                "new_te_category_id": tagged_entry.category.db_id})
         te_to_the_left_dbo = cursor.fetchone()
         cursor.execute("SELECT te_id, te_end"
                        " FROM tagged_entry"
-                       " WHERE te_start==:new_te_end"
-                       " AND te_category_id==:new_te_category_id",
+                       " WHERE te_start=:new_te_end"
+                       " AND te_category_id=:new_te_category_id",
                        {"new_te_end": datetime_helper.datetime_to_timestamp(tagged_entry.stop),
                         "new_te_category_id": tagged_entry.category.db_id})
         te_to_the_right_dbo = cursor.fetchone()
@@ -91,13 +91,13 @@ class TaggedEntryRepository:
         params = {"main_name": main_name}
 
         if sub_name is not None:
-            query += " INNER JOIN category sub ON tagged_entry.te_category_id == sub.c_id"
-            query += " INNER JOIN category main ON sub.c_parent_id == main.c_id"
+            query += " INNER JOIN category sub ON tagged_entry.te_category_id = sub.c_id"
+            query += " INNER JOIN category main ON sub.c_parent_id = main.c_id"
             query += " WHERE sub.c_name=:sub_name"
             query += " AND main.c_name=:main_name"
             params["sub_name"] = sub_name
         else:
-            query += " INNER JOIN category main ON tagged_entry.te_category_id == main.c_id"
+            query += " INNER JOIN category main ON tagged_entry.te_category_id = main.c_id"
             query += " WHERE main.c_name=:main_name"
 
         cursor = conn.execute(query, params)
