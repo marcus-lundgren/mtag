@@ -56,6 +56,17 @@ class TaggedEntryRepository:
 
         conn.commit()
 
+    def update(self, conn: sqlite3.Connection, tagged_entry: TaggedEntry) -> None:
+        conn.execute("UPDATE tagged_entry SET te_category_id=:te_category_id, te_start=:te_start, te_end=:te_end"
+                     " WHERE te_id=:te_id",
+                     {"te_start": datetime_helper.datetime_to_timestamp(tagged_entry.start),
+                      "te_end": datetime_helper.datetime_to_timestamp(tagged_entry.stop),
+                      "te_id": tagged_entry.db_id,
+                      "te_category_id": tagged_entry.category.db_id
+                      })
+
+        conn.commit()
+
     def delete(self, conn: sqlite3.Connection, db_id: int) -> None:
         conn.execute("DELETE FROM tagged_entry WHERE te_id=:db_id", {"db_id": db_id})
         conn.commit()

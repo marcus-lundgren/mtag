@@ -35,6 +35,7 @@ class TimelinePage(Gtk.Box):
         # Drawing area
         self.timeline_canvas = TimelineCanvas(parent=parent)
         self.timeline_canvas.connect("tagged-entry-created", self._do_tagged_entry_created)
+        self.timeline_canvas.connect("tagged-entry-edited", self._do_tagged_entry_edited)
         self.timeline_canvas.connect("tagged-entry-deleted", self._do_tagged_entry_deleted)
         self.timeline_canvas.connect("timeline-boundary-changed",
                                      lambda _, start, stop: self.timeline_minimap.set_boundaries(start, stop))
@@ -113,6 +114,12 @@ class TimelinePage(Gtk.Box):
         tagged_entry_repository = TaggedEntryRepository()
         with database_helper.create_connection() as conn:
             tagged_entry_repository.insert(conn=conn, tagged_entry=te)
+        self._reload_logged_entries_from_date()
+
+    def _do_tagged_entry_edited(self, _, te: TaggedEntry):
+        tagged_entry_repository = TaggedEntryRepository()
+        with database_helper.create_connection() as conn:
+            tagged_entry_repository.update(conn=conn, tagged_entry=te)
         self._reload_logged_entries_from_date()
 
     def _do_tagged_entry_deleted(self, _, te: TaggedEntry):

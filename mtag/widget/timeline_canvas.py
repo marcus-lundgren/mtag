@@ -76,6 +76,13 @@ class TimelineCanvas(Gtk.DrawingArea):
     def tagged_entry_created(self, *args):
         pass
 
+    @GObject.Signal(name="tagged-entry-edited",
+                    flags=GObject.SignalFlags.RUN_LAST,
+                    return_type=GObject.TYPE_BOOLEAN,
+                    arg_types=[object])
+    def tagged_entry_edited(self, *args):
+        pass
+
     @GObject.Signal(name="tagged-entry-deleted",
                     flags=GObject.SignalFlags.RUN_LAST,
                     return_type=GObject.TYPE_BOOLEAN,
@@ -125,6 +132,7 @@ class TimelineCanvas(Gtk.DrawingArea):
         self.timeline_entries_by_color: DefaultDict = defaultdict(list)
 
         self.context_menu = TimelineContextPopover(relative_to=self)
+        self.context_menu.connect("tagged-entry-edit-category-event", self._do_context_menu_edit_category)
         self.context_menu.connect("tagged-entry-delete-event", self._do_context_menu_delete)
         self._update_canvas_constants()
 
@@ -136,6 +144,19 @@ class TimelineCanvas(Gtk.DrawingArea):
 
     def _do_context_menu_delete(self, _: TimelineContextPopover, te: entity.TaggedEntry) -> None:
         self.emit("tagged-entry-deleted", te)
+
+    def _do_context_menu_edit_category(self, _: TimelineContextPopover, te: entity.TaggedEntry):
+        dialog = CategoryChoiceDialog(window=self.parent, tagged_entry=te)
+        r = dialog.run()
+        (main_category, sub_category) = dialog.get_chosen_category_value()
+        dialog.destroy()
+
+        if r == Gtk.ResponseType.OK:
+            # Set chosen category
+            with database_helper.create_connection() as conn:
+                category_repository = CategoryRepository()
+                te.category = category_repository.insert(conn=conn, main_name=main_category, sub_name=sub_category)
+                self.emit("tagged-entry-edited", te)
 
     def zoom(self, zoom_in: bool, dt: Optional[datetime.datetime] = None) -> None:
         dt_to_use = dt
