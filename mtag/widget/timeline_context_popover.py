@@ -28,15 +28,15 @@ class TimelineContextPopover(Gtk.Popover):
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
+        button = Gtk.Button(label="Edit category")
+        button.connect("clicked", self._do_edit_category_button_clicked)
+        button.show()
+        box.pack_start(button, expand=True, fill=True, padding=0)
+
         button = Gtk.Button(label="Delete")
         button.connect("clicked", self._do_delete_button_clicked)
         button.show()
         box.pack_start(button, expand=True, fill=True, padding=0)
-
-        button = Gtk.Button(label="Edit category")
-        button.connect("clicked", self._do_edit_category_button_clicked)
-        button.show()
-        box.pack_end(button, expand=True, fill=True, padding=0)
 
         box.show()
         self.add(box)
