@@ -59,13 +59,7 @@ class CategoryPage(Gtk.Box):
         ctw_sw.set_size_request(200, -1)
         ctw_sw.add(self.sub_categories_tree_view)
 
-        new_sub_category_button = Gtk.Button(label="Create new")
-        new_sub_category_button.connect("clicked", self._on_new_sub_clicked)
-
-        sub_box.pack_start(ctw_sw, expand=True, fill=True, padding=0)
-        sub_box.pack_end(new_sub_category_button, expand=False, fill=False, padding=0)
-
-        self.add(sub_box)
+        self.add(ctw_sw)
 
         # Details
         grid = Gtk.Grid()
