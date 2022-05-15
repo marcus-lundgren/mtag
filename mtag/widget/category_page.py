@@ -172,19 +172,6 @@ class CategoryPage(Gtk.Box):
 
         self.update_page()
 
-    def _on_new_sub_clicked(self, _):
-        new_category_dialog = NewCategoryDialog(window=self.parent)
-        dialog_response = new_category_dialog.run()
-        new_category_name = new_category_dialog.get_new_category_name()
-        new_category_dialog.destroy()
-
-        if dialog_response == Gtk.ResponseType.OK:
-            with database_helper.create_connection() as conn:
-                cr = CategoryRepository()
-                cr.insert_sub(conn=conn, name=new_category_name, parent_id=self.current_category_holder.main.db_id)
-                self._update_sub_category_list()
-                self.update_page()
-
     def _do_delete_button_clicked(self, _):
         with database_helper.create_connection() as conn:
             CategoryRepository().delete(conn, self.current_category)
