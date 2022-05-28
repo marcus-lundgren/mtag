@@ -1,7 +1,11 @@
 import sqlite3
 import os
 import logging
+from datetime import date
 from mtag.helper import filesystem_helper
+
+
+latest_seen_backup_date = None
 
 
 def create_connection() -> sqlite3.Connection:
@@ -22,9 +26,33 @@ def create_connection() -> sqlite3.Connection:
 
         conn.executescript(schema_script)
 
+    _backup_if_needed(conn=conn)
+    filesystem_helper.purge_backups_if_needed()
     _update_if_needed(conn=conn)
 
     return conn
+
+
+def _backup_if_needed(conn: sqlite3.Connection) -> None:
+    global latest_seen_backup_date
+    today = date.today()
+
+    # We've already seen a backup for the current date
+    if latest_seen_backup_date == today:
+        return
+
+    backup_filename = today.strftime("mtag_%Y-%m-%d.db")
+    backup_filepath = os.path.join(filesystem_helper.get_userdatabackup_path(),
+                                   backup_filename)
+
+    latest_seen_backup_date = today
+
+    if os.path.exists(backup_filepath):
+        logging.debug(f"Backup '{backup_filename}' exists. Nothing to do.")
+        return
+
+    logging.info("No backup for current date exists. Creating it.")
+    conn.execute(f"VACUUM INTO '{backup_filepath}'")
 
 
 def _update_if_needed(conn: sqlite3.Connection):
