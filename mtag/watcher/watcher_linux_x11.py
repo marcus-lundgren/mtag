@@ -42,7 +42,7 @@ whoiam = subprocess.run(["whoami"], stdout=subprocess.PIPE, universal_newlines=T
 session_id = subprocess.run(["loginctl", "show-user", "-pSessions", "--value", whoiam],
                             stdout=subprocess.PIPE, universal_newlines=True).stdout.strip()
 
-logging.debug(whoiam, "=>", session_id)
+logging.debug(f"{whoiam} => {session_id}")
 
 
 def get_locked_state():

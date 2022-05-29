@@ -57,8 +57,6 @@ def register_activity_entry(idle_period: int, locked_state: bool, datetime_now: 
             activity_entry = ActivityEntry(start=datetime_now, stop=new_update, active=was_active)
             activity_entry_repository.insert(conn=db_connection, activity_entry=activity_entry)
         else:
-            logging.debug("Last logged stop:", last_activity_entry.stop)
-
             max_delta_seconds = configuration.seconds_before_new_entry
             max_delta_period = datetime.timedelta(seconds=max_delta_seconds)
 
@@ -97,8 +95,6 @@ def register_logged_entry(application_window: ApplicationWindow, datetime_now: d
                                        application_window=application_window)
             logged_entry_repository.insert(conn=db_connection, logged_entry=logged_entry)
         else:
-            logging.debug("Last logged stop:", last_logged_entry.stop)
-
             configuration = configuration_helper.get_configuration()
             max_delta_seconds = configuration.seconds_before_new_entry
             max_delta_period = datetime.timedelta(seconds=max_delta_seconds)
