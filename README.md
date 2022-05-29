@@ -28,6 +28,8 @@ The supported platforms are Linux (X11 and Logind are required) and Windows (onl
   * XDG_DATA_HOME/mtag/ (if XDG_DATA_HOME is configured)
   * HOME/.local/share/mtag/ (as fallback)
 
+Backups are stored in the subdirectory `backup` of this folder, one for each day. If more than three backups exists, then the surplus older ones are purged.
+
 ### Configuration file
 
 * Windows
