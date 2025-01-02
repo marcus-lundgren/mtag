@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Timeline{% endblock %}
+{% block header %}
+<!-- TODO!? -->
+{% endblock %}}
+{% block content %}
+<canvas id="timeline"></canvas>
+
+<details>
+  <summary>Logged entries</summary>
+
+  <table>
+    <thead>
+      <th>Start</th>
+      <th>End</th>
+      <th>Title</th>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2024-01-01 00:00:00</td>
+        <td>2024-01-01 00:01:00</td>
+        <td>Firefox</td>
+      </tr>
+      <tr>
+        <td>2024-01-01 00:01:00</td>
+        <td>2024-01-01 00:02:00</td>
+        <td>Emacs</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<details>
+  <summary>Tagged entries</summary>
+
+  <table>
+    <thead>
+      <th>Start</th>
+      <th>End</th>
+      <th>Title</th>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2024-01-01 00:00:00</td>
+        <td>2024-01-01 00:01:00</td>
+        <td>Firefox</td>
+      </tr>
+      <tr>
+        <td>2024-01-01 00:01:00</td>
+        <td>2024-01-01 00:02:00</td>
+        <td>Emacs</td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<script>
+  const canvas = document.getElementById('timeline');
+  var ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#FFF";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(200, 100);
+  ctx.stroke();
+</script>
+{% endblock %}
