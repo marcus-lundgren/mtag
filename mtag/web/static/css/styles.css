@@ -34,11 +34,21 @@ body {
     background-color: lightblue;
 }
 
-#timeline {
+#canvas-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    margin: 10px 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+#canvas-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 300px;
     margin: auto;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 table {
