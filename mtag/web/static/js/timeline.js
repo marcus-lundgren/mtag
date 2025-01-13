@@ -12,24 +12,24 @@ function randomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-function createEntry(start) {
-    return {
-        startX: start,
-        stopX: start + 30 + Math.random() * 140,
-        color: randomColor()
-    }
-}
+var loggedEntries = [];
 
 function overlayTimeline() {
     const ctx = timelineCanvas.getContext("2d");
     ctx.fillStyle = "#FFF";
-    ctx.fillRect(0, 0, timelineCanvas.width, timelineCanvas.height);
-    for (let i = 0; i < timelineCanvas.width;) {
-        const entry = createEntry(i);
-        ctx.fillStyle = entry.color;
-        ctx.fillRect(entry.startX, 0, entry.stopX - entry.startX, 50);
-        i = entry.stopX;
-    }
+    const canvasWidth = timelineCanvas.width;
+    ctx.fillRect(0, 0, canvasWidth, timelineCanvas.height);
+    const startOfDay = new Date(new Date().setHours(20, 0, 0, 0));
+    const endOfDay = new Date(new Date().setHours(22, 59, 59, 999));
+    const dayDiff = endOfDay - startOfDay;
+
+    loggedEntries.forEach((le) => {
+        ctx.fillStyle = le.color;
+
+        const startX = ((le.start - startOfDay) / dayDiff) * canvasWidth;
+        const stopX = ((le.stop - startOfDay) / dayDiff) * canvasWidth;
+        ctx.fillRect(startX, 0, stopX - startX, 50);
+    });
 }
 
 function overlayTest() {
@@ -45,14 +45,43 @@ function overlayTest() {
 
     overlayCanvas.addEventListener("mousemove", (event) => {
         const mouseX = event.offsetX;
-        ctx.clearRect(0, 0, overlayCanvas.width * 100, overlayCanvas.height);
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
         ctx.strokeStyle = "#444";
         ctx.beginPath();
         ctx.moveTo(mouseX, 0);
         ctx.lineTo(mouseX, overlayCanvas.height);
         ctx.stroke();
-    })
+    });
+
+    overlayCanvas.addEventListener("mouseleave", (event) => {
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    });
 }
 
-overlayTimeline();
-overlayTest();
+async function fetchEntries() {
+    const url = "/entries/" + "2025-01-13";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status ${response.status}`);
+        }
+
+        const json = await response.json();
+        console.log(json);
+        json.logged_entries.forEach((le) => {
+            loggedEntries.push({
+                start: new Date(le.start),
+                stop: new Date(le.stop),
+                title: le.application_window.title,
+                color: randomColor()
+            });
+        });
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
+fetchEntries().then(() => {
+    overlayTimeline();
+    overlayTest();
+});
