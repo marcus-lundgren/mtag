@@ -7,7 +7,8 @@ const colors = [
     "#452",
     "#ddd",
     "#815"
-]
+];
+
 function randomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
