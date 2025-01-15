@@ -84,7 +84,29 @@ async function fetchEntries() {
     }
 }
 
+function updateTables() {
+    const loggedEntriesTable = document.getElementById("logged-entries-table");
+    const tableBody = loggedEntriesTable.getElementsByTagName("tbody")[0];
+
+    // Remove all existing rows
+    tableBody.innerHTML = "";
+
+    // Add the entries
+    loggedEntries.forEach((le) => {
+        const row = tableBody.insertRow();
+        const startCell = row.insertCell();
+        startCell.innerText = le.start.toISOString();
+
+        const stopCell = row.insertCell();
+        stopCell.innerText = le.stop.toISOString();
+
+        const titleCell = row.insertCell();
+        titleCell.innerText = le.title;
+    });
+}
+
 setUpListeners();
 fetchEntries().then(() => {
     renderTimeline();
+    updateTables();
 });
