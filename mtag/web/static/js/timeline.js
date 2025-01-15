@@ -6,7 +6,11 @@ const colors = [
     "#123",
     "#452",
     "#ddd",
-    "#815"
+    "#815",
+    "#518",
+    "#FAA",
+    "#817",
+    "#AFA"
 ];
 
 function randomColor() {
