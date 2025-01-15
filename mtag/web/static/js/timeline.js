@@ -14,14 +14,15 @@ function randomColor() {
 }
 
 var loggedEntries = [];
+const currentDate = new Date("2025-01-13");
 
-function overlayTimeline() {
+function renderTimeline() {
     const ctx = timelineCanvas.getContext("2d");
     ctx.fillStyle = "#FFF";
     const canvasWidth = timelineCanvas.width;
     ctx.fillRect(0, 0, canvasWidth, timelineCanvas.height);
-    const startOfDay = new Date(new Date().setHours(20, 0, 0, 0));
-    const endOfDay = new Date(new Date().setHours(22, 59, 59, 999));
+    const startOfDay = new Date(new Date(currentDate).setHours(20, 0, 0, 0));
+    const endOfDay = new Date(new Date(currentDate).setHours(22, 59, 59, 999));
     const dayDiff = endOfDay - startOfDay;
 
     loggedEntries.forEach((le) => {
@@ -33,7 +34,7 @@ function overlayTimeline() {
     });
 }
 
-function overlayTest() {
+function setUpListeners() {
     const ctx = overlayCanvas.getContext("2d");
     new ResizeObserver(() => {
         console.log("Resizing..");
@@ -41,7 +42,7 @@ function overlayTest() {
         overlayCanvas.height = canvasContainer.clientHeight;
         timelineCanvas.width = canvasContainer.clientWidth;
         timelineCanvas.height = canvasContainer.clientHeight;
-        overlayTimeline();
+        renderTimeline();
     }).observe(canvasContainer);
 
     overlayCanvas.addEventListener("mousemove", (event) => {
@@ -60,7 +61,8 @@ function overlayTest() {
 }
 
 async function fetchEntries() {
-    const url = "/entries/" + "2025-01-13";
+    const dateString = currentDate.toISOString().split("T")[0];
+    const url = "/entries/" + dateString;
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -82,7 +84,7 @@ async function fetchEntries() {
     }
 }
 
+setUpListeners();
 fetchEntries().then(() => {
-    overlayTimeline();
-    overlayTest();
+    renderTimeline();
 });
