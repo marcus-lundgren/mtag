@@ -47,6 +47,8 @@ function renderTimeline() {
     });
 }
 
+let specialMark = undefined;
+
 function setUpListeners() {
     const ctx = overlayCanvas.getContext("2d");
     new ResizeObserver(() => {
@@ -58,6 +60,13 @@ function setUpListeners() {
         renderTimeline();
     }).observe(canvasContainer);
 
+    overlayCanvas.addEventListener("mousedown", (event) => {
+        specialMark = {
+            x: event.offsetX,
+            color: "rgba(51, 51, 51, 0.4)"
+        };
+    });
+
     overlayCanvas.addEventListener("mousemove", (event) => {
         const mouseX = event.offsetX;
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
@@ -66,6 +75,18 @@ function setUpListeners() {
         ctx.moveTo(mouseX, 0);
         ctx.lineTo(mouseX, overlayCanvas.height);
         ctx.stroke();
+
+        if (specialMark !== undefined) {
+            ctx.fillStyle = specialMark.color;
+            ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, overlayCanvas.height);
+        }
+    });
+
+    overlayCanvas.addEventListener("mouseup", (event) => {
+        if (specialMark !== undefined) {
+            specialMark = undefined;
+            alert("FIX ME!");
+        }
     });
 
     overlayCanvas.addEventListener("mouseleave", (event) => {
