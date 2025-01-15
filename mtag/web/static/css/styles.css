@@ -51,13 +51,26 @@ body {
     margin: auto;
 }
 
-table {
+details {
+    margin: 10px 0;
+}
+
+details table {
     border-collapse: collapse;
-    margin: 25px 0;
+    margin: 25px auto;
     font-family: sans-serif;
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     width: 95%;
+}
+
+summary {
+    padding: 10px;
+    font-weight: bold;
+    color: yellow;
+    background-image: linear-gradient(to bottom, #666, #444, #444, #666);
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 table thead tr {
@@ -86,13 +99,6 @@ table tbody tr:last-of-type {
 table tbody tr:hover {
     color: yellow;
     background-color: #AAA;
-}
-
-summary {
-    padding: 10px;
-    font-weight: bold;
-    color: yellow;
-    background-image: linear-gradient(to right, #444, #DDD);
 }
 
 /* OLD */
