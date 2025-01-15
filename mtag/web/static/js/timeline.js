@@ -13,24 +13,33 @@ function randomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-var loggedEntries = [];
-const currentDate = new Date("2025-01-13");
+const loggedEntries = [];
+const taggedEntries = [];
+const currentDate = new Date("2025-01-15");
 
 function renderTimeline() {
     const ctx = timelineCanvas.getContext("2d");
     ctx.fillStyle = "#FFF";
     const canvasWidth = timelineCanvas.width;
     ctx.fillRect(0, 0, canvasWidth, timelineCanvas.height);
-    const startOfDay = new Date(new Date(currentDate).setHours(20, 0, 0, 0));
-    const endOfDay = new Date(new Date(currentDate).setHours(22, 59, 59, 999));
+    const startOfDay = new Date(new Date(currentDate).setHours(21, 15, 0, 0));
+    const endOfDay = new Date(new Date(currentDate).setHours(22, 10, 0, 0));
     const dayDiff = endOfDay - startOfDay;
+
+    taggedEntries.forEach((te) => {
+        ctx.fillStyle = te.color;
+
+        const startX = ((te.start - startOfDay) / dayDiff) * canvasWidth;
+        const stopX = ((te.stop - startOfDay) / dayDiff) * canvasWidth;
+        ctx.fillRect(startX, 0, stopX - startX, 50);
+    });
 
     loggedEntries.forEach((le) => {
         ctx.fillStyle = le.color;
 
         const startX = ((le.start - startOfDay) / dayDiff) * canvasWidth;
         const stopX = ((le.stop - startOfDay) / dayDiff) * canvasWidth;
-        ctx.fillRect(startX, 0, stopX - startX, 50);
+        ctx.fillRect(startX, 75, stopX - startX, 125);
     });
 }
 
@@ -70,7 +79,6 @@ async function fetchEntries() {
         }
 
         const json = await response.json();
-        console.log(json);
         json.logged_entries.forEach((le) => {
             loggedEntries.push({
                 start: new Date(le.start),
@@ -79,21 +87,35 @@ async function fetchEntries() {
                 color: randomColor()
             });
         });
+
+        json.tagged_entries.forEach((te) => {
+            taggedEntries.push({
+                start: new Date(te.start),
+                stop: new Date(te.stop),
+                category: te.category.name,
+                url: te.category.url,
+                color: randomColor()
+            })
+        });
     } catch (error) {
         console.error(error.message);
     }
 }
 
 function updateTables() {
-    const loggedEntriesTable = document.getElementById("logged-entries-table");
-    const tableBody = loggedEntriesTable.getElementsByTagName("tbody")[0];
+    const leTable = document.getElementById("logged-entries-table");
+    const leTableBody = leTable.getElementsByTagName("tbody")[0];
+
+    const teTable = document.getElementById("tagged-entries-table");
+    const teTableBody = teTable.getElementsByTagName("tbody")[0];
 
     // Remove all existing rows
-    tableBody.innerHTML = "";
+    leTableBody.innerHTML = "";
+    teTableBody.innerHTML = "";
 
     // Add the entries
     loggedEntries.forEach((le) => {
-        const row = tableBody.insertRow();
+        const row = leTableBody.insertRow();
         const startCell = row.insertCell();
         startCell.innerText = le.start.toISOString();
 
@@ -102,6 +124,22 @@ function updateTables() {
 
         const titleCell = row.insertCell();
         titleCell.innerText = le.title;
+    });
+
+    console.log(taggedEntries);
+    taggedEntries.forEach((te) => {
+        const row = teTableBody.insertRow();
+        const startCell = row.insertCell();
+        startCell.innerText = te.start.toISOString();
+
+        const stopCell = row.insertCell();
+        stopCell.innerText = te.stop.toISOString();
+
+        const titleCell = row.insertCell();
+        titleCell.innerText = te.category;
+
+        const urlCell = row.insertCell();
+        urlCell.innerText = te.url;
     });
 }
 
