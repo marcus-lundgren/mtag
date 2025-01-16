@@ -164,7 +164,11 @@ function updateTables() {
         titleCell.innerText = te.category;
 
         const urlCell = row.insertCell();
-        urlCell.innerText = te.url;
+        if (te.url !== undefined) {
+            urlCell.innerHTML = `<a href="${te.url}" target="_blank">${te.url}</a>`
+        } else {
+            urlCell.innerText = te.url;
+        }
     });
 }
 
