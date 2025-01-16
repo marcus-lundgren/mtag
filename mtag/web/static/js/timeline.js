@@ -151,7 +151,6 @@ function updateTables() {
         titleCell.innerText = le.title;
     });
 
-    console.log(taggedEntries);
     const taggedEntrySummaries = {};
     taggedEntries.forEach((te) => {
         let summary = taggedEntrySummaries[te.category];
