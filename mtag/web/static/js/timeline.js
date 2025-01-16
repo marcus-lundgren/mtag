@@ -152,24 +152,33 @@ function updateTables() {
     });
 
     console.log(taggedEntries);
+    const taggedEntrySummaries = {};
     taggedEntries.forEach((te) => {
+        let summary = taggedEntrySummaries[te.category];
+        if (summary === undefined) {
+            summary = { url: te.url, durationAsDate: new Date(0) };
+            taggedEntrySummaries[te.category] = summary;
+        }
+
+        const entryDuration = (te.stop - te.start) / 1000;
+        summary.durationAsDate.setSeconds(summary.durationAsDate.getSeconds() + entryDuration);
+    });
+
+    for (let [category, summary] of Object.entries(taggedEntrySummaries)) {
         const row = teTableBody.insertRow();
-        const startCell = row.insertCell();
-        startCell.innerText = te.start.toISOString();
+        const durationCell = row.insertCell();
+        durationCell.innerText = summary.durationAsDate.toISOString().split("T")[1].split(".")[0];
 
-        const stopCell = row.insertCell();
-        stopCell.innerText = te.stop.toISOString();
-
-        const titleCell = row.insertCell();
-        titleCell.innerText = te.category;
+        const categoryCell = row.insertCell();
+        categoryCell.innerText = category;
 
         const urlCell = row.insertCell();
-        if (te.url !== undefined) {
-            urlCell.innerHTML = `<a href="${te.url}" target="_blank">${te.url}</a>`
+        if (summary.url !== undefined) {
+            urlCell.innerHTML = `<a href="${summary.url}" target="_blank">${summary.url}</a>`
         } else {
-            urlCell.innerText = te.url;
+            urlCell.innerText = summary.url;
         }
-    });
+    };
 }
 
 setUpListeners();
