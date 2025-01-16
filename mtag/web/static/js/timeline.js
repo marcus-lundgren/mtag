@@ -20,29 +20,60 @@ function randomColor() {
 const loggedEntries = [];
 const taggedEntries = [];
 const currentDate = new Date("2025-01-15");
+let timelineStart = new Date(new Date(currentDate));
+let timelineStop = new Date(new Date(currentDate).setHours(23, 59, 59, 999));
+
+function handleZoom(zoomingIn) {
+    const zoomFactor = 0.03;
+    let zoomStepInSeconds = (timelineStop - timelineStart) * zoomFactor / 1000;
+
+    // Do not zoom in too far
+    if (zoomingIn && zoomStepInSeconds < 5) {
+        return;
+    }
+
+    if (!zoomingIn) {
+        zoomStepInSeconds = -zoomStepInSeconds;
+    }
+
+    timelineStart.setSeconds(timelineStart.getSeconds() + zoomStepInSeconds / 2);
+    timelineStop.setSeconds(timelineStop.getSeconds() - zoomStepInSeconds / 2);
+    renderTimeline();
+}
+
+function handleMove(movingLeft) {
+    const moveFactor = 0.05;
+    let moveStepInSeconds = (timelineStop - timelineStart) * moveFactor / 1000;
+    if (movingLeft) {
+        moveStepInSeconds = -moveStepInSeconds;
+    }
+
+    timelineStart.setSeconds(timelineStart.getSeconds() + moveStepInSeconds);
+    timelineStop.setSeconds(timelineStop.getSeconds() + moveStepInSeconds);
+    renderTimeline();
+}
 
 function renderTimeline() {
+    const canvasWidth = timelineCanvas.width;
+    const dayDiff = timelineStop - timelineStart;
+
     const ctx = timelineCanvas.getContext("2d");
     ctx.fillStyle = "#FFF";
-    const canvasWidth = timelineCanvas.width;
     ctx.fillRect(0, 0, canvasWidth, timelineCanvas.height);
-    const startOfDay = new Date(new Date(currentDate).setHours(21, 15, 0, 0));
-    const endOfDay = new Date(new Date(currentDate).setHours(22, 10, 0, 0));
-    const dayDiff = endOfDay - startOfDay;
 
     taggedEntries.forEach((te) => {
         ctx.fillStyle = te.color;
 
-        const startX = ((te.start - startOfDay) / dayDiff) * canvasWidth;
-        const stopX = ((te.stop - startOfDay) / dayDiff) * canvasWidth;
+        const startX = ((te.start - timelineStart) / dayDiff) * canvasWidth;
+        const stopX = ((te.stop - timelineStart) / dayDiff) * canvasWidth;
         ctx.fillRect(startX, 0, stopX - startX, 50);
     });
 
     loggedEntries.forEach((le) => {
         ctx.fillStyle = le.color;
 
-        const startX = ((le.start - startOfDay) / dayDiff) * canvasWidth;
-        const stopX = ((le.stop - startOfDay) / dayDiff) * canvasWidth;
+        const startX = ((le.start - timelineStart) / dayDiff) * canvasWidth;
+        const stopX = ((le.stop - timelineStart) / dayDiff) * canvasWidth;
         ctx.fillRect(startX, 75, stopX - startX, 125);
     });
 }
@@ -91,6 +122,15 @@ function setUpListeners() {
 
     overlayCanvas.addEventListener("mouseleave", (event) => {
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    });
+
+    overlayCanvas.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        if (event.deltaY !== 0) {
+            handleZoom(event.deltaY < 0);
+        } else if (event.deltaX !== 0) {
+            handleMove(event.deltaX < 0);
+        }
     });
 }
 
