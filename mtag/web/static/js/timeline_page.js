@@ -3,6 +3,7 @@ import { handleZoom, handleMove } from "./timeline.js";
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
 const timelineCanvas = document.getElementById('timeline');
+const datePicker = document.getElementById("date-picker");
 
 const colors = [
     "#123",
@@ -24,11 +25,21 @@ const taggedEntries = [];
 
 const currentTimelineDate = {};
 
-function setCurrentDate(newDateAsString) {
-    const startOfDay = new Date(newDateAsString);
+function setCurrentDate(newDate) {
+    const startOfDay = newDate;
     currentTimelineDate.start = startOfDay;
-    currentTimelineDate.date = startOfDay;
+    currentTimelineDate.date = new Date(startOfDay);
     currentTimelineDate.stop = new Date(new Date(startOfDay).setHours(23, 59, 59, 999));
+
+    datePicker.valueAsDate = startOfDay;
+    fetchEntries();
+}
+
+function addDaysToCurrentDate(daysToAdd) {
+    console.log("adding", daysToAdd);
+    const newDate = new Date(currentTimelineDate.date);
+    newDate.setDate(newDate.getDate() + daysToAdd);
+    setCurrentDate(newDate);
 }
 
 function renderTimeline() {
@@ -112,9 +123,30 @@ function setUpListeners() {
             handleMove(event.deltaX < 0, currentTimelineDate, renderTimeline);
         }
     });
+
+    datePicker.addEventListener("change", (event) => {
+        setCurrentDate(datePicker.valueAsDate);
+    });
+
+    const dateButtonsSetup = {
+        "minus-one-week-button": -7,
+        "minus-one-day-button": -1,
+        "plus-one-day-button": 1,
+        "plus-one-week-button": 7
+    };
+
+    Object.keys(dateButtonsSetup).forEach((buttonId) => {
+        const button = document.getElementById(buttonId);
+        button.addEventListener("click", (event) => {
+            addDaysToCurrentDate(dateButtonsSetup[buttonId]);
+        });
+    });
 }
 
 async function fetchEntries() {
+    loggedEntries.length = 0;
+    taggedEntries.length = 0;
+
     const dateString = currentTimelineDate.date.toISOString().split("T")[0];
     const url = "/entries/" + dateString;
     try {
@@ -142,6 +174,9 @@ async function fetchEntries() {
                 color: randomColor()
             })
         });
+
+        renderTimeline();
+        updateTables();
     } catch (error) {
         console.error(error.message);
     }
@@ -200,9 +235,6 @@ function updateTables() {
     };
 }
 
-setCurrentDate(new Date("2025-01-15"));
 setUpListeners();
-fetchEntries().then(() => {
-    renderTimeline();
-    updateTables();
-});
+setCurrentDate(new Date("2025-01-15"));
+fetchEntries();
