@@ -96,11 +96,6 @@ table tbody tr:last-of-type {
     border-bottom: 2px solid darkorange;
 }
 
-table tbody tr:hover {
-    color: yellow;
-    background-color: #AAA;
-}
-
 /* OLD */
 .parent {
     display: grid;
