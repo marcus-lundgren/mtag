@@ -28,15 +28,24 @@ export function handleMove(movingLeft, currentTimelineDate, renderTimeline) {
     renderTimeline();
 }
 
-export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries) => {
+export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries, activityEntries) => {
     const canvasWidth = timelineCanvas.width;
+    const canvasHeight = timelineCanvas.height;
     const timelineStart = currentTimelineDate.start;
     const timelineStop = currentTimelineDate.stop;
     const dayDiff = timelineStop - timelineStart;
 
     const ctx = timelineCanvas.getContext("2d");
     ctx.fillStyle = "#FFF";
-    ctx.fillRect(0, 0, canvasWidth, timelineCanvas.height);
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    activityEntries.forEach((ae) => {
+        ctx.fillStyle = ae.color;
+
+        const startX = ((ae.start - timelineStart) / dayDiff) * canvasWidth;
+        const stopX = ((ae.stop - timelineStart) / dayDiff) * canvasWidth;
+        ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
+    });
 
     taggedEntries.forEach((te) => {
         ctx.fillStyle = te.color;

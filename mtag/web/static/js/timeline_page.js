@@ -5,8 +5,12 @@ const overlayCanvas = document.getElementById('overlay');
 const timelineCanvas = document.getElementById('timeline');
 const datePicker = document.getElementById("date-picker");
 
+const loggedEntries = [];
+const taggedEntries = [];
+const activityEntries = [];
+
 function callRenderTimeline() {
-    renderTimeline(timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries);
+    renderTimeline(timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries, activityEntries);
 }
 
 const colors = [
@@ -23,9 +27,6 @@ const colors = [
 function randomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
-
-const loggedEntries = [];
-const taggedEntries = [];
 
 const currentTimelineDate = {};
 
@@ -149,6 +150,14 @@ async function fetchEntries() {
                 category: te.category.name,
                 url: te.category.url,
                 color: randomColor()
+            })
+        });
+
+        json.activity_entries.forEach((ae) => {
+            activityEntries.push({
+                start: new Date(ae.start),
+                stop: new Date(ae.stop),
+                color: ae.active ? "#8AD98A" : "#808080"
             })
         });
 

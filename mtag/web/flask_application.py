@@ -1,8 +1,8 @@
 import datetime
 from flask import Flask, render_template, request
-from ..entity import Category, LoggedEntry, ApplicationWindow, Application, TaggedEntry
+from ..entity import Category, LoggedEntry, ApplicationWindow, Application, TaggedEntry, ActivityEntry
 from ..helper import database_helper
-from ..repository import CategoryRepository, LoggedEntryRepository, TaggedEntryRepository
+from ..repository import CategoryRepository, LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
 
 app = Flask(__name__)
 
@@ -17,9 +17,11 @@ def get_logged_entries(date_string: str):
     with database_helper.create_connection() as conn:
         logged_entries = LoggedEntryRepository().get_all_by_date(conn=conn, date=date_date)
         tagged_entries = TaggedEntryRepository().get_all_by_date(conn=conn, date=date_date)
+        activity_entries = ActivityEntryRepository().get_all_by_date(conn=conn, date=date_date)
     return {
         "logged_entries": [logged_entry_to_json(le) for le in logged_entries],
-        "tagged_entries": [tagged_entry_to_json(te) for te in tagged_entries]
+        "tagged_entries": [tagged_entry_to_json(te) for te in tagged_entries],
+        "activity_entries": [activity_entry_to_json(ae) for ae in activity_entries]
     }
 
 
@@ -39,6 +41,15 @@ def settings():
 @app.route("/about")
 def about():
     return render_template("about.html")
+
+
+def activity_entry_to_json(ae: ActivityEntry):
+    return {
+        "db_id": ae.db_id,
+        "active": ae.active,
+        "start": datetime_to_json(ae.start),
+        "stop": datetime_to_json(ae.stop)
+    }
 
 
 def tagged_entry_to_json(te: TaggedEntry):
