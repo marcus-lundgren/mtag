@@ -27,3 +27,30 @@ export function handleMove(movingLeft, currentTimelineDate, renderTimeline) {
     currentTimelineDate.stop.setSeconds(currentTimelineDate.stop.getSeconds() + moveStepInSeconds);
     renderTimeline();
 }
+
+export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries) => {
+    const canvasWidth = timelineCanvas.width;
+    const timelineStart = currentTimelineDate.start;
+    const timelineStop = currentTimelineDate.stop;
+    const dayDiff = timelineStop - timelineStart;
+
+    const ctx = timelineCanvas.getContext("2d");
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(0, 0, canvasWidth, timelineCanvas.height);
+
+    taggedEntries.forEach((te) => {
+        ctx.fillStyle = te.color;
+
+        const startX = ((te.start - timelineStart) / dayDiff) * canvasWidth;
+        const stopX = ((te.stop - timelineStart) / dayDiff) * canvasWidth;
+        ctx.fillRect(startX, 0, stopX - startX, 50);
+    });
+
+    loggedEntries.forEach((le) => {
+        ctx.fillStyle = le.color;
+
+        const startX = ((le.start - timelineStart) / dayDiff) * canvasWidth;
+        const stopX = ((le.stop - timelineStart) / dayDiff) * canvasWidth;
+        ctx.fillRect(startX, 75, stopX - startX, 125);
+    });
+}

@@ -1,9 +1,13 @@
-import { handleZoom, handleMove } from "./timeline.js";
+import { handleZoom, handleMove, renderTimeline } from "./timeline.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
 const timelineCanvas = document.getElementById('timeline');
 const datePicker = document.getElementById("date-picker");
+
+function callRenderTimeline() {
+    renderTimeline(timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries);
+}
 
 const colors = [
     "#123",
@@ -42,33 +46,6 @@ function addDaysToCurrentDate(daysToAdd) {
     setCurrentDate(newDate);
 }
 
-function renderTimeline() {
-    const canvasWidth = timelineCanvas.width;
-    const timelineStart = currentTimelineDate.start;
-    const timelineStop = currentTimelineDate.stop;
-    const dayDiff = timelineStop - timelineStart;
-
-    const ctx = timelineCanvas.getContext("2d");
-    ctx.fillStyle = "#FFF";
-    ctx.fillRect(0, 0, canvasWidth, timelineCanvas.height);
-
-    taggedEntries.forEach((te) => {
-        ctx.fillStyle = te.color;
-
-        const startX = ((te.start - timelineStart) / dayDiff) * canvasWidth;
-        const stopX = ((te.stop - timelineStart) / dayDiff) * canvasWidth;
-        ctx.fillRect(startX, 0, stopX - startX, 50);
-    });
-
-    loggedEntries.forEach((le) => {
-        ctx.fillStyle = le.color;
-
-        const startX = ((le.start - timelineStart) / dayDiff) * canvasWidth;
-        const stopX = ((le.stop - timelineStart) / dayDiff) * canvasWidth;
-        ctx.fillRect(startX, 75, stopX - startX, 125);
-    });
-}
-
 let specialMark = undefined;
 
 function setUpListeners() {
@@ -79,7 +56,7 @@ function setUpListeners() {
         overlayCanvas.height = canvasContainer.clientHeight;
         timelineCanvas.width = canvasContainer.clientWidth;
         timelineCanvas.height = canvasContainer.clientHeight;
-        renderTimeline();
+        callRenderTimeline();
     }).observe(canvasContainer);
 
     overlayCanvas.addEventListener("mousedown", (event) => {
@@ -118,9 +95,9 @@ function setUpListeners() {
     overlayCanvas.addEventListener("wheel", (event) => {
         event.preventDefault();
         if (event.deltaY !== 0) {
-            handleZoom(event.deltaY < 0, currentTimelineDate, renderTimeline);
+            handleZoom(event.deltaY < 0, currentTimelineDate, callRenderTimeline);
         } else if (event.deltaX !== 0) {
-            handleMove(event.deltaX < 0, currentTimelineDate, renderTimeline);
+            handleMove(event.deltaX < 0, currentTimelineDate, callRenderTimeline);
         }
     });
 
@@ -175,7 +152,7 @@ async function fetchEntries() {
             })
         });
 
-        renderTimeline();
+        callRenderTimeline();
         updateTables();
     } catch (error) {
         console.error(error.message);
