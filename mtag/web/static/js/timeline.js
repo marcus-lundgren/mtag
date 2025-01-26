@@ -28,6 +28,11 @@ export function handleMove(movingLeft, currentTimelineDate, renderTimeline) {
     renderTimeline();
 }
 
+const TIMELINE_HEIGHT = 30;
+const TAGGED_ENTRIES_START_Y = TIMELINE_HEIGHT + 10;
+const SPACE_BETWEEN_TIMELINES = TIMELINE_HEIGHT;
+const TIMELINE_MARGIN = 10;
+
 export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries, activityEntries) => {
     const canvasWidth = timelineCanvas.width;
     const canvasHeight = timelineCanvas.height;
@@ -35,10 +40,16 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
     const timelineStop = currentTimelineDate.stop;
     const dayDiff = timelineStop - timelineStart;
 
+    const entriesHeight = (canvasHeight - TAGGED_ENTRIES_START_Y - SPACE_BETWEEN_TIMELINES - TIMELINE_MARGIN) / 2;
+    const loggedEntriesStartY = TAGGED_ENTRIES_START_Y + entriesHeight + SPACE_BETWEEN_TIMELINES;
+
     const ctx = timelineCanvas.getContext("2d");
+
+    // Clear the background
     ctx.fillStyle = "#FFF";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
+    // Activity entries
     activityEntries.forEach((ae) => {
         ctx.fillStyle = ae.color;
 
@@ -47,19 +58,21 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
         ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
     });
 
+    // Tagged entries
     taggedEntries.forEach((te) => {
         ctx.fillStyle = te.color;
 
         const startX = ((te.start - timelineStart) / dayDiff) * canvasWidth;
         const stopX = ((te.stop - timelineStart) / dayDiff) * canvasWidth;
-        ctx.fillRect(startX, 0, stopX - startX, 50);
+        ctx.fillRect(startX, TAGGED_ENTRIES_START_Y, stopX - startX, entriesHeight);
     });
 
+    // Logged entries
     loggedEntries.forEach((le) => {
         ctx.fillStyle = le.color;
 
         const startX = ((le.start - timelineStart) / dayDiff) * canvasWidth;
         const stopX = ((le.stop - timelineStart) / dayDiff) * canvasWidth;
-        ctx.fillRect(startX, 75, stopX - startX, 125);
+        ctx.fillRect(startX, loggedEntriesStartY, stopX - startX, entriesHeight);
     });
 }
