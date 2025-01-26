@@ -58,6 +58,21 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
         ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
     });
 
+    // Time row
+    ctx.fillStyle = "#595959";
+    ctx.fillRect(0, 0, canvasWidth, TIMELINE_HEIGHT);
+    ctx.strokeStyle = "#B3B3B3";
+    const startOfTimeTimeline = new Date(timelineStart);
+    startOfTimeTimeline.setSeconds(0);
+    startOfTimeTimeline.setMinutes(0);
+    for (let currentTime = startOfTimeTimeline; currentTime < timelineStop; currentTime.setSeconds(currentTime.getSeconds() + 3600)) {
+        const lineX = ((currentTime - timelineStart) / dayDiff) * canvasWidth;
+        ctx.beginPath();
+        ctx.moveTo(lineX, TIMELINE_HEIGHT - 10);
+        ctx.lineTo(lineX, TIMELINE_HEIGHT);
+        ctx.stroke();
+    }
+
     // Tagged entries
     taggedEntries.forEach((te) => {
         ctx.fillStyle = te.color;
