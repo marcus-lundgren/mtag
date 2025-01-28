@@ -59,18 +59,33 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
     });
 
     // Time row
+    // - Background
     ctx.fillStyle = "#595959";
     ctx.fillRect(0, 0, canvasWidth, TIMELINE_HEIGHT);
-    ctx.strokeStyle = "#B3B3B3";
+
+    // - Set up font related things
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const textWidth = ctx.measureText("88:88").width;
+    const minuteIncrement = calculateMinuteIncrement(textWidth, canvasWidth, dayDiff);
+
     const startOfTimeTimeline = new Date(timelineStart);
     startOfTimeTimeline.setSeconds(0);
     startOfTimeTimeline.setMinutes(0);
-    for (let currentTime = startOfTimeTimeline; currentTime < timelineStop; currentTime.setSeconds(currentTime.getSeconds() + 3600)) {
+    const TIMELINE_START = TIMELINE_HEIGHT - 10;
+    ctx.strokeStyle = "#B3B3B3";
+    for (let currentTime = startOfTimeTimeline;
+         currentTime < timelineStop;
+         currentTime.setMinutes(currentTime.getMinutes() + minuteIncrement)) {
         const lineX = ((currentTime - timelineStart) / dayDiff) * canvasWidth;
         ctx.beginPath();
-        ctx.moveTo(lineX, TIMELINE_HEIGHT - 10);
+        ctx.moveTo(lineX, TIMELINE_START);
         ctx.lineTo(lineX, TIMELINE_HEIGHT);
         ctx.stroke();
+        const timeText = getHourAndMinuteText(currentTime);
+        ctx.fillStyle = currentTime.getMinutes() === 0 ? "#E6E64C" : "#33CCFF";
+        ctx.fillText(timeText, lineX, 5);
     }
 
     // Tagged entries
@@ -90,4 +105,34 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
         const stopX = ((le.stop - timelineStart) / dayDiff) * canvasWidth;
         ctx.fillRect(startX, loggedEntriesStartY, stopX - startX, entriesHeight);
     });
+}
+
+function getHourAndMinuteText(date) {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+
+    const hoursString = hours < 10 ? "0" + hours : hours;
+    const minuteString = minutes < 10 ? "0" + minutes : minutes;
+
+    return hoursString + ":" + minuteString;
+}
+
+function calculateMinuteIncrement(textWidth, canvasWidth, dayDiff) {
+    const pixelsPerSeconds = canvasWidth / (dayDiff / 1000);
+    const textWidthWithPadding = (textWidth + 6) / pixelsPerSeconds / 60;
+    if (textWidthWithPadding > 59) {
+        return (Math.floor(textWidthWithPadding / 60) + 1) * 60;
+    } else if (textWidthWithPadding > 29) {
+        return 60;
+    } else if (textWidthWithPadding > 14) {
+        return 30;
+    } else if (textWidthWithPadding > 9) {
+        return 15;
+    } else if (textWidthWithPadding > 4) {
+        return 10;
+    } else if (textWidthWithPadding >= 1) {
+        return 5;
+    }
+
+    return 1;
 }
