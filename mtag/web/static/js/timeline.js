@@ -1,24 +1,61 @@
-export function handleZoom(zoomingIn, currentTimelineDate, renderTimeline) {
-    const zoomFactor = 0.03;
-    let zoomStepInSeconds = (currentTimelineDate.stop - currentTimelineDate.start) * zoomFactor / 1000;
+const ZOOM_FACTOR = 0.03;
+const MOVE_FACTOR = 0.05;
+const TIMELINE_SIDE_PADDING = 29;
 
-    // Do not zoom in too far
-    if (zoomingIn && zoomStepInSeconds < 5) {
-        return;
+export class TimelineHelper {
+    constructor(canvas, currentTimelineDate) {
+        this.canvas = canvas;
+        this.currentTimelineDate = currentTimelineDate;
+        this.update();
     }
 
-    if (!zoomingIn) {
-        zoomStepInSeconds = -zoomStepInSeconds;
+    update() {
+        this.canvasWidth = this.canvas.offsetWidth;
+        this.canvasWidthWithoutPadding = this.canvasWidth - (TIMELINE_SIDE_PADDING * 2);
+        this.startDate = this.currentTimelineDate.start;
+        this.stopDate = this.currentTimelineDate.stop;
+        this.boundaryDelta = this.stopDate - this.startDate;
     }
 
-    currentTimelineDate.start.setSeconds(currentTimelineDate.start.getSeconds() + zoomStepInSeconds / 2);
-    currentTimelineDate.stop.setSeconds(currentTimelineDate.stop.getSeconds() - zoomStepInSeconds / 2);
-    renderTimeline();
+    getCurrentBoundaryDeltaInTime() {
+        return this.boundaryDelta;
+    }
+
+    getTimelineStart() {
+        return this.startDate;
+    }
+
+    getTimelineStop() {
+        return this.stopDate;
+    }
+
+    zoom(zoomingIn, callRenderTimeline) {
+        let zoomStepInSeconds = this.boundaryDelta * ZOOM_FACTOR / 1000;
+
+        // Do not zoom in too far
+        if (zoomingIn && zoomStepInSeconds < 5) {
+            return;
+        }
+
+        if (!zoomingIn) {
+            zoomStepInSeconds = -zoomStepInSeconds;
+        }
+
+        this.startDate.setSeconds(this.startDate.getSeconds() + zoomStepInSeconds / 2);
+        this.stopDate.setSeconds(this.stopDate.getSeconds() - zoomStepInSeconds / 2);
+        this.update();
+        callRenderTimeline();
+    }
+
+    dateToPixel(date) {
+        const deltaFromStart = date - this.startDate;
+        const relativeDelta = deltaFromStart / this.boundaryDelta;
+        return relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING;
+    }
 }
 
 export function handleMove(movingLeft, currentTimelineDate, renderTimeline) {
-    const moveFactor = 0.05;
-    let moveStepInSeconds = (currentTimelineDate.stop - currentTimelineDate.start) * moveFactor / 1000;
+    let moveStepInSeconds = (currentTimelineDate.stop - currentTimelineDate.start) * MOVE_FACTOR / 1000;
     if (movingLeft) {
         moveStepInSeconds = -moveStepInSeconds;
     }
@@ -33,12 +70,9 @@ const TAGGED_ENTRIES_START_Y = TIMELINE_HEIGHT + 10;
 const SPACE_BETWEEN_TIMELINES = TIMELINE_HEIGHT;
 const TIMELINE_MARGIN = 10;
 
-export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries, activityEntries) => {
+export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, loggedEntries, activityEntries) => {
     const canvasWidth = timelineCanvas.width;
     const canvasHeight = timelineCanvas.height;
-    const timelineStart = currentTimelineDate.start;
-    const timelineStop = currentTimelineDate.stop;
-    const dayDiff = timelineStop - timelineStart;
 
     const entriesHeight = (canvasHeight - TAGGED_ENTRIES_START_Y - SPACE_BETWEEN_TIMELINES - TIMELINE_MARGIN) / 2;
     const loggedEntriesStartY = TAGGED_ENTRIES_START_Y + entriesHeight + SPACE_BETWEEN_TIMELINES;
@@ -53,8 +87,8 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
     activityEntries.forEach((ae) => {
         ctx.fillStyle = ae.color;
 
-        const startX = ((ae.start - timelineStart) / dayDiff) * canvasWidth;
-        const stopX = ((ae.stop - timelineStart) / dayDiff) * canvasWidth;
+        const startX = timelineHelper.dateToPixel(ae.start);
+        const stopX = timelineHelper.dateToPixel(ae.stop);
         ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
     });
 
@@ -68,19 +102,20 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     const textWidth = ctx.measureText("88:88").width;
-    const minuteIncrement = calculateMinuteIncrement(textWidth, canvasWidth, dayDiff);
+    const minuteIncrement = calculateMinuteIncrement(textWidth, canvasWidth, timelineHelper.getCurrentBoundaryDeltaInTime());
 
-    const startOfTimeTimeline = new Date(timelineStart);
+    const startOfTimeTimeline = new Date(timelineHelper.getTimelineStart());
     startOfTimeTimeline.setSeconds(0);
     startOfTimeTimeline.setMinutes(0);
-    const TIMELINE_START = TIMELINE_HEIGHT - 10;
+    const TIMELINE_START_Y = TIMELINE_HEIGHT - 10;
     ctx.strokeStyle = "#B3B3B3";
+    const timelineStop = timelineHelper.getTimelineStop();
     for (let currentTime = startOfTimeTimeline;
          currentTime < timelineStop;
          currentTime.setMinutes(currentTime.getMinutes() + minuteIncrement)) {
-        const lineX = ((currentTime - timelineStart) / dayDiff) * canvasWidth;
+        const lineX = timelineHelper.dateToPixel(currentTime);
         ctx.beginPath();
-        ctx.moveTo(lineX, TIMELINE_START);
+        ctx.moveTo(lineX, TIMELINE_START_Y);
         ctx.lineTo(lineX, TIMELINE_HEIGHT);
         ctx.stroke();
         const timeText = getHourAndMinuteText(currentTime);
@@ -92,8 +127,8 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
     taggedEntries.forEach((te) => {
         ctx.fillStyle = te.color;
 
-        const startX = ((te.start - timelineStart) / dayDiff) * canvasWidth;
-        const stopX = ((te.stop - timelineStart) / dayDiff) * canvasWidth;
+        const startX = timelineHelper.dateToPixel(te.start);
+        const stopX = timelineHelper.dateToPixel(te.stop);
         ctx.fillRect(startX, TAGGED_ENTRIES_START_Y, stopX - startX, entriesHeight);
     });
 
@@ -101,10 +136,15 @@ export const renderTimeline = (timelineCanvas, currentTimelineDate, taggedEntrie
     loggedEntries.forEach((le) => {
         ctx.fillStyle = le.color;
 
-        const startX = ((le.start - timelineStart) / dayDiff) * canvasWidth;
-        const stopX = ((le.stop - timelineStart) / dayDiff) * canvasWidth;
+        const startX = timelineHelper.dateToPixel(le.start);
+        const stopX = timelineHelper.dateToPixel(le.stop);
         ctx.fillRect(startX, loggedEntriesStartY, stopX - startX, entriesHeight);
     });
+
+    // Draw the sides
+    ctx.fillStyle = "rgba(128, 128, 128, 0.5)";
+    ctx.fillRect(0, 0, TIMELINE_SIDE_PADDING, canvasHeight);
+    ctx.fillRect(canvasWidth - TIMELINE_SIDE_PADDING, 0, TIMELINE_SIDE_PADDING, canvasHeight);
 }
 
 function getHourAndMinuteText(date) {

@@ -1,4 +1,4 @@
-import { handleZoom, handleMove, renderTimeline } from "./timeline.js";
+import { handleMove, renderTimeline, TimelineHelper } from "./timeline.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -9,8 +9,11 @@ const loggedEntries = [];
 const taggedEntries = [];
 const activityEntries = [];
 
+const currentTimelineDate = {};
+let timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
+
 function callRenderTimeline() {
-    renderTimeline(timelineCanvas, currentTimelineDate, taggedEntries, loggedEntries, activityEntries);
+    renderTimeline(timelineHelper, timelineCanvas, taggedEntries, loggedEntries, activityEntries);
 }
 
 const colors = [
@@ -28,20 +31,19 @@ function randomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-const currentTimelineDate = {};
-
 function setCurrentDate(newDate) {
     const startOfDay = newDate;
+    newDate.setHours(0);
     currentTimelineDate.start = startOfDay;
     currentTimelineDate.date = new Date(startOfDay);
     currentTimelineDate.stop = new Date(new Date(startOfDay).setHours(23, 59, 59, 999));
+    timelineHelper.update();
 
-    datePicker.valueAsDate = startOfDay;
+    datePicker.value = dateToDateString(startOfDay);
     fetchEntries();
 }
 
 function addDaysToCurrentDate(daysToAdd) {
-    console.log("adding", daysToAdd);
     const newDate = new Date(currentTimelineDate.date);
     newDate.setDate(newDate.getDate() + daysToAdd);
     setCurrentDate(newDate);
@@ -96,7 +98,7 @@ function setUpListeners() {
     overlayCanvas.addEventListener("wheel", (event) => {
         event.preventDefault();
         if (event.deltaY !== 0) {
-            handleZoom(event.deltaY < 0, currentTimelineDate, callRenderTimeline);
+            timelineHelper.zoom(event.deltaY < 0, callRenderTimeline);
         } else if (event.deltaX !== 0) {
             handleMove(event.deltaX < 0, currentTimelineDate, callRenderTimeline);
         }
@@ -125,7 +127,7 @@ async function fetchEntries() {
     loggedEntries.length = 0;
     taggedEntries.length = 0;
 
-    const dateString = currentTimelineDate.date.toISOString().split("T")[0];
+    const dateString = dateToDateString(currentTimelineDate.date);
     const url = "/entries/" + dateString;
     try {
         const response = await fetch(url);
@@ -219,6 +221,14 @@ function updateTables() {
             urlCell.innerText = summary.url;
         }
     };
+}
+
+function dateToDateString(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    return year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
 }
 
 setUpListeners();
