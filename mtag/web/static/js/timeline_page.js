@@ -1,4 +1,4 @@
-import { handleMove, renderTimeline, TimelineHelper } from "./timeline.js";
+import { renderTimeline, TimelineHelper } from "./timeline.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -100,7 +100,7 @@ function setUpListeners() {
         if (event.deltaY !== 0) {
             timelineHelper.zoom(event.deltaY < 0, callRenderTimeline);
         } else if (event.deltaX !== 0) {
-            handleMove(event.deltaX < 0, currentTimelineDate, callRenderTimeline);
+            timelineHelper.move(event.deltaX < 0, callRenderTimeline);
         }
     });
 

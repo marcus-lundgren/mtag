@@ -47,22 +47,23 @@ export class TimelineHelper {
         callRenderTimeline();
     }
 
+    move(movingLeft, renderTimeline) {
+        let moveStepInSeconds = this.boundaryDelta * MOVE_FACTOR / 1000;
+        if (movingLeft) {
+            moveStepInSeconds = -moveStepInSeconds;
+        }
+
+        this.startDate.setSeconds(this.startDate.getSeconds() + moveStepInSeconds);
+        this.stopDate.setSeconds(this.stopDate.getSeconds() + moveStepInSeconds);
+        this.update();
+        renderTimeline();
+    }
+
     dateToPixel(date) {
         const deltaFromStart = date - this.startDate;
         const relativeDelta = deltaFromStart / this.boundaryDelta;
         return relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING;
     }
-}
-
-export function handleMove(movingLeft, currentTimelineDate, renderTimeline) {
-    let moveStepInSeconds = (currentTimelineDate.stop - currentTimelineDate.start) * MOVE_FACTOR / 1000;
-    if (movingLeft) {
-        moveStepInSeconds = -moveStepInSeconds;
-    }
-
-    currentTimelineDate.start.setSeconds(currentTimelineDate.start.getSeconds() + moveStepInSeconds);
-    currentTimelineDate.stop.setSeconds(currentTimelineDate.stop.getSeconds() + moveStepInSeconds);
-    renderTimeline();
 }
 
 const TIMELINE_HEIGHT = 30;
