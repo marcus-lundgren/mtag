@@ -12,6 +12,9 @@ export class TimelineHelper {
     update() {
         this.canvasWidth = this.canvas.offsetWidth;
         this.canvasWidthWithoutPadding = this.canvasWidth - (TIMELINE_SIDE_PADDING * 2);
+        this.startOfDate = this.currentTimelineDate.date;
+        this.endOfDate = new Date(this.currentTimelineDate.date);
+        this.endOfDate.setHours(23, 59, 59, 0);
         this.startDate = this.currentTimelineDate.start;
         this.stopDate = this.currentTimelineDate.stop;
         this.boundaryDelta = this.stopDate - this.startDate;
@@ -48,13 +51,16 @@ export class TimelineHelper {
     }
 
     move(movingLeft, renderTimeline) {
-        let moveStepInSeconds = this.boundaryDelta * MOVE_FACTOR / 1000;
+        let moveStep = this.boundaryDelta * MOVE_FACTOR;
         if (movingLeft) {
-            moveStepInSeconds = -moveStepInSeconds;
+            moveStep = Math.min(this.startDate - this.currentTimelineDate.date, moveStep);
+            moveStep = -moveStep;
+        } else {
+            moveStep = Math.min(this.endOfDate - this.stopDate, moveStep);
         }
 
-        this.startDate.setSeconds(this.startDate.getSeconds() + moveStepInSeconds);
-        this.stopDate.setSeconds(this.stopDate.getSeconds() + moveStepInSeconds);
+        this.startDate.setMilliseconds(this.startDate.getMilliseconds() + moveStep);
+        this.stopDate.setMilliseconds(this.stopDate.getMilliseconds() + moveStep);
         this.update();
         renderTimeline();
     }
