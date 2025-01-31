@@ -1,6 +1,7 @@
 const ZOOM_FACTOR = 0.03;
 const MOVE_FACTOR = 0.05;
 const TIMELINE_SIDE_PADDING = 29;
+const MAX_BOUNDARY = (23 * 3600 + 59 * 60 + 59) * 1000;
 
 export class TimelineHelper {
     constructor(canvas, currentTimelineDate) {
@@ -32,20 +33,56 @@ export class TimelineHelper {
         return this.boundaryStop;
     }
 
-    zoom(zoomingIn, callRenderTimeline) {
-        let zoomStepInSeconds = this.boundaryDelta * ZOOM_FACTOR / 1000;
+    zoom(zoomingIn, mouseDate, callRenderTimeline) {
+        let zoomStepInMilliseconds = this.boundaryDelta * ZOOM_FACTOR;
+        let newBoundaryDelta = this.boundaryDelta;
+        const mouseOffset = mouseDate - this.boundaryStart;
+        const mouseRelativeOffset = mouseOffset / this.boundaryDelta;
+        const oldRelativeMousePositionInMilliseconds = mouseRelativeOffset * this.boundaryDelta;
 
-        // Do not zoom in too far
-        if (zoomingIn && zoomStepInSeconds < 5) {
-            return;
+        let newStartInMilliseconds = this.boundaryStart.getTime();
+
+        if (zoomingIn) {
+            // Do not zoom in too far
+            if (zoomStepInMilliseconds < 5000) {
+                return;
+            }
+
+            newBoundaryDelta -= zoomStepInMilliseconds;
+            const newRelativeMousePositionInMilliseconds = Math.floor(newBoundaryDelta * mouseRelativeOffset);
+            const startOffset = oldRelativeMousePositionInMilliseconds - newRelativeMousePositionInMilliseconds;
+            newStartInMilliseconds += startOffset;
+        } else {
+            // Do not zoom out in far
+            if (MAX_BOUNDARY <= this.boundaryDelta) {
+                return;
+            }
+
+            newBoundaryDelta += zoomStepInMilliseconds;
+            const startOfDateInMilliseconds = this.startOfDate.getTime();
+            if (MAX_BOUNDARY <= newBoundaryDelta) {
+                newBoundaryDelta = MAX_BOUNDARY;
+                newStartInMilliseconds = startOfDateInMilliseconds;
+            } else {
+                const newRelativeMousePositionInMilliseconds = Math.floor(newBoundaryDelta * mouseRelativeOffset);
+                const startOffset = oldRelativeMousePositionInMilliseconds - newRelativeMousePositionInMilliseconds;
+                newStartInMilliseconds += startOffset;
+
+                // Ensure that we don't get too far to the left
+                if (newStartInMilliseconds < startOfDateInMilliseconds) {
+                    newStartInMilliseconds = startOfDateInMilliseconds;
+                }
+
+                // Ensure that we don't get too far to the right
+                const endOfDateInMilliseconds = startOfDateInMilliseconds + MAX_BOUNDARY;
+                if (endOfDateInMilliseconds < newStartInMilliseconds + newBoundaryDelta) {
+                    newStartInMilliseconds = endOfDateInMilliseconds - newBoundaryDelta;
+                }
+            }
         }
 
-        if (!zoomingIn) {
-            zoomStepInSeconds = -zoomStepInSeconds;
-        }
-
-        this.boundaryStart.setSeconds(this.boundaryStart.getSeconds() + zoomStepInSeconds / 2);
-        this.boundaryStop.setSeconds(this.boundaryStop.getSeconds() - zoomStepInSeconds / 2);
+        this.boundaryStart.setTime(newStartInMilliseconds);
+        this.boundaryStop.setTime(newStartInMilliseconds + newBoundaryDelta);
         this.update();
         callRenderTimeline();
     }
@@ -69,6 +106,19 @@ export class TimelineHelper {
         const deltaFromStart = date - this.boundaryStart;
         const relativeDelta = deltaFromStart / this.boundaryDelta;
         return relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING;
+    }
+
+    pixelToDate(x) {
+        if (x - TIMELINE_SIDE_PADDING <= 0) {
+            return this.boundaryStart;
+        } else if (x >= this.canvasWidth - TIMELINE_SIDE_PADDING) {
+            return this.boundaryStop;
+        }
+
+        const xToUse = x - TIMELINE_SIDE_PADDING;
+        const relativePixelDelta = xToUse / this.canvasWidthWithoutPadding;
+        const d = new Date(this.boundaryStart.getTime() + relativePixelDelta * this.boundaryDelta);
+        return d;
     }
 }
 

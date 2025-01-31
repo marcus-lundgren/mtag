@@ -98,7 +98,8 @@ function setUpListeners() {
     overlayCanvas.addEventListener("wheel", (event) => {
         event.preventDefault();
         if (event.deltaY !== 0) {
-            timelineHelper.zoom(event.deltaY < 0, callRenderTimeline);
+            const mouseDate = timelineHelper.pixelToDate(event.offsetX);
+            timelineHelper.zoom(event.deltaY < 0, mouseDate, callRenderTimeline);
         } else if (event.deltaX !== 0) {
             timelineHelper.move(event.deltaX < 0, callRenderTimeline);
         }
