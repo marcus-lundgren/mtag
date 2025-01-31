@@ -15,21 +15,21 @@ export class TimelineHelper {
         this.startOfDate = this.currentTimelineDate.date;
         this.endOfDate = new Date(this.currentTimelineDate.date);
         this.endOfDate.setHours(23, 59, 59, 0);
-        this.startDate = this.currentTimelineDate.start;
-        this.stopDate = this.currentTimelineDate.stop;
-        this.boundaryDelta = this.stopDate - this.startDate;
+        this.boundaryStart = this.currentTimelineDate.start;
+        this.boundaryStop = this.currentTimelineDate.stop;
+        this.boundaryDelta = this.boundaryStop - this.boundaryStart;
     }
 
     getCurrentBoundaryDeltaInTime() {
         return this.boundaryDelta;
     }
 
-    getTimelineStart() {
-        return this.startDate;
+    getBoundaryStart() {
+        return this.boundaryStart;
     }
 
-    getTimelineStop() {
-        return this.stopDate;
+    getBoundaryStop() {
+        return this.boundaryStop;
     }
 
     zoom(zoomingIn, callRenderTimeline) {
@@ -44,8 +44,8 @@ export class TimelineHelper {
             zoomStepInSeconds = -zoomStepInSeconds;
         }
 
-        this.startDate.setSeconds(this.startDate.getSeconds() + zoomStepInSeconds / 2);
-        this.stopDate.setSeconds(this.stopDate.getSeconds() - zoomStepInSeconds / 2);
+        this.boundaryStart.setSeconds(this.boundaryStart.getSeconds() + zoomStepInSeconds / 2);
+        this.boundaryStop.setSeconds(this.boundaryStop.getSeconds() - zoomStepInSeconds / 2);
         this.update();
         callRenderTimeline();
     }
@@ -53,20 +53,20 @@ export class TimelineHelper {
     move(movingLeft, renderTimeline) {
         let moveStep = this.boundaryDelta * MOVE_FACTOR;
         if (movingLeft) {
-            moveStep = Math.min(this.startDate - this.currentTimelineDate.date, moveStep);
+            moveStep = Math.min(this.boundaryStart - this.currentTimelineDate.date, moveStep);
             moveStep = -moveStep;
         } else {
-            moveStep = Math.min(this.endOfDate - this.stopDate, moveStep);
+            moveStep = Math.min(this.endOfDate - this.boundaryStop, moveStep);
         }
 
-        this.startDate.setMilliseconds(this.startDate.getMilliseconds() + moveStep);
-        this.stopDate.setMilliseconds(this.stopDate.getMilliseconds() + moveStep);
+        this.boundaryStart.setMilliseconds(this.boundaryStart.getMilliseconds() + moveStep);
+        this.boundaryStop.setMilliseconds(this.boundaryStop.getMilliseconds() + moveStep);
         this.update();
         renderTimeline();
     }
 
     dateToPixel(date) {
-        const deltaFromStart = date - this.startDate;
+        const deltaFromStart = date - this.boundaryStart;
         const relativeDelta = deltaFromStart / this.boundaryDelta;
         return relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING;
     }
@@ -111,12 +111,12 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     const textWidth = ctx.measureText("88:88").width;
     const minuteIncrement = calculateMinuteIncrement(textWidth, canvasWidth, timelineHelper.getCurrentBoundaryDeltaInTime());
 
-    const startOfTimeTimeline = new Date(timelineHelper.getTimelineStart());
+    const startOfTimeTimeline = new Date(timelineHelper.getBoundaryStart());
     startOfTimeTimeline.setSeconds(0);
     startOfTimeTimeline.setMinutes(0);
     const TIMELINE_START_Y = TIMELINE_HEIGHT - 10;
     ctx.strokeStyle = "#B3B3B3";
-    const timelineStop = timelineHelper.getTimelineStop();
+    const timelineStop = timelineHelper.getBoundaryStop();
     for (let currentTime = startOfTimeTimeline;
          currentTime < timelineStop;
          currentTime.setMinutes(currentTime.getMinutes() + minuteIncrement)) {
