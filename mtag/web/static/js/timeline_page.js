@@ -59,6 +59,7 @@ function setUpListeners() {
         overlayCanvas.height = canvasContainer.clientHeight;
         timelineCanvas.width = canvasContainer.clientWidth;
         timelineCanvas.height = canvasContainer.clientHeight;
+        timelineHelper.update();
         callRenderTimeline();
     }).observe(canvasContainer);
 
