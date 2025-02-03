@@ -173,7 +173,8 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     startOfTimeTimeline.setMinutes(0);
     const TIMELINE_START_Y = TIMELINE_HEIGHT - 10;
     ctx.strokeStyle = "#B3B3B3";
-    const timelineStop = timelineHelper.getBoundaryStop();
+    const timelineStop = new Date(timelineHelper.getBoundaryStop());
+    timelineStop.setMinutes(timelineStop.getMinutes() + minuteIncrement);
     for (let currentTime = startOfTimeTimeline;
          currentTime < timelineStop;
          currentTime.setMinutes(currentTime.getMinutes() + minuteIncrement)) {
