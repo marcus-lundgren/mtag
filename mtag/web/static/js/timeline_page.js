@@ -49,6 +49,10 @@ function addDaysToCurrentDate(daysToAdd) {
     setCurrentDate(newDate);
 }
 
+const SpecialTypes = Object.freeze({
+    "TAGGING": 0,
+    "ZOOMING": 1
+});
 let specialMark = undefined;
 
 function setUpListeners() {
@@ -65,8 +69,9 @@ function setUpListeners() {
 
     overlayCanvas.addEventListener("mousedown", (event) => {
         specialMark = {
+            type: event.shiftKey ? SpecialTypes.ZOOMING : SpecialTypes.TAGGING,
             x: event.offsetX,
-            color: "rgba(51, 51, 51, 0.4)"
+            color: (event.shiftKey ? "rgba(51, 154, 51, 0.4)" : "rgba(51, 51, 51, 0.4)")
         };
     });
 
@@ -86,10 +91,25 @@ function setUpListeners() {
     });
 
     overlayCanvas.addEventListener("mouseup", (event) => {
-        if (specialMark !== undefined) {
-            specialMark = undefined;
+        if (specialMark === undefined) {
+            return;
+        }
+
+        switch(specialMark.type) {
+        case SpecialTypes.ZOOMING:
+            const specialDate = timelineHelper.pixelToDate(specialMark.x);
+            const mouseDate = timelineHelper.pixelToDate(event.offsetX);
+            timelineHelper.setBoundaries(
+                specialDate < mouseDate ? specialDate : mouseDate,
+                specialDate < mouseDate ? mouseDate : specialDate,
+                callRenderTimeline);
+            break;
+        case SpecialTypes.TAGGING:
+        default:
             alert("FIX ME!");
         }
+
+        specialMark = undefined;
     });
 
     overlayCanvas.addEventListener("mouseleave", (event) => {

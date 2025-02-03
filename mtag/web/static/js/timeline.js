@@ -33,6 +33,13 @@ export class TimelineHelper {
         return this.boundaryStop;
     }
 
+    setBoundaries(newStart, newStop, callRenderTimeline) {
+        this.currentTimelineDate.start.setTime(newStart.getTime());
+        this.currentTimelineDate.stop.setTime(newStop.getTime());
+        this.update();
+        callRenderTimeline();
+    }
+
     zoom(zoomingIn, mouseDate, callRenderTimeline) {
         let zoomStepInMilliseconds = this.boundaryDelta * ZOOM_FACTOR;
         let newBoundaryDelta = this.boundaryDelta;
