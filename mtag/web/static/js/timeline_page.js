@@ -153,7 +153,14 @@ function setUpListeners() {
     });
 
     datePicker.addEventListener("change", (event) => {
-        setCurrentDate(datePicker.valueAsDate);
+        let newDate = datePicker.valueAsDate;
+
+        // If NULL, then default to the current date
+        if (newDate === null) {
+            newDate = new Date();
+            newDate.setHours(0, 0, 0, 0);
+        }
+        setCurrentDate(newDate);
     });
 
     const dateButtonsSetup = {
