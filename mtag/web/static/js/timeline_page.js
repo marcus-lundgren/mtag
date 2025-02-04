@@ -173,7 +173,8 @@ async function fetchEntries() {
                 stop: new Date(te.stop),
                 category: te.category.name,
                 url: te.category.url,
-                color: randomColor()
+                color: randomColor(),
+                categoryStr: te.category_str
             })
         });
 
@@ -218,10 +219,10 @@ function updateTables() {
 
     const taggedEntrySummaries = {};
     taggedEntries.forEach((te) => {
-        let summary = taggedEntrySummaries[te.category];
+        let summary = taggedEntrySummaries[te.categoryStr];
         if (summary === undefined) {
             summary = { url: te.url, durationAsDate: new Date(0) };
-            taggedEntrySummaries[te.category] = summary;
+            taggedEntrySummaries[te.categoryStr] = summary;
         }
 
         const entryDuration = (te.stop - te.start) / 1000;

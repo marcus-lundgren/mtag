@@ -59,7 +59,7 @@ def tagged_entry_to_json(te: TaggedEntry):
         "stop": datetime_to_json(te.stop),
         # "initial_position": te.self.start,
         "category": category_to_json(te.category),
-        # "category_str": te.category_str
+        "category_str": te.category_str
     }
 
 
