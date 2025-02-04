@@ -227,7 +227,7 @@ function getHourAndMinuteText(date) {
     return `${hourString}:${minuteString}`;
 }
 
-function padLeftWithZero(n) {
+export const padLeftWithZero = (n) => {
     return n < 10 ? "0" + n : n;
 }
 

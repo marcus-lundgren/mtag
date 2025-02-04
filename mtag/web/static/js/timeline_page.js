@@ -1,4 +1,4 @@
-import { renderTimeline, TimelineHelper, getHourAndMinuteAndSecondText } from "./timeline.js";
+import { renderTimeline, TimelineHelper, getHourAndMinuteAndSecondText, padLeftWithZero } from "./timeline.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -277,7 +277,7 @@ function dateToDateString(date) {
     const month = date.getMonth() + 1;
     const day = date.getDate();
 
-    return year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
+    return year + "-" + padLeftWithZero(month) + "-" + padLeftWithZero(day);
 }
 
 setUpListeners();
