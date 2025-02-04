@@ -162,7 +162,7 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     ctx.fillRect(0, 0, canvasWidth, TIMELINE_HEIGHT);
 
     // - Set up font related things
-    ctx.font = "12px Arial";
+    ctx.font = "14px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     const textWidth = ctx.measureText("88:88").width;
