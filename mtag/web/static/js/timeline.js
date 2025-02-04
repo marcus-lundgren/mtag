@@ -212,14 +212,23 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     ctx.fillRect(canvasWidth - TIMELINE_SIDE_PADDING, 0, TIMELINE_SIDE_PADDING, canvasHeight);
 }
 
+export const getHourAndMinuteAndSecondText = (date) => {
+    const hourString = padLeftWithZero(date.getHours());
+    const minuteString = padLeftWithZero(date.getMinutes());
+    const secondString = padLeftWithZero(date.getSeconds());
+
+    return `${hourString}:${minuteString}:${secondString}`;
+}
+
 function getHourAndMinuteText(date) {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
+    const hourString = padLeftWithZero(date.getHours());
+    const minuteString = padLeftWithZero(date.getMinutes());
 
-    const hoursString = hours < 10 ? "0" + hours : hours;
-    const minuteString = minutes < 10 ? "0" + minutes : minutes;
+    return `${hourString}:${minuteString}`;
+}
 
-    return hoursString + ":" + minuteString;
+function padLeftWithZero(n) {
+    return n < 10 ? "0" + n : n;
 }
 
 function calculateMinuteIncrement(textWidth, canvasWidth, dayDiff) {

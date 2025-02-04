@@ -1,4 +1,4 @@
-import { renderTimeline, TimelineHelper } from "./timeline.js";
+import { renderTimeline, TimelineHelper, getHourAndMinuteAndSecondText } from "./timeline.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -77,6 +77,7 @@ function setUpListeners() {
 
     overlayCanvas.addEventListener("mousemove", (event) => {
         const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
         ctx.strokeStyle = "#444";
         ctx.beginPath();
@@ -84,6 +85,31 @@ function setUpListeners() {
         ctx.lineTo(mouseX, overlayCanvas.height);
         ctx.stroke();
 
+        // Tooltip
+        const mouseDate = timelineHelper.pixelToDate(mouseX);
+        const mouseDateString = getHourAndMinuteAndSecondText(mouseDate);
+
+        ctx.font = "14px Arial";
+        ctx.textBaseline = "top";
+        const textMeasurement = ctx.measureText(mouseDateString);
+        const textWidth = textMeasurement.width;
+        const textHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
+
+        const rectangleWidth = textWidth + 5 * 2;
+        const rectangleHeight = textHeight + 5 * 2;
+
+        const rectangleX = mouseX + 10;
+        const rectangleY = mouseY + 10;
+
+        const textX = rectangleX + 5;
+        const textY = rectangleY + 7;
+
+        ctx.fillStyle = "rgba(75, 75, 175, 0.75)";
+        ctx.fillRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
+        ctx.fillStyle = "yellow";
+        ctx.fillText(mouseDateString, textX, textY);
+
+        // Special mark handling
         if (specialMark !== undefined) {
             ctx.fillStyle = specialMark.color;
             ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, overlayCanvas.height);
