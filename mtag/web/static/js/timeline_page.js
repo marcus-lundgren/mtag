@@ -98,8 +98,8 @@ function setUpListeners() {
         const rectangleWidth = textWidth + 5 * 2;
         const rectangleHeight = textHeight + 5 * 2;
 
-        const rectangleX = mouseX + 10;
-        const rectangleY = mouseY + 10;
+        const rectangleX = Math.min(mouseX + 10, overlayCanvas.width - rectangleWidth);
+        const rectangleY = Math.min(mouseY + 10, overlayCanvas.height - rectangleHeight);
 
         const textX = rectangleX + 5;
         const textY = rectangleY + 7;
