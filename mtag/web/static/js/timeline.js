@@ -233,18 +233,18 @@ export const padLeftWithZero = (n) => {
 
 function calculateMinuteIncrement(textWidth, canvasWidth, dayDiff) {
     const pixelsPerSeconds = canvasWidth / (dayDiff / 1000);
-    const textWidthWithPadding = (textWidth + 6) / pixelsPerSeconds / 60;
-    if (textWidthWithPadding > 59) {
-        return (Math.floor(textWidthWithPadding / 60) + 1) * 60;
-    } else if (textWidthWithPadding > 29) {
+    const textWidthWithPaddingInMinutes = (textWidth + 6) / pixelsPerSeconds / 60;
+    if (textWidthWithPaddingInMinutes > 59) {
+        return (Math.floor(textWidthWithPaddingInMinutes / 60) + 1) * 60;
+    } else if (textWidthWithPaddingInMinutes > 29) {
         return 60;
-    } else if (textWidthWithPadding > 14) {
+    } else if (textWidthWithPaddingInMinutes > 14) {
         return 30;
-    } else if (textWidthWithPadding > 9) {
+    } else if (textWidthWithPaddingInMinutes > 9) {
         return 15;
-    } else if (textWidthWithPadding > 4) {
+    } else if (textWidthWithPaddingInMinutes > 4) {
         return 10;
-    } else if (textWidthWithPadding >= 1) {
+    } else if (textWidthWithPaddingInMinutes >= 1) {
         return 5;
     }
 
