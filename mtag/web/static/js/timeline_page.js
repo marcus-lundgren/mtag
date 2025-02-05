@@ -90,7 +90,27 @@ function setUpListeners() {
     });
 
     overlayCanvas.addEventListener("mousemove", (event) => {
-        renderOverlay(event.offsetX, event.offsetY, overlayCanvas, timelineHelper, specialMark);
+        const mouseX = event.offsetX;
+
+        // FIXME!
+        // Binary search to find the hovered over entry
+        let start = 0;
+        let stop = timelineLoggedEntries.length - 1;
+        let hoveredEntry = undefined;
+        while (specialMark === undefined && start <= stop) {
+            const middle = start + Math.floor((stop - start) / 2);
+            const currentEntry = timelineLoggedEntries[middle];
+            if (currentEntry.containsX(mouseX)) {
+                hoveredEntry = currentEntry;
+                break;
+            } else if (mouseX < currentEntry.getStartX()) {
+                stop = middle - 1;
+            } else {
+                start = middle + 1;
+            }
+        }
+
+        renderOverlay(mouseX, event.offsetY, overlayCanvas, timelineHelper, specialMark, hoveredEntry);
     });
 
     overlayCanvas.addEventListener("mouseup", (event) => {

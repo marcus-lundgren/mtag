@@ -155,6 +155,10 @@ export class TimelineEntry {
     getWidth() {
         return this.width;
     }
+
+    containsX(x) {
+        return this.startX <= x && x <= this.stopX;
+    }
 }
 
 const TIMELINE_HEIGHT = 30;
@@ -231,7 +235,12 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     ctx.fillRect(canvasWidth - TIMELINE_SIDE_PADDING, 0, TIMELINE_SIDE_PADDING, canvasHeight);
 }
 
-export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, specialMark) => {
+export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, specialMark, hoveredEntry) => {
+    const canvasHeight = overlayCanvas.height;
+
+    const entriesHeight = (canvasHeight - TAGGED_ENTRIES_START_Y - SPACE_BETWEEN_TIMELINES - TIMELINE_MARGIN) / 2;
+    const loggedEntriesStartY = TAGGED_ENTRIES_START_Y + entriesHeight + SPACE_BETWEEN_TIMELINES;
+
     const ctx = overlayCanvas.getContext("2d");
     ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
     ctx.strokeStyle = "#444";
@@ -239,6 +248,17 @@ export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, spe
     ctx.moveTo(mouseX, 0);
     ctx.lineTo(mouseX, overlayCanvas.height);
     ctx.stroke();
+
+    if (hoveredEntry !== undefined) {
+        // Hovered entry
+        // ctx.fillStyle = "rgba(179, 179, 179, 0.2)";
+        ctx.fillStyle = "rgba(179, 179, 179, 0.8)";
+        ctx.fillRect(hoveredEntry.getStartX(), loggedEntriesStartY, hoveredEntry.getWidth(), entriesHeight);
+    } else if (specialMark !== undefined) {
+        // Special mark handling
+        ctx.fillStyle = specialMark.color;
+        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, overlayCanvas.height);
+    }
 
     // Tooltip
     const mouseDate = timelineHelper.pixelToDate(mouseX);
@@ -265,12 +285,6 @@ export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, spe
     ctx.strokeRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
     ctx.fillStyle = "yellow";
     ctx.fillText(mouseDateString, textX, textY);
-
-    // Special mark handling
-    if (specialMark !== undefined) {
-        ctx.fillStyle = specialMark.color;
-        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, overlayCanvas.height);
-    }
 }
 
 export const getHourAndMinuteAndSecondText = (date) => {
