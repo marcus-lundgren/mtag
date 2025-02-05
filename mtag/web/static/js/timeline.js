@@ -231,6 +231,48 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     ctx.fillRect(canvasWidth - TIMELINE_SIDE_PADDING, 0, TIMELINE_SIDE_PADDING, canvasHeight);
 }
 
+export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, specialMark) => {
+    const ctx = overlayCanvas.getContext("2d");
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    ctx.strokeStyle = "#444";
+    ctx.beginPath();
+    ctx.moveTo(mouseX, 0);
+    ctx.lineTo(mouseX, overlayCanvas.height);
+    ctx.stroke();
+
+    // Tooltip
+    const mouseDate = timelineHelper.pixelToDate(mouseX);
+    const mouseDateString = getHourAndMinuteAndSecondText(mouseDate);
+
+    ctx.font = "14px Arial";
+    ctx.textBaseline = "top";
+    const textMeasurement = ctx.measureText(mouseDateString);
+    const textWidth = textMeasurement.width;
+    const textHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
+
+    const rectangleWidth = textWidth + 5 * 2;
+    const rectangleHeight = textHeight + 5 * 2;
+
+    const rectangleX = Math.min(mouseX + 10, overlayCanvas.width - rectangleWidth);
+    const rectangleY = Math.min(mouseY + 10, overlayCanvas.height - rectangleHeight);
+
+    const textX = rectangleX + 5;
+    const textY = rectangleY + 7;
+
+    ctx.fillStyle = "rgba(75, 75, 175, 0.75)";
+    ctx.fillRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
+    ctx.strokeStyle = "rgba(205, 154, 51, 0.8)"
+    ctx.strokeRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
+    ctx.fillStyle = "yellow";
+    ctx.fillText(mouseDateString, textX, textY);
+
+    // Special mark handling
+    if (specialMark !== undefined) {
+        ctx.fillStyle = specialMark.color;
+        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, overlayCanvas.height);
+    }
+}
+
 export const getHourAndMinuteAndSecondText = (date) => {
     const hourString = padLeftWithZero(date.getHours());
     const minuteString = padLeftWithZero(date.getMinutes());
