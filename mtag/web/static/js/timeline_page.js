@@ -1,4 +1,4 @@
-import { renderTimeline, TimelineHelper, getHourAndMinuteAndSecondText, padLeftWithZero } from "./timeline.js";
+import { renderTimeline, TimelineHelper, TimelineEntry, getHourAndMinuteAndSecondText, padLeftWithZero } from "./timeline.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -9,11 +9,16 @@ const loggedEntries = [];
 const taggedEntries = [];
 const activityEntries = [];
 
+const timelineLoggedEntries = [];
+const timelineTaggedEntries = [];
+const timelineActivityEntries = [];
+
 const currentTimelineDate = {};
-let timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
+const timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
 
 function callRenderTimeline() {
-    renderTimeline(timelineHelper, timelineCanvas, taggedEntries, loggedEntries, activityEntries);
+    updateTimelineEntries();
+    renderTimeline(timelineHelper, timelineCanvas, timelineTaggedEntries, timelineLoggedEntries, timelineActivityEntries);
 }
 
 const colors = [
@@ -55,6 +60,14 @@ const SpecialTypes = Object.freeze({
 });
 let specialMark = undefined;
 
+function updateTimelineEntries() {
+    [timelineLoggedEntries, timelineTaggedEntries, timelineActivityEntries].forEach((entries) => {
+        entries.forEach((entry) => {
+            entry.update(timelineHelper);
+        })
+    });
+}
+
 function setUpListeners() {
     const ctx = overlayCanvas.getContext("2d");
     new ResizeObserver(() => {
@@ -64,6 +77,7 @@ function setUpListeners() {
         timelineCanvas.width = canvasContainer.clientWidth;
         timelineCanvas.height = canvasContainer.clientHeight;
         timelineHelper.update();
+        updateTimelineEntries();
         callRenderTimeline();
     }).observe(canvasContainer);
 
@@ -181,6 +195,11 @@ function setUpListeners() {
 async function fetchEntries() {
     loggedEntries.length = 0;
     taggedEntries.length = 0;
+    activityEntries.length = 0;
+
+    timelineLoggedEntries.length = 0;
+    timelineTaggedEntries.length = 0;
+    timelineActivityEntries.length = 0;
 
     const dateString = dateToDateString(currentTimelineDate.date);
     const url = "/entries/" + dateString;
@@ -192,31 +211,37 @@ async function fetchEntries() {
 
         const json = await response.json();
         json.logged_entries.forEach((le) => {
-            loggedEntries.push({
+            const parsedLe = {
                 start: new Date(le.start),
                 stop: new Date(le.stop),
                 title: le.application_window.title,
                 color: randomColor()
-            });
+            };
+            loggedEntries.push(parsedLe);
+            timelineLoggedEntries.push(new TimelineEntry(le, parsedLe, timelineHelper));
         });
 
         json.tagged_entries.forEach((te) => {
-            taggedEntries.push({
+            const parsedTe = {
                 start: new Date(te.start),
                 stop: new Date(te.stop),
                 category: te.category.name,
                 url: te.category.url,
                 color: randomColor(),
                 categoryStr: te.category_str
-            })
+            };
+            taggedEntries.push(parsedTe);
+            timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper));
         });
 
         json.activity_entries.forEach((ae) => {
-            activityEntries.push({
+            const parsedAe = {
                 start: new Date(ae.start),
                 stop: new Date(ae.stop),
                 color: ae.active ? "#8AD98A" : "#808080"
-            })
+            };
+            activityEntries.push(parsedAe);
+            timelineActivityEntries.push(new TimelineEntry(ae, parsedAe, timelineHelper));
         });
 
         callRenderTimeline();

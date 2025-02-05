@@ -129,6 +129,34 @@ export class TimelineHelper {
     }
 }
 
+export class TimelineEntry {
+    constructor(entry, parsedEntry, timelineHelper) {
+        this.start = parsedEntry.start;
+        this.stop = parsedEntry.stop;
+        this.color = parsedEntry.color;
+        this.entry = entry;
+        this.update(timelineHelper);
+    }
+
+    update(timelineHelper) {
+        this.startX = timelineHelper.dateToPixel(this.start);
+        this.stopX = timelineHelper.dateToPixel(this.stop);
+        this.width = this.stopX - this.startX;
+    }
+
+    getColor() {
+        return this.color;
+    }
+
+    getStartX() {
+        return this.startX;
+    }
+
+    getWidth() {
+        return this.width;
+    }
+}
+
 const TIMELINE_HEIGHT = 30;
 const TAGGED_ENTRIES_START_Y = TIMELINE_HEIGHT + 10;
 const SPACE_BETWEEN_TIMELINES = TIMELINE_HEIGHT;
@@ -149,11 +177,8 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
 
     // Activity entries
     activityEntries.forEach((ae) => {
-        ctx.fillStyle = ae.color;
-
-        const startX = timelineHelper.dateToPixel(ae.start);
-        const stopX = timelineHelper.dateToPixel(ae.stop);
-        ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
+        ctx.fillStyle = ae.getColor();
+        ctx.fillRect(ae.getStartX(), 0, ae.getWidth(), canvasHeight);
     });
 
     // Time row
@@ -190,20 +215,14 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
 
     // Tagged entries
     taggedEntries.forEach((te) => {
-        ctx.fillStyle = te.color;
-
-        const startX = timelineHelper.dateToPixel(te.start);
-        const stopX = timelineHelper.dateToPixel(te.stop);
-        ctx.fillRect(startX, TAGGED_ENTRIES_START_Y, stopX - startX, entriesHeight);
+        ctx.fillStyle = te.getColor();
+        ctx.fillRect(te.getStartX(), TAGGED_ENTRIES_START_Y, te.getWidth(), entriesHeight);
     });
 
     // Logged entries
     loggedEntries.forEach((le) => {
-        ctx.fillStyle = le.color;
-
-        const startX = timelineHelper.dateToPixel(le.start);
-        const stopX = timelineHelper.dateToPixel(le.stop);
-        ctx.fillRect(startX, loggedEntriesStartY, stopX - startX, entriesHeight);
+        ctx.fillStyle = le.getColor();
+        ctx.fillRect(le.getStartX(), loggedEntriesStartY, le.getWidth(), entriesHeight);
     });
 
     // Draw the sides
