@@ -303,7 +303,7 @@ function getHourAndMinuteText(date) {
 }
 
 export const padLeftWithZero = (n) => {
-    return n < 10 ? "0" + n : n;
+    return n.toString().padStart(2, "0");
 }
 
 function calculateMinuteIncrement(textWidth, canvasWidth, dayDiff) {
