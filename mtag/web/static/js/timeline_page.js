@@ -1,24 +1,41 @@
-import { renderTimeline, renderOverlay, TimelineHelper, TimelineEntry, getHourAndMinuteAndSecondText, padLeftWithZero } from "./timeline.js";
+import { renderTimeline, renderOverlay,
+         updateTimelineProperties, updateOverlayProperties,
+         timelineProperties, overlayProperties,
+         TimelineHelper, TimelineEntry,
+         getHourAndMinuteAndSecondText, padLeftWithZero } from "./timeline.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
 const timelineCanvas = document.getElementById('timeline');
 const datePicker = document.getElementById("date-picker");
 
+timelineProperties.canvas = timelineCanvas;
+overlayProperties.canvas = overlayCanvas;
+
 const loggedEntries = [];
 const taggedEntries = [];
 const activityEntries = [];
 
-const timelineLoggedEntries = [];
-const timelineTaggedEntries = [];
-const timelineActivityEntries = [];
+const timelineLoggedEntries = timelineProperties.timelineLoggedEntries;
+const timelineTaggedEntries = timelineProperties.timelineTaggedEntries;
+const timelineActivityEntries = timelineProperties.timelineActivityEntries;
+
+const visibleLoggedEntries = timelineProperties.visibleLoggedEntries;
+const visibleTaggedEntries = timelineProperties.visibleTaggedEntries;
+const visibleActivityEntries = timelineProperties.visibleActivityEntries;
 
 const currentTimelineDate = {};
 const timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
 
+const SpecialTypes = Object.freeze({
+    "TAGGING": 0,
+    "ZOOMING": 1
+});
+
 function callRenderTimeline() {
+    updateTimelineProperties(timelineHelper);
     updateTimelineEntries();
-    renderTimeline(timelineHelper, timelineCanvas, timelineTaggedEntries, timelineLoggedEntries, timelineActivityEntries);
+    renderTimeline(timelineHelper);
 }
 
 const colors = [
@@ -54,18 +71,27 @@ function addDaysToCurrentDate(daysToAdd) {
     setCurrentDate(newDate);
 }
 
-const SpecialTypes = Object.freeze({
-    "TAGGING": 0,
-    "ZOOMING": 1
-});
-let specialMark = undefined;
-
 function updateTimelineEntries() {
-    [timelineLoggedEntries, timelineTaggedEntries, timelineActivityEntries].forEach((entries) => {
-        entries.forEach((entry) => {
-            entry.update(timelineHelper);
-        })
-    });
+    function updateEntries(timelineEntries, visibleEntries) {
+        visibleEntries.length = 0;
+        let lastStopX = undefined;
+        timelineEntries.forEach((e) => {
+            e.update(timelineHelper);
+
+            if (e.getStop() < currentTimelineDate.start || currentTimelineDate.stop < e.getStart()) {
+                return;
+            }
+
+            if (e.getStopX() !== lastStopX) {
+                lastStopX = e.getStopX();
+                visibleEntries.push(e);
+            }
+        });
+    }
+
+    updateEntries(timelineLoggedEntries, visibleLoggedEntries);
+    updateEntries(timelineTaggedEntries, visibleTaggedEntries);
+    updateEntries(timelineActivityEntries, visibleActivityEntries);
 }
 
 function setUpListeners() {
@@ -78,11 +104,12 @@ function setUpListeners() {
         timelineCanvas.height = canvasContainer.clientHeight;
         timelineHelper.update();
         updateTimelineEntries();
-        callRenderTimeline();
+        updateTimelineProperties(timelineHelper);
+        renderTimeline(timelineHelper);
     }).observe(canvasContainer);
 
     overlayCanvas.addEventListener("mousedown", (event) => {
-        specialMark = {
+        overlayProperties.specialMark = {
             type: event.shiftKey ? SpecialTypes.ZOOMING : SpecialTypes.TAGGING,
             x: event.offsetX,
             color: (event.shiftKey ? "rgba(51, 154, 51, 0.4)" : "rgba(51, 51, 51, 0.4)")
@@ -90,30 +117,12 @@ function setUpListeners() {
     });
 
     overlayCanvas.addEventListener("mousemove", (event) => {
-        const mouseX = event.offsetX;
-
-        // FIXME!
-        // Binary search to find the hovered over entry
-        let start = 0;
-        let stop = timelineLoggedEntries.length - 1;
-        let hoveredEntry = undefined;
-        while (specialMark === undefined && start <= stop) {
-            const middle = start + Math.floor((stop - start) / 2);
-            const currentEntry = timelineLoggedEntries[middle];
-            if (currentEntry.containsX(mouseX)) {
-                hoveredEntry = currentEntry;
-                break;
-            } else if (mouseX < currentEntry.getStartX()) {
-                stop = middle - 1;
-            } else {
-                start = middle + 1;
-            }
-        }
-
-        renderOverlay(mouseX, event.offsetY, overlayCanvas, timelineHelper, specialMark, hoveredEntry);
+        updateOverlayProperties(event.offsetX, event.offsetY);
+        renderOverlay(timelineHelper);
     });
 
     overlayCanvas.addEventListener("mouseup", (event) => {
+        const specialMark = overlayProperties.specialMark;
         if (specialMark === undefined) {
             return;
         }
@@ -124,15 +133,17 @@ function setUpListeners() {
             const mouseDate = timelineHelper.pixelToDate(event.offsetX);
             timelineHelper.setBoundaries(
                 specialDate < mouseDate ? specialDate : mouseDate,
-                specialDate < mouseDate ? mouseDate : specialDate,
-                callRenderTimeline);
+                specialDate < mouseDate ? mouseDate : specialDate);
+            updateTimelineEntries();
+            updateTimelineProperties(timelineHelper);
+            renderTimeline(timelineHelper);
             break;
         case SpecialTypes.TAGGING:
         default:
             alert("FIX ME!");
         }
 
-        specialMark = undefined;
+        overlayProperties.specialMark = undefined;
     });
 
     overlayCanvas.addEventListener("mouseleave", (event) => {
@@ -147,6 +158,11 @@ function setUpListeners() {
         } else if (event.deltaX !== 0) {
             timelineHelper.move(event.deltaX < 0, callRenderTimeline);
         }
+
+        updateTimelineEntries();
+        updateOverlayProperties(event.offsetX, event.offsetY);
+        renderTimeline(timelineHelper);
+        renderOverlay(timelineHelper);
     });
 
     datePicker.addEventListener("change", (event) => {
@@ -184,6 +200,10 @@ async function fetchEntries() {
     timelineTaggedEntries.length = 0;
     timelineActivityEntries.length = 0;
 
+    visibleLoggedEntries.length = 0;
+    visibleTaggedEntries.length = 0;
+    visibleActivityEntries.length = 0;
+
     const dateString = dateToDateString(currentTimelineDate.date);
     const url = "/entries/" + dateString;
     try {
@@ -197,11 +217,12 @@ async function fetchEntries() {
             const parsedLe = {
                 start: new Date(le.start),
                 stop: new Date(le.stop),
+                application: le.application_window.application.name,
                 title: le.application_window.title,
                 color: randomColor()
             };
             loggedEntries.push(parsedLe);
-            timelineLoggedEntries.push(new TimelineEntry(le, parsedLe, timelineHelper));
+            timelineLoggedEntries.push(new TimelineEntry(le, parsedLe, timelineHelper, [parsedLe.application, parsedLe.title]));
         });
 
         json.tagged_entries.forEach((te) => {
@@ -214,7 +235,7 @@ async function fetchEntries() {
                 categoryStr: te.category_str
             };
             taggedEntries.push(parsedTe);
-            timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper));
+            timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper, [parsedTe.categoryStr]));
         });
 
         json.activity_entries.forEach((ae) => {
@@ -224,7 +245,7 @@ async function fetchEntries() {
                 color: ae.active ? "#8AD98A" : "#808080"
             };
             activityEntries.push(parsedAe);
-            timelineActivityEntries.push(new TimelineEntry(ae, parsedAe, timelineHelper));
+            timelineActivityEntries.push(new TimelineEntry(ae, parsedAe, timelineHelper, [(ae.active ? "## Active ##" : "## Inactive ##")]));
         });
 
         callRenderTimeline();
@@ -253,6 +274,9 @@ function updateTables() {
 
         const stopCell = row.insertCell();
         stopCell.innerText = le.stop.toISOString();
+
+        const applicationCell = row.insertCell();
+        applicationCell.innerText = le.application;
 
         const titleCell = row.insertCell();
         titleCell.innerText = le.title;

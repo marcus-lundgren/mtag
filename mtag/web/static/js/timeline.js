@@ -3,6 +3,42 @@ const MOVE_FACTOR = 0.05;
 const TIMELINE_SIDE_PADDING = 29;
 const MAX_BOUNDARY = (23 * 3600 + 59 * 60 + 59) * 1000;
 
+const TIMELINE_HEIGHT = 30;
+const TAGGED_ENTRIES_START_Y = TIMELINE_HEIGHT + 10;
+const TIMELINE_MARGIN = 10;
+
+export const overlayProperties = {
+    canvas: undefined,
+    specialMark: undefined,
+    mouseX: undefined,
+    mouseY: undefined,
+    hoveredEntry: undefined
+};
+
+export const timelineProperties = {
+    canvas: undefined,
+    currentTimelineDate: undefined,
+    minuteIncrement: undefined,
+
+    // Timeline dimensions
+    entityHeight: undefined,
+    taggedEntryStartY: TAGGED_ENTRIES_START_Y,
+    loggedEntryStartY: undefined,
+    boundaryStart: undefined,
+    boundaryStop: undefined,
+    boundaryDelta: undefined,
+    viewportStart: undefined,
+    viewportStop: undefined,
+
+    // Entries
+    timelineLoggedEntries: [],
+    timelineTaggedEntries: [],
+    timelineActivityEntries: [],
+    visibleLoggedEntries: [],
+    visibleTaggedEntries: [],
+    visibleActivityEntries: []
+};
+
 export class TimelineHelper {
     constructor(canvas, currentTimelineDate) {
         this.canvas = canvas;
@@ -33,11 +69,10 @@ export class TimelineHelper {
         return this.boundaryStop;
     }
 
-    setBoundaries(newStart, newStop, callRenderTimeline) {
+    setBoundaries(newStart, newStop) {
         this.currentTimelineDate.start.setTime(newStart.getTime());
         this.currentTimelineDate.stop.setTime(newStop.getTime());
         this.update();
-        callRenderTimeline();
     }
 
     zoom(zoomingIn, mouseDate, callRenderTimeline) {
@@ -130,12 +165,13 @@ export class TimelineHelper {
 }
 
 export class TimelineEntry {
-    constructor(entry, parsedEntry, timelineHelper) {
+    constructor(entry, parsedEntry, timelineHelper, texts) {
         this.start = parsedEntry.start;
         this.stop = parsedEntry.stop;
         this.color = parsedEntry.color;
         this.entry = entry;
         this.update(timelineHelper);
+        this.texts = texts;
     }
 
     update(timelineHelper) {
@@ -148,12 +184,28 @@ export class TimelineEntry {
         return this.color;
     }
 
+    getStart() {
+        return this.start;
+    }
+
+    getStop() {
+        return this.stop;
+    }
+
     getStartX() {
         return this.startX;
     }
 
+    getStopX() {
+        return this.stopX;
+    }
+
     getWidth() {
         return this.width;
+    }
+
+    getTexts() {
+        return this.texts;
     }
 
     containsX(x) {
@@ -161,26 +213,37 @@ export class TimelineEntry {
     }
 }
 
-const TIMELINE_HEIGHT = 30;
-const TAGGED_ENTRIES_START_Y = TIMELINE_HEIGHT + 10;
 const SPACE_BETWEEN_TIMELINES = TIMELINE_HEIGHT;
-const TIMELINE_MARGIN = 10;
+export const updateTimelineProperties = (timelineHelper) => {
+    const canvas = timelineProperties.canvas;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    timelineProperties.entityHeight = (canvasHeight - timelineProperties.taggedEntryStartY - SPACE_BETWEEN_TIMELINES - TIMELINE_MARGIN) / 2;
+    timelineProperties.loggedEntryStartY = timelineProperties.taggedEntryStartY + timelineProperties.entityHeight + SPACE_BETWEEN_TIMELINES;
 
-export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, loggedEntries, activityEntries) => {
-    const canvasWidth = timelineCanvas.width;
-    const canvasHeight = timelineCanvas.height;
+    const ctx = canvas.getContext("2d");
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const textWidth = ctx.measureText("88:88").width;
+    timelineProperties.minuteIncrement = calculateMinuteIncrement(textWidth, canvasWidth, timelineHelper.getCurrentBoundaryDeltaInTime());
+}
 
-    const entriesHeight = (canvasHeight - TAGGED_ENTRIES_START_Y - SPACE_BETWEEN_TIMELINES - TIMELINE_MARGIN) / 2;
-    const loggedEntriesStartY = TAGGED_ENTRIES_START_Y + entriesHeight + SPACE_BETWEEN_TIMELINES;
+export const renderTimeline = (timelineHelper) => {
+    const canvas = timelineProperties.canvas;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
 
-    const ctx = timelineCanvas.getContext("2d");
+    const entriesHeight = timelineProperties.entityHeight;
+
+    const ctx = canvas.getContext("2d");
 
     // Clear the background
     ctx.fillStyle = "#FFF";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // Activity entries
-    activityEntries.forEach((ae) => {
+    timelineProperties.visibleActivityEntries.forEach((ae) => {
         ctx.fillStyle = ae.getColor();
         ctx.fillRect(ae.getStartX(), 0, ae.getWidth(), canvasHeight);
     });
@@ -191,16 +254,15 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     ctx.fillRect(0, 0, canvasWidth, TIMELINE_HEIGHT);
 
     // - Set up font related things
-    ctx.font = "14px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    const textWidth = ctx.measureText("88:88").width;
-    const minuteIncrement = calculateMinuteIncrement(textWidth, canvasWidth, timelineHelper.getCurrentBoundaryDeltaInTime());
-
+    const minuteIncrement = timelineProperties.minuteIncrement;
     const startOfTimeTimeline = new Date(timelineHelper.getBoundaryStart());
     startOfTimeTimeline.setSeconds(0);
     startOfTimeTimeline.setMinutes(0);
     const TIMELINE_START_Y = TIMELINE_HEIGHT - 10;
+
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
     ctx.strokeStyle = "#B3B3B3";
     const timelineStop = new Date(timelineHelper.getBoundaryStop());
     timelineStop.setMinutes(timelineStop.getMinutes() + minuteIncrement);
@@ -218,15 +280,15 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     }
 
     // Tagged entries
-    taggedEntries.forEach((te) => {
+    timelineProperties.visibleTaggedEntries.forEach((te) => {
         ctx.fillStyle = te.getColor();
-        ctx.fillRect(te.getStartX(), TAGGED_ENTRIES_START_Y, te.getWidth(), entriesHeight);
+        ctx.fillRect(te.getStartX(), timelineProperties.taggedEntryStartY, te.getWidth(), entriesHeight);
     });
 
     // Logged entries
-    loggedEntries.forEach((le) => {
+    timelineProperties.visibleLoggedEntries.forEach((le) => {
         ctx.fillStyle = le.getColor();
-        ctx.fillRect(le.getStartX(), loggedEntriesStartY, le.getWidth(), entriesHeight);
+        ctx.fillRect(le.getStartX(), timelineProperties.loggedEntryStartY, le.getWidth(), entriesHeight);
     });
 
     // Draw the sides
@@ -235,29 +297,64 @@ export const renderTimeline = (timelineHelper, timelineCanvas, taggedEntries, lo
     ctx.fillRect(canvasWidth - TIMELINE_SIDE_PADDING, 0, TIMELINE_SIDE_PADDING, canvasHeight);
 }
 
-export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, specialMark, hoveredEntry) => {
-    const canvasHeight = overlayCanvas.height;
+export const updateOverlayProperties = (mouseX, mouseY) => {
+    overlayProperties.mouseX = mouseX;
+    overlayProperties.mouseY = mouseY;
 
-    const entriesHeight = (canvasHeight - TAGGED_ENTRIES_START_Y - SPACE_BETWEEN_TIMELINES - TIMELINE_MARGIN) / 2;
-    const loggedEntriesStartY = TAGGED_ENTRIES_START_Y + entriesHeight + SPACE_BETWEEN_TIMELINES;
+    const entityHeight = timelineProperties.entityHeight;
+    const loggedEntryStartY = timelineProperties.loggedEntryStartY;
+    overlayProperties.hoveredEntry = undefined;
+    if (loggedEntryStartY <= mouseY
+        && mouseY <= loggedEntryStartY + entityHeight) {
+        console.log("Looking for logged entries...");
+        // Binary search to find the hovered over entry
+        const visibleLoggedEntries = timelineProperties.visibleLoggedEntries;
+        let start = 0;
+        let stop = visibleLoggedEntries.length - 1;
+        let hoveredEntry = undefined;
+        while (visibleLoggedEntries.specialMark === undefined
+               && start <= stop) {
+            const middle = start + Math.floor((stop - start) / 2);
+            const currentEntry = visibleLoggedEntries[middle];
+            if (currentEntry.containsX(mouseX)) {
+                overlayProperties.hoveredEntry = currentEntry;
+                break;
+            } else if (mouseX < currentEntry.getStartX()) {
+                stop = middle - 1;
+            } else {
+                start = middle + 1;
+            }
+        }
+    }
+}
 
-    const ctx = overlayCanvas.getContext("2d");
-    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+export const renderOverlay = (timelineHelper) => {
+    const canvas = overlayProperties.canvas;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    const mouseX = overlayProperties.mouseX;
+    const mouseY = overlayProperties.mouseY;
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     ctx.strokeStyle = "#444";
     ctx.beginPath();
     ctx.moveTo(mouseX, 0);
-    ctx.lineTo(mouseX, overlayCanvas.height);
+    ctx.lineTo(mouseX, canvasHeight);
     ctx.stroke();
 
+    const hoveredEntry = overlayProperties.hoveredEntry;
+    const specialMark = overlayProperties.specialMark;
     if (hoveredEntry !== undefined) {
         // Hovered entry
         // ctx.fillStyle = "rgba(179, 179, 179, 0.2)";
-        ctx.fillStyle = "rgba(179, 179, 179, 0.8)";
-        ctx.fillRect(hoveredEntry.getStartX(), loggedEntriesStartY, hoveredEntry.getWidth(), entriesHeight);
+        ctx.fillStyle = "rgba(179, 179, 179, 0.7)";
+        ctx.fillRect(hoveredEntry.getStartX(), timelineProperties.loggedEntryStartY, hoveredEntry.getWidth(), timelineProperties.entityHeight);
     } else if (specialMark !== undefined) {
         // Special mark handling
         ctx.fillStyle = specialMark.color;
-        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, overlayCanvas.height);
+        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, canvasHeight);
     }
 
     // Tooltip
@@ -266,15 +363,23 @@ export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, spe
 
     ctx.font = "14px Arial";
     ctx.textBaseline = "top";
-    const textMeasurement = ctx.measureText(mouseDateString);
+
+    const texts = [mouseDateString];
+    if (hoveredEntry !== undefined) {
+        texts.push(...hoveredEntry.texts);
+    }
+
+    const tooltipText = texts.join(" || ");
+
+    const textMeasurement = ctx.measureText(tooltipText);
     const textWidth = textMeasurement.width;
     const textHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
 
     const rectangleWidth = textWidth + 5 * 2;
     const rectangleHeight = textHeight + 5 * 2;
 
-    const rectangleX = Math.min(mouseX + 10, overlayCanvas.width - rectangleWidth);
-    const rectangleY = Math.min(mouseY + 10, overlayCanvas.height - rectangleHeight);
+    const rectangleX = Math.min(mouseX + 10, canvasWidth - rectangleWidth);
+    const rectangleY = Math.min(mouseY + 10, canvasHeight - rectangleHeight);
 
     const textX = rectangleX + 5;
     const textY = rectangleY + 7;
@@ -284,7 +389,7 @@ export const renderOverlay = (mouseX, mouseY, overlayCanvas, timelineHelper, spe
     ctx.strokeStyle = "rgba(205, 154, 51, 0.8)"
     ctx.strokeRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
     ctx.fillStyle = "yellow";
-    ctx.fillText(mouseDateString, textX, textY);
+    ctx.fillText(tooltipText, textX, textY);
 }
 
 export const getHourAndMinuteAndSecondText = (date) => {
