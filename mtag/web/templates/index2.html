@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MTag - Timeline</title>
+  <link rel="stylesheet" href="static/css/styles.css">
+</head>
+<body>
+  <nav>
+    <ul id="header-container">
+      <li><a href="/">Timeline</a></li>
+      <li><a href="/categories">Categories</a></li>
+      <li><a href="/settings">Settings</a></li>
+      <li><a href="/">About</a></li>
+    </ul>
+  </nav>
+  <div id="content">
+<div id="toolbar">
+  <input id="minus-one-week-button" type="button" value="<< -1 week"></input>
+  <input id="minus-one-day-button"type="button" value="< -1 day"></input>
+  <input id="date-picker" type="date"/>
+  <input id="plus-one-day-button" type="button" value="1 day >"></input>
+  <input id="plus-one-week-button" type="button" value="1 week >>"></input>
+</div>
+
+<div id="canvas-container">
+  <canvas id="timeline"></canvas>
+  <canvas id="overlay"></canvas>
+</div>
+
+<details open>
+  <summary>Tagged entries</summary>
+
+  <table id="tagged-entries-table">
+    <thead>
+      <th>Duration</th>
+      <th>Category</th>
+      <th>URL</th>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</details>
+
+<details>
+  <summary>Logged entries</summary>
+
+  <table id="logged-entries-table">
+    <thead>
+      <th>Start</th>
+      <th>Stop</th>
+      <th>Application</th>
+      <th>Title</th>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</details>
+<script type="module" src="static/js/timeline_page.js"></script>
+
+  </div>
+</body>
+</html>

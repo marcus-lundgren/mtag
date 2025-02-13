@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+from http.server import HTTPServer
+from mtag.web import RequestHandler
+
+
+if __name__ == '__main__':
+    http_server = HTTPServer(('127.0.0.1', 8000), RequestHandler)
+    try:
+        http_server.serve_forever()
+    except KeyBoardInterrupt:
+        pass
+    http_server.close()
