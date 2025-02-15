@@ -283,21 +283,23 @@ function updateTables() {
     });
 
     const taggedEntrySummaries = {};
+    let totalTaggedTimeInMilliseconds = 0;
     taggedEntries.forEach((te) => {
         let summary = taggedEntrySummaries[te.categoryStr];
         if (summary === undefined) {
-            summary = { url: te.url, durationAsDate: new Date(0) };
+            summary = { url: te.url, durationInMilliseconds: 0 };
             taggedEntrySummaries[te.categoryStr] = summary;
         }
 
-        const entryDuration = (te.stop - te.start) / 1000;
-        summary.durationAsDate.setSeconds(summary.durationAsDate.getSeconds() + entryDuration);
+        const entryDuration = te.stop - te.start;
+        totalTaggedTimeInMilliseconds += entryDuration;
+        summary.durationInMilliseconds += entryDuration;
     });
 
     for (let [category, summary] of Object.entries(taggedEntrySummaries)) {
         const row = teTableBody.insertRow();
         const durationCell = row.insertCell();
-        durationCell.innerText = summary.durationAsDate.toISOString().split("T")[1].split(".")[0];
+        durationCell.innerText = millisecondsToTimeString(summary.durationInMilliseconds);
 
         const categoryCell = row.insertCell();
         categoryCell.innerText = category;
@@ -309,6 +311,9 @@ function updateTables() {
             urlCell.innerText = summary.url;
         }
     };
+
+    const totalTaggedTimeSpan = document.getElementById("total-tagged-time");
+    totalTaggedTimeSpan.innerText = millisecondsToTimeString(totalTaggedTimeInMilliseconds);
 }
 
 function dateToDateString(date) {
@@ -317,6 +322,14 @@ function dateToDateString(date) {
     const day = date.getDate();
 
     return year + "-" + padLeftWithZero(month) + "-" + padLeftWithZero(day);
+}
+
+function millisecondsToTimeString(ms) {
+    const msInSeconds = ms / 1000;
+    const hours = Math.floor(msInSeconds / 3600);
+    const minutes = Math.floor((msInSeconds - hours * 3600) / 60);
+    const seconds = Math.floor(msInSeconds % 60);
+    return padLeftWithZero(hours) + ":" + padLeftWithZero(minutes) + ":" + padLeftWithZero(seconds);
 }
 
 setUpListeners();
