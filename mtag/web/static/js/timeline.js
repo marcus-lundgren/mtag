@@ -147,7 +147,7 @@ export class TimelineHelper {
     dateToPixel(date) {
         const deltaFromStart = date - this.boundaryStart;
         const relativeDelta = deltaFromStart / this.boundaryDelta;
-        return relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING;
+        return Math.floor(relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING);
     }
 
     pixelToDate(x) {
