@@ -344,17 +344,19 @@ export const renderOverlay = (timelineHelper) => {
     ctx.lineTo(mouseX, canvasHeight);
     ctx.stroke();
 
-    const hoveredEntry = overlayProperties.hoveredEntry;
     const specialMark = overlayProperties.specialMark;
+    if (specialMark !== undefined) {
+        // Special mark handling
+        ctx.fillStyle = specialMark.color;
+        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, canvasHeight);
+    }
+
+    const hoveredEntry = overlayProperties.hoveredEntry;
     if (hoveredEntry !== undefined) {
         // Hovered entry
         // ctx.fillStyle = "rgba(179, 179, 179, 0.2)";
         ctx.fillStyle = "rgba(179, 179, 179, 0.7)";
         ctx.fillRect(hoveredEntry.getStartX(), timelineProperties.loggedEntryStartY, hoveredEntry.getWidth(), timelineProperties.entityHeight);
-    } else if (specialMark !== undefined) {
-        // Special mark handling
-        ctx.fillStyle = specialMark.color;
-        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, canvasHeight);
     }
 
     // Tooltip
