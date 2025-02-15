@@ -13,13 +13,14 @@ date_validator = re.compile(r"\d\d\d\d-\d\d-\d\d")
 file_paths = {
     "/": "templates/index2.html",
     "/index.html": "templates/index2.html",
+    "/categories.html": "templates/categories.html",
+    "/settings.html": "templates/settings.html",
+    "/about.html": "templates/about.html",
     "/static/js/timeline.js": "static/js/timeline.js",
     "/static/js/timeline_page.js": "static/js/timeline_page.js",
     "/static/css/styles.css": "static/css/styles.css",
 }
 
-def html_page_loader(file_path: str) -> str:
-    pass
 
 class RequestHandler(BaseHTTPRequestHandler):
     def _set_json_response(self, obj) -> None:
@@ -43,15 +44,18 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Static files
         if self.path in file_paths:
-            print("############", Path(__file__).parent, file_paths[self.path])
-            p: str = os.path.join(Path(__file__).parent, *file_paths[self.path].split("/"))
-            content_type: str = "text/html"
-            if p.endswith(".js"):
+            dir(self)
+            p: str = self._get_local_file_path(file_paths[self.path])
+            file_contents = self._get_file_contents(p)
+
+            if p.endswith(".html"):
+                content_type: str = "text/html"
+                file_contents = self._html_page_loader(file_contents)
+            elif p.endswith(".js"):
                 content_type = "text/javascript"
             elif p.endswith(".css"):
                 content_type = "text/css"
-            with open(p, "r") as f:
-                self._set_string_response(f.read(), content_type)
+            self._set_string_response(file_contents, content_type)
         elif self.path.startswith("/entries/"):
             date_string = self.path[len("/entries/"):]
 
@@ -72,6 +76,20 @@ class RequestHandler(BaseHTTPRequestHandler):
             })
         else:
             self._set_not_found_response()
+
+    def _html_page_loader(self, page_contents: str) -> str:
+        html_base_path = self._get_local_file_path("/templates/base2.html")
+        html_base_contents = self._get_file_contents(html_base_path)
+        return html_base_contents.replace("<!-- CONTENT -->", page_contents)
+
+    def _get_local_file_path(self, url_path: str) -> str:
+        print("############", Path(__file__).parent, url_path)
+        return os.path.join(Path(__file__).parent, *url_path.split("/"))
+
+    def _get_file_contents(self, local_path: str) -> str:
+        with open(local_path, "r") as f:
+            return f.read()
+
 
 
 def activity_entry_to_json(ae: ActivityEntry):
