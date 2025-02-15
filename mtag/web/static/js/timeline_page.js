@@ -321,4 +321,3 @@ function dateToDateString(date) {
 
 setUpListeners();
 setCurrentDate(new Date("2025-01-15"));
-fetchEntries();
