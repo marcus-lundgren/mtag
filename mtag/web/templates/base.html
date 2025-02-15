@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MTag - {% block title %}{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <title>MTag</title>
+  <link rel="stylesheet" href="static/css/styles.css">
 </head>
 <body>
   <nav>
     <ul id="header-container">
       <li><a href="/">Timeline</a></li>
-      <li><a href="/categories">Categories</a></li>
-      <li><a href="/settings">Settings</a></li>
-      <li><a href="/">About</a></li>
+      <li><a href="/categories.html">Categories</a></li>
+      <li><a href="/settings.html">Settings</a></li>
+      <li><a href="/about.html">About</a></li>
     </ul>
   </nav>
   <div id="content">
-    {% block content %}{% endblock %}
+<!-- CONTENT -->
   </div>
 </body>
 </html>

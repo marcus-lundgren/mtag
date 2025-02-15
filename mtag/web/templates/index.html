@@ -1,13 +1,15 @@
-{% extends "base.html" %}
-{% block title %}Timeline{% endblock %}
-{% block content %}
-
-<div id="toolbar">
-  <input id="minus-one-week-button" type="button" value="<< -1 week"></input>
-  <input id="minus-one-day-button"type="button" value="< -1 day"></input>
-  <input id="date-picker" type="date"/>
-  <input id="plus-one-day-button" type="button" value="1 day >"></input>
-  <input id="plus-one-week-button" type="button" value="1 week >>"></input>
+<div style="display: flex; justify-content: space-between;">
+  <div id="toolbar">
+    <input id="minus-one-week-button" type="button" value="<< -1 week"></input>
+    <input id="minus-one-day-button"type="button" value="< -1 day"></input>
+    <input id="date-picker" type="date"/>
+    <input id="plus-one-day-button" type="button" value="1 day >"></input>
+    <input id="plus-one-week-button" type="button" value="1 week >>"></input>
+  </div>
+  <div>
+    <span>Tagged time:</span>
+    <span id="total-tagged-time">00:00:00</span>
+  </div>
 </div>
 
 <div id="canvas-container">
@@ -43,5 +45,4 @@
     </tbody>
   </table>
 </details>
-<script type="module" src="{{ url_for('static', filename='js/timeline_page.js') }}"></script>
-{% endblock %}
+<script type="module" src="static/js/timeline_page.js"></script>
