@@ -304,9 +304,7 @@ export const updateOverlayProperties = (mouseX, mouseY) => {
     const entityHeight = timelineProperties.entityHeight;
     const loggedEntryStartY = timelineProperties.loggedEntryStartY;
     overlayProperties.hoveredEntry = undefined;
-    if (loggedEntryStartY <= mouseY
-        && mouseY <= loggedEntryStartY + entityHeight) {
-        console.log("Looking for logged entries...");
+    if (loggedEntryStartY <= mouseY && mouseY <= loggedEntryStartY + entityHeight) {
         // Binary search to find the hovered over entry
         const visibleLoggedEntries = timelineProperties.visibleLoggedEntries;
         let start = 0;
