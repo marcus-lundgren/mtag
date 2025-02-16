@@ -8,7 +8,7 @@ if __name__ == '__main__':
     host = "127.0.0.1"
     port = 8000
     http_server = HTTPServer((host, port), RequestHandler)
-    print(f"Starting on web server at http://{host}:{port}")
+    print(f"Started web server at http://{host}:{port}")
     try:
         http_server.serve_forever()
     except KeyboardInterrupt:
