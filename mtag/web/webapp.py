@@ -44,7 +44,6 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Static files
         if self.path in file_paths:
-            dir(self)
             p: str = self._get_local_file_path(file_paths[self.path])
             file_contents = self._get_file_contents(p)
 
