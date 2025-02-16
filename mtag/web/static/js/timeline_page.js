@@ -27,6 +27,8 @@ const visibleActivityEntries = timelineProperties.visibleActivityEntries;
 const currentTimelineDate = {};
 const timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
 
+const newTaggedEntryDialog = document.getElementById("new-tagged-entry-modal");
+
 const SpecialTypes = Object.freeze({
     "TAGGING": 0,
     "ZOOMING": 1
@@ -139,6 +141,8 @@ function setUpListeners() {
             renderTimeline(timelineHelper);
             break;
         case SpecialTypes.TAGGING:
+            newTaggedEntryDialog.style.display = "block";
+            break;
         default:
             alert("FIX ME!");
         }
@@ -189,6 +193,17 @@ function setUpListeners() {
             addDaysToCurrentDate(dateButtonsSetup[buttonId]);
         });
     });
+
+    const modalClose = document.getElementById("modal-close");
+    modalClose.addEventListener("click", (event) => {
+        newTaggedEntryDialog.style.display = "none";
+    });
+
+    window.onclick = (event) => {
+        if (event.target === newTaggedEntryDialog) {
+            newTaggedEntryDialog.style.display = "none";
+        }
+    };
 }
 
 async function fetchEntries() {
