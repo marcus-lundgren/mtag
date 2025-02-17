@@ -85,7 +85,7 @@ table td {
 }
 
 table tbody tr {
-    border-bottom: 1px solid #dddddd;
+    border-bottom: 1px solid #DDD;
 }
 
 table tbody tr:nth-of-type(even) {

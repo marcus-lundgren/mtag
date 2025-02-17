@@ -11,14 +11,14 @@ from ..repository import CategoryRepository, LoggedEntryRepository, TaggedEntryR
 
 date_validator = re.compile(r"\d\d\d\d-\d\d-\d\d")
 file_paths = {
-    "/": "templates/index.html",
-    "/index.html": "templates/index.html",
-    "/categories.html": "templates/categories.html",
-    "/settings.html": "templates/settings.html",
-    "/about.html": "templates/about.html",
-    "/static/js/timeline.js": "static/js/timeline.js",
-    "/static/js/timeline_page.js": "static/js/timeline_page.js",
-    "/static/css/styles.css": "static/css/styles.css",
+    "/": "www/index.html",
+    "/index.html": "www/index.html",
+    "/categories.html": "www/categories.html",
+    "/settings.html": "www/settings.html",
+    "/about.html": "www/about.html",
+    "/static/js/timeline.js": "www/static/js/timeline.js",
+    "/static/js/timeline_page.js": "www/static/js/timeline_page.js",
+    "/static/css/styles.css": "www/static/css/styles.css",
 }
 
 
@@ -77,7 +77,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._set_not_found_response()
 
     def _html_page_loader(self, page_contents: str) -> str:
-        html_base_path = self._get_local_file_path("/templates/base.html")
+        html_base_path = self._get_local_file_path("/www/base.html")
         html_base_contents = self._get_file_contents(html_base_path)
         return html_base_contents.replace("<!-- CONTENT -->", page_contents)
 
