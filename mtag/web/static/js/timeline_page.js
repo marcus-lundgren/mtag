@@ -320,10 +320,11 @@ function updateTables() {
         categoryCell.innerText = category;
 
         const urlCell = row.insertCell();
-        if (summary.url !== undefined) {
-            urlCell.innerHTML = `<a href="${summary.url}" target="_blank">${summary.url}</a>`
-        } else {
-            urlCell.innerText = summary.url;
+        let url = summary.url;
+        if (url !== undefined) {
+            // TODO - Do this server side instead?
+            url = url.replace("{{date}}", dateToDateString(currentTimelineDate.date));
+            urlCell.innerHTML = `<a href="${url}" target="_blank">${url}</a>`
         }
     };
 
