@@ -315,13 +315,42 @@ export const updateOverlayProperties = (mouseX, mouseY) => {
             const middle = start + Math.floor((stop - start) / 2);
             const currentEntry = visibleLoggedEntries[middle];
             if (currentEntry.containsX(mouseX)) {
-                overlayProperties.hoveredEntry = currentEntry;
+                overlayProperties.hoveredEntry = {
+                    entry: currentEntry,
+                    startY: loggedEntryStartY
+                };
                 break;
             } else if (mouseX < currentEntry.getStartX()) {
                 stop = middle - 1;
             } else {
                 start = middle + 1;
             }
+        }
+    }
+
+    const taggedEntryStartY = timelineProperties.taggedEntryStartY;
+    if (taggedEntryStartY <= mouseY && mouseY <= taggedEntryStartY + entityHeight) {
+        const visibleTaggedEntries = timelineProperties.visibleTaggedEntries;
+
+        // We don't expect many entries. Perform a linear search.
+        for (let i = 0; i < visibleTaggedEntries.length; ++i) {
+            const currentTaggedEntry = visibleTaggedEntries[i];
+
+            // No need to iterate further if the mouse is to the left of the entry
+            if (mouseX < currentTaggedEntry.getStartX()) {
+                break;
+            }
+
+            // The mouse is to the right of the current entry. Keep iterating.
+            if (currentTaggedEntry.getStopX() < mouseX) {
+                continue;
+            }
+
+            // The current entry must contain the mouse position!
+            overlayProperties.hoveredEntry = {
+                entry: currentTaggedEntry,
+                startY: taggedEntryStartY
+            };
         }
     }
 }
@@ -354,7 +383,7 @@ export const renderOverlay = (timelineHelper) => {
         // Hovered entry
         // ctx.fillStyle = "rgba(179, 179, 179, 0.2)";
         ctx.fillStyle = "rgba(179, 179, 179, 0.7)";
-        ctx.fillRect(hoveredEntry.getStartX(), timelineProperties.loggedEntryStartY, hoveredEntry.getWidth(), timelineProperties.entityHeight);
+        ctx.fillRect(hoveredEntry.entry.getStartX(), hoveredEntry.startY, hoveredEntry.entry.getWidth(), timelineProperties.entityHeight);
     }
 
     // Tooltip
@@ -366,7 +395,7 @@ export const renderOverlay = (timelineHelper) => {
 
     const texts = [mouseDateString];
     if (hoveredEntry !== undefined) {
-        texts.push(...hoveredEntry.texts);
+        texts.push(...hoveredEntry.entry.texts);
     }
 
     const tooltipText = texts.join(" || ");
