@@ -40,21 +40,6 @@ function callRenderTimeline() {
     renderTimeline(timelineHelper);
 }
 
-const colors = [
-    "#123",
-    "#452",
-    "#ddd",
-    "#815",
-    "#518",
-    "#FAA",
-    "#817",
-    "#AFA"
-];
-
-function randomColor() {
-    return colors[Math.floor(Math.random() * colors.length)];
-}
-
 function setCurrentDate(newDate) {
     const startOfDay = newDate;
     newDate.setHours(0);
@@ -228,30 +213,30 @@ async function fetchEntries() {
         }
 
         const json = await response.json();
-        json.logged_entries.forEach((le) => {
+        for (const le of json.logged_entries) {
             const parsedLe = {
                 start: new Date(le.start),
                 stop: new Date(le.stop),
                 application: le.application_window.application.name,
                 title: le.application_window.title,
-                color: randomColor()
+                color: await stringToColor(le.application_window.application.name)
             };
             loggedEntries.push(parsedLe);
             timelineLoggedEntries.push(new TimelineEntry(le, parsedLe, timelineHelper, [parsedLe.application, parsedLe.title]));
-        });
+        };
 
-        json.tagged_entries.forEach((te) => {
+        for (const te of json.tagged_entries) {
             const parsedTe = {
                 start: new Date(te.start),
                 stop: new Date(te.stop),
                 category: te.category.name,
                 url: te.category.url,
-                color: randomColor(),
+                color: await stringToColor(te.category_str),
                 categoryStr: te.category_str
             };
             taggedEntries.push(parsedTe);
             timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper, [parsedTe.categoryStr]));
-        });
+        };
 
         json.activity_entries.forEach((ae) => {
             const parsedAe = {
@@ -346,6 +331,16 @@ function millisecondsToTimeString(ms) {
     const minutes = Math.floor((msInSeconds - hours * 3600) / 60);
     const seconds = Math.floor(msInSeconds % 60);
     return padLeftWithZero(hours) + ":" + padLeftWithZero(minutes) + ":" + padLeftWithZero(seconds);
+}
+
+async function stringToColor(str) {
+    const utf8 = new TextEncoder().encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+          .map((bytes) => bytes.toString(16).padStart(2, '0'))
+          .join('');
+    return "#" + hashHex.substring(0, 6);
 }
 
 setUpListeners();
