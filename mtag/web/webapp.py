@@ -73,6 +73,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 "tagged_entries": [tagged_entry_to_json(te) for te in tagged_entries],
                 "activity_entries": [activity_entry_to_json(ae) for ae in activity_entries]
             })
+        elif self.path.startswith("/categories"):
+            with database_helper.create_connection() as conn:
+                categories = CategoryRepository().get_all(conn=conn)
+            self._set_json_response([{"main": category_to_json(main), "children": [category_to_json(c) for c in children]} for (main, children) in categories])
         else:
             self._set_not_found_response()
 

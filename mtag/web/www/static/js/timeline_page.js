@@ -28,6 +28,7 @@ const currentTimelineDate = {};
 const timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
 
 const newTaggedEntryDialog = document.getElementById("new-tagged-entry-modal");
+const modalCategoriesList = document.getElementById("modal-categories-list");
 
 const SpecialTypes = Object.freeze({
     "TAGGING": 0,
@@ -126,6 +127,7 @@ function setUpListeners() {
             renderTimeline(timelineHelper);
             break;
         case SpecialTypes.TAGGING:
+            fetchCategories();
             newTaggedEntryDialog.style.display = "block";
             break;
         default:
@@ -179,16 +181,40 @@ function setUpListeners() {
         });
     });
 
-    const modalClose = document.getElementById("modal-close");
-    modalClose.addEventListener("click", (event) => {
+    const modalCancelButton = document.getElementById("modal-cancel");
+    modalCancelButton.addEventListener("click", (event) => {
         newTaggedEntryDialog.style.display = "none";
     });
+}
 
-    window.onclick = (event) => {
-        if (event.target === newTaggedEntryDialog) {
-            newTaggedEntryDialog.style.display = "none";
+function addOptionToCategoryList(categoryText) {
+    let option = document.createElement("option");
+    option.text = categoryText;
+    modalCategoriesList.add(option);
+}
+
+async function fetchCategories() {
+    modalCategoriesList.options.length = 0;
+
+    const url = "/categories";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status ${response.status}`);
         }
-    };
+
+        const json = await response.json();
+
+        for (const categoryTuple of json) {
+            const mainName = categoryTuple.main.name;
+            addOptionToCategoryList(mainName);
+            for (const c of categoryTuple.children) {
+                addOptionToCategoryList(mainName + " >> " + c.name);
+            }
+        }
+    } catch (error) {
+        console.error(error.message);
+    }
 }
 
 async function fetchEntries() {

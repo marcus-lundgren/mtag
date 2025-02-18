@@ -111,24 +111,10 @@ table tbody tr:last-of-type {
 
 #modal-content {
   background-color: #fefefe;
-  margin: 15% auto;
+  margin: 50px auto;
   padding: 20px;
   border: 1px solid #888;
-  width: 80%;
-}
-
-#modal-close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-#modal-close:hover,
-#modal-close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
+  width: 500px;
 }
 
 /* OLD */
