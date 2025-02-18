@@ -333,9 +333,7 @@ export const updateOverlayProperties = (mouseX, mouseY) => {
         const visibleTaggedEntries = timelineProperties.visibleTaggedEntries;
 
         // We don't expect many entries. Perform a linear search.
-        for (let i = 0; i < visibleTaggedEntries.length; ++i) {
-            const currentTaggedEntry = visibleTaggedEntries[i];
-
+        for (const currentTaggedEntry of visibleTaggedEntries) {
             // No need to iterate further if the mouse is to the left of the entry
             if (mouseX < currentTaggedEntry.getStartX()) {
                 break;
