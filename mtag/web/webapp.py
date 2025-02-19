@@ -80,6 +80,13 @@ class RequestHandler(BaseHTTPRequestHandler):
         else:
             self._set_not_found_response()
 
+    def do_POST(self):
+        print("POST called")
+        print("----", self.path)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+
     def _html_page_loader(self, page_contents: str) -> str:
         html_base_path = self._get_local_file_path("/www/base.html")
         html_base_contents = self._get_file_contents(html_base_path)

@@ -31,6 +31,7 @@ const newTaggedEntryDialog = document.getElementById("new-tagged-entry-modal");
 const modalCategoriesList = document.getElementById("modal-categories-list");
 const modalDateSpan = document.getElementById("modal-date-span");
 const modalInput = document.getElementById("modal-input");
+const modalSaveButton = document.getElementById("modal-store");
 
 const SpecialTypes = Object.freeze({
     "TAGGING": 0,
@@ -202,6 +203,21 @@ function setUpListeners() {
         for (const option of modalCategoriesList.options) {
             option.style.display = option.text.includes(modalInput.value) ? "block" : "none";
         }
+    });
+
+    modalSaveButton.addEventListener("click", (event) => {
+        fetch("/taggedentry/add", {
+            method: "POST",
+            body: JSON.stringify({
+                main: modalInput.value,
+                sub: "TODO",
+                start: "TODO",
+                stop: "TODO"
+            }),
+            header: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        }).then((response) => console.log(response));
     });
 }
 
