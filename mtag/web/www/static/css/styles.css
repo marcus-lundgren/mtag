@@ -2,7 +2,7 @@ body {
     font-family: sans-serif;
     margin: 0;
     background-color: #DDD;
-    font-size: 1.3em;
+    font-size: 1em;
 }
 
 #header-container {
@@ -55,7 +55,7 @@ details {
     margin: 10px 0;
 }
 
-details table {
+table {
     border-collapse: collapse;
     margin: 25px auto;
     font-family: sans-serif;
