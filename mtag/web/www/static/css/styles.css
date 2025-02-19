@@ -117,6 +117,10 @@ table tbody tr:last-of-type {
   width: 500px;
 }
 
+#modal-date-span {
+    text-align: center;
+}
+
 /* OLD */
 .parent {
     display: grid;

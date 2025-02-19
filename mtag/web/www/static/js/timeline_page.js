@@ -29,6 +29,7 @@ const timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
 
 const newTaggedEntryDialog = document.getElementById("new-tagged-entry-modal");
 const modalCategoriesList = document.getElementById("modal-categories-list");
+const modalDateSpan = document.getElementById("modal-date-span");
 
 const SpecialTypes = Object.freeze({
     "TAGGING": 0,
@@ -115,19 +116,28 @@ function setUpListeners() {
             return;
         }
 
+        const specialDate = timelineHelper.pixelToDate(specialMark.x);
+        const mouseDate = timelineHelper.pixelToDate(event.offsetX);
+
+        const startDate = specialDate < mouseDate ? specialDate : mouseDate;
+        const stopDate = specialDate < mouseDate ? mouseDate : specialDate;
+
         switch(specialMark.type) {
         case SpecialTypes.ZOOMING:
             const specialDate = timelineHelper.pixelToDate(specialMark.x);
             const mouseDate = timelineHelper.pixelToDate(event.offsetX);
-            timelineHelper.setBoundaries(
-                specialDate < mouseDate ? specialDate : mouseDate,
-                specialDate < mouseDate ? mouseDate : specialDate);
+            timelineHelper.setBoundaries(startDate, stopDate);
             updateTimelineEntries();
             updateTimelineProperties(timelineHelper);
             renderTimeline(timelineHelper);
             break;
         case SpecialTypes.TAGGING:
             fetchCategories();
+            modalDateSpan.innerText =
+                getHourAndMinuteAndSecondText(startDate)
+                + " - "
+                + getHourAndMinuteAndSecondText(stopDate)
+                + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
             newTaggedEntryDialog.style.display = "block";
             break;
         default:
