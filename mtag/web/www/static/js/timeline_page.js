@@ -30,6 +30,7 @@ const timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
 const newTaggedEntryDialog = document.getElementById("new-tagged-entry-modal");
 const modalCategoriesList = document.getElementById("modal-categories-list");
 const modalDateSpan = document.getElementById("modal-date-span");
+const modalInput = document.getElementById("modal-input");
 
 const SpecialTypes = Object.freeze({
     "TAGGING": 0,
@@ -132,6 +133,7 @@ function setUpListeners() {
             renderTimeline(timelineHelper);
             break;
         case SpecialTypes.TAGGING:
+            modalInput.value = "";
             fetchCategories();
             modalDateSpan.innerText =
                 getHourAndMinuteAndSecondText(startDate)
@@ -195,10 +197,24 @@ function setUpListeners() {
     modalCancelButton.addEventListener("click", (event) => {
         newTaggedEntryDialog.style.display = "none";
     });
+
+    modalInput.addEventListener("input", (event) => {
+        for (const option of modalCategoriesList.options) {
+            option.style.display = option.text.includes(modalInput.value) ? "block" : "none";
+        }
+    });
+}
+
+function optionDblClickListener(event) {
+    modalInput.value = event.target.text;
+
+    // Fire the input event so that we filter the options again
+    modalInput.dispatchEvent(new Event("input"));
 }
 
 function addOptionToCategoryList(categoryText) {
     let option = document.createElement("option");
+    option.addEventListener("dblclick", optionDblClickListener);
     option.text = categoryText;
     modalCategoriesList.add(option);
 }
