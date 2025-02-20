@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, date
 import json
 import re
 import os
@@ -63,7 +63,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self._set_bad_request_response
                 return
 
-            date_date = datetime.date.fromisoformat(date_string)
+            date_date = date.fromisoformat(date_string)
             with database_helper.create_connection() as conn:
                 logged_entries = LoggedEntryRepository().get_all_by_date(conn=conn, date=date_date)
                 tagged_entries = TaggedEntryRepository().get_all_by_date(conn=conn, date=date_date)
@@ -83,6 +83,23 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         print("POST called")
         print("----", self.path)
+
+        if self.path == "/taggedentry/add":
+            content_length = int(self.headers['Content-Length'])
+            body = self.rfile.read(content_length)
+            data = json.loads(body.decode("utf-8"))
+
+            tagged_entry = TaggedEntry(
+                start=datetime.fromisoformat(data["start"]),
+                stop=datetime.fromisoformat(data["stop"]),
+                category=None)
+            with database_helper.create_connection() as conn:
+                category_repository = CategoryRepository()
+                tagged_entry.category = category_repository.insert(
+                    conn=conn,
+                    main_name=data["main"],
+                    sub_name=data["sub"])
+                TaggedEntryRepository().insert(conn=conn, tagged_entry=tagged_entry)
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.end_headers()
@@ -155,6 +172,6 @@ def application_to_json(a: Application) -> dict:
     }
 
 
-def datetime_to_json(dt: datetime.datetime) -> str:
+def datetime_to_json(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%S")
 

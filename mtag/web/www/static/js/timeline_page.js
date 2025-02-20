@@ -33,6 +33,8 @@ const modalDateSpan = document.getElementById("modal-date-span");
 const modalInput = document.getElementById("modal-input");
 const modalSaveButton = document.getElementById("modal-store");
 
+let newTaggedEntryBoundaries = { start: undefined, stop: undefined };
+
 const SpecialTypes = Object.freeze({
     "TAGGING": 0,
     "ZOOMING": 1
@@ -141,6 +143,8 @@ function setUpListeners() {
                 + " - "
                 + getHourAndMinuteAndSecondText(stopDate)
                 + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
+            newTaggedEntryBoundaries.start = dateToISOString(startDate);
+            newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
             newTaggedEntryDialog.style.display = "block";
             break;
         default:
@@ -206,18 +210,31 @@ function setUpListeners() {
     });
 
     modalSaveButton.addEventListener("click", (event) => {
+        const splitInput = modalInput.value.split(">>").map((s) => s.trim());
+        const mainToUse = splitInput[0];
+        const subToUse = splitInput.length > 1 ? splitInput[1] : null;
+
         fetch("/taggedentry/add", {
             method: "POST",
             body: JSON.stringify({
-                main: modalInput.value,
-                sub: "TODO",
-                start: "TODO",
-                stop: "TODO"
+                main: mainToUse,
+                sub: subToUse,
+                start: newTaggedEntryBoundaries.start,
+                stop: newTaggedEntryBoundaries.stop
             }),
             header: {
                 "Content-type": "application/json; charset=UTF-8"
             }
-        }).then((response) => console.log(response));
+        }).then((response) => {
+            console.log(response)
+            if (!response.ok) {
+                alert("Unable to save!");
+            } else {
+                fetchEntries();
+            }
+
+            newTaggedEntryDialog.style.display = "none";
+        });
     });
 }
 
@@ -399,6 +416,13 @@ function millisecondsToTimeString(ms) {
     const minutes = Math.floor((msInSeconds - hours * 3600) / 60);
     const seconds = Math.floor(msInSeconds % 60);
     return padLeftWithZero(hours) + ":" + padLeftWithZero(minutes) + ":" + padLeftWithZero(seconds);
+}
+
+function dateToISOString(date) {
+    const seconds = padLeftWithZero(date.getSeconds());
+    const minutes = padLeftWithZero(date.getMinutes());
+    const hours = padLeftWithZero(date.getHours());
+    return `${dateToDateString(date)}T${getHourAndMinuteAndSecondText(date)}`;
 }
 
 async function stringToColor(str) {
