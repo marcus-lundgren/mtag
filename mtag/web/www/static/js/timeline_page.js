@@ -137,6 +137,7 @@ function setUpListeners() {
             break;
         case SpecialTypes.TAGGING:
             modalInput.value = "";
+            modalSaveButton.disabled = true;
             fetchCategories();
             modalDateSpan.innerText =
                 getHourAndMinuteAndSecondText(startDate)
@@ -204,15 +205,31 @@ function setUpListeners() {
     });
 
     modalInput.addEventListener("input", (event) => {
+        const currentInput = modalInput.value;
+        modalSaveButton.disabled = currentInput.length === 0;
         for (const option of modalCategoriesList.options) {
-            option.style.display = option.text.includes(modalInput.value) ? "block" : "none";
+            option.style.display = option.text.includes(currentInput) ? "block" : "none";
         }
     });
 
     modalSaveButton.addEventListener("click", (event) => {
         const splitInput = modalInput.value.split(">>").map((s) => s.trim());
+        if (splitInput.length > 2) {
+            alert("Too many '>>' in string");
+            return;
+        }
+
         const mainToUse = splitInput[0];
-        const subToUse = splitInput.length > 1 ? splitInput[1] : null;
+        if (mainToUse.length === 0) {
+            alert("Main category is empty");
+            return;
+        }
+
+        const subToUse = splitInput.length === 1 ? null : splitInput[1];
+        if (subToUse !== null && subToUse.length === 0) {
+            alert("Sub category is empty");
+            return;
+        }
 
         fetch("/taggedentry/add", {
             method: "POST",

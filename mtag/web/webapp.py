@@ -89,6 +89,16 @@ class RequestHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length)
             data = json.loads(body.decode("utf-8"))
 
+            main_name = data["main"].strip()
+            if len(main_name) == 0:
+                raise Exception("Main category is null or whitespace")
+
+            sub_name = data["sub"]
+            if sub_name is not None:
+                if len(sub_name.strip()) == 0:
+                    raise Exception("Sub category is empty or whitespace")
+                sub_name = sub_name.strip()
+
             tagged_entry = TaggedEntry(
                 start=datetime.fromisoformat(data["start"]),
                 stop=datetime.fromisoformat(data["stop"]),
