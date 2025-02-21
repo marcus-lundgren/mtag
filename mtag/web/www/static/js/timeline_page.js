@@ -115,7 +115,7 @@ function setUpListeners() {
             for (const taggedEntry of timelineProperties.timelineTaggedEntries) {
                 // The entry is to the right of the mouse. Use its start date
                 // as the boundary stop and stop iterating.
-                if (taggingMouseDate < taggedEntry.getStart()) {
+                if (taggingMouseDate <= taggedEntry.getStart()) {
                     boundaryStop = taggedEntry.getStart();
                     break;
                 }
