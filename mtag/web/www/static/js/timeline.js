@@ -9,10 +9,12 @@ const TIMELINE_MARGIN = 10;
 
 export const overlayProperties = {
     canvas: undefined,
-    specialMark: undefined,
     mouseX: undefined,
     mouseY: undefined,
-    hoveredEntry: undefined
+    hoveredEntry: undefined,
+    taggingMouseDate: undefined,
+    zoomState: undefined,
+    taggingState: undefined
 };
 
 export const timelineProperties = {
@@ -147,7 +149,7 @@ export class TimelineHelper {
     dateToPixel(date) {
         const deltaFromStart = date - this.boundaryStart;
         const relativeDelta = deltaFromStart / this.boundaryDelta;
-        return Math.floor(relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING);
+        return relativeDelta * this.canvasWidthWithoutPadding + TIMELINE_SIDE_PADDING;
     }
 
     pixelToDate(x) {
@@ -175,8 +177,8 @@ export class TimelineEntry {
     }
 
     update(timelineHelper) {
-        this.startX = timelineHelper.dateToPixel(this.start);
-        this.stopX = timelineHelper.dateToPixel(this.stop);
+        this.startX = Math.floor(timelineHelper.dateToPixel(this.start));
+        this.stopX = Math.ceil(timelineHelper.dateToPixel(this.stop));
         this.width = this.stopX - this.startX;
     }
 
@@ -297,7 +299,7 @@ export const renderTimeline = (timelineHelper) => {
     ctx.fillRect(canvasWidth - TIMELINE_SIDE_PADDING, 0, TIMELINE_SIDE_PADDING, canvasHeight);
 }
 
-export const updateOverlayProperties = (mouseX, mouseY) => {
+export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
     overlayProperties.mouseX = mouseX;
     overlayProperties.mouseY = mouseY;
 
@@ -310,8 +312,7 @@ export const updateOverlayProperties = (mouseX, mouseY) => {
         let start = 0;
         let stop = visibleLoggedEntries.length - 1;
         let hoveredEntry = undefined;
-        while (visibleLoggedEntries.specialMark === undefined
-               && start <= stop) {
+        while (start <= stop) {
             const middle = start + Math.floor((stop - start) / 2);
             const currentEntry = visibleLoggedEntries[middle];
             if (currentEntry.containsX(mouseX)) {
@@ -328,12 +329,10 @@ export const updateOverlayProperties = (mouseX, mouseY) => {
         }
     }
 
+    // We don't expect many entries. Perform a linear search.
     const taggedEntryStartY = timelineProperties.taggedEntryStartY;
     if (taggedEntryStartY <= mouseY && mouseY <= taggedEntryStartY + entityHeight) {
-        const visibleTaggedEntries = timelineProperties.visibleTaggedEntries;
-
-        // We don't expect many entries. Perform a linear search.
-        for (const currentTaggedEntry of visibleTaggedEntries) {
+        for (const currentTaggedEntry of timelineProperties.visibleTaggedEntries) {
             // No need to iterate further if the mouse is to the left of the entry
             if (mouseX < currentTaggedEntry.getStartX()) {
                 break;
@@ -349,8 +348,51 @@ export const updateOverlayProperties = (mouseX, mouseY) => {
                 entry: currentTaggedEntry,
                 startY: taggedEntryStartY
             };
+            break;
         }
     }
+
+    let newTaggingMouseDate = timelineHelper.pixelToDate(mouseX);
+    const taggingState = overlayProperties.taggingState;
+
+    // We have a tagging state. Use the boundaries within it to determine
+    // the new taggingMouseDate.
+    if (taggingState !== undefined) {
+        if (taggingState.boundaryStart <= newTaggingMouseDate
+            && newTaggingMouseDate <= taggingState.boundaryStop) {
+            overlayProperties.taggingMouseDate = newTaggingMouseDate;
+        } else if (newTaggingMouseDate < taggingState.boundaryStart) {
+            overlayProperties.taggingMouseDate = taggingState.boundaryStart;
+        } else {
+            overlayProperties.taggingMouseDate = taggingState.boundaryStop;
+        }
+
+        return;
+    }
+
+    // We are not in a tagging state. Iterate all of the tagged entries,
+    // since we want to get the actual start/stop date if we are within it.
+    for (const currentTaggedEntry of timelineProperties.timelineTaggedEntries) {
+        // No need to iterate further if the mouse is to the left of the entry
+        if (newTaggingMouseDate < currentTaggedEntry.getStart()) {
+            break;
+        }
+
+        // The mouse is to the right of the current entry. Keep iterating.
+        if (currentTaggedEntry.getStop() < newTaggingMouseDate) {
+            continue;
+        }
+
+        // The current entry must contain the mouse position!
+        const startDate = currentTaggedEntry.getStart();
+        const stopDate = currentTaggedEntry.getStop();
+        const startDelta = newTaggingMouseDate - startDate;
+        const stopDelta = stopDate - newTaggingMouseDate;
+        newTaggingMouseDate = startDelta < stopDelta ? startDate : stopDate;
+        break;
+    }
+
+    overlayProperties.taggingMouseDate = newTaggingMouseDate;
 }
 
 export const renderOverlay = (timelineHelper) => {
@@ -358,6 +400,7 @@ export const renderOverlay = (timelineHelper) => {
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
 
+    const taggingMouseX = timelineHelper.dateToPixel(overlayProperties.taggingMouseDate);
     const mouseX = overlayProperties.mouseX;
     const mouseY = overlayProperties.mouseY;
 
@@ -365,15 +408,23 @@ export const renderOverlay = (timelineHelper) => {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     ctx.strokeStyle = "#444";
     ctx.beginPath();
-    ctx.moveTo(mouseX, 0);
-    ctx.lineTo(mouseX, canvasHeight);
+    ctx.moveTo(taggingMouseX, 0);
+    ctx.lineTo(taggingMouseX, canvasHeight);
     ctx.stroke();
 
-    const specialMark = overlayProperties.specialMark;
-    if (specialMark !== undefined) {
-        // Special mark handling
-        ctx.fillStyle = specialMark.color;
-        ctx.fillRect(specialMark.x, 0, mouseX - specialMark.x, canvasHeight);
+    if (overlayProperties.zoomState !== undefined) {
+        const zoomState = overlayProperties.zoomState;
+        const startX = Math.min(zoomState.initialX, mouseX);
+        const stopX = Math.max(zoomState.initialX, mouseX);
+
+        ctx.fillStyle = "rgba(51, 154, 51, 0.4)";
+        ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
+    } else if (overlayProperties.taggingState !== undefined) {
+        const taggingState = overlayProperties.taggingState;
+        const initialX = timelineHelper.dateToPixel(taggingState.initialDate);
+
+        ctx.fillStyle = "rgba(51, 51, 51, 0.4)";
+        ctx.fillRect(initialX, 0, taggingMouseX - initialX, canvasHeight);
     }
 
     const hoveredEntry = overlayProperties.hoveredEntry;

@@ -102,40 +102,65 @@ function setUpListeners() {
     }).observe(canvasContainer);
 
     overlayCanvas.addEventListener("mousedown", (event) => {
-        overlayProperties.specialMark = {
-            type: event.shiftKey ? SpecialTypes.ZOOMING : SpecialTypes.TAGGING,
-            x: event.offsetX,
-            color: (event.shiftKey ? "rgba(51, 154, 51, 0.4)" : "rgba(51, 51, 51, 0.4)")
-        };
+        const isZooming = event.shiftKey;
+
+        if (isZooming) {
+            overlayProperties.zoomState = {
+                initialX: event.offsetX
+            };
+        } else {
+            const taggingMouseDate = overlayProperties.taggingMouseDate;
+            let boundaryStart = currentTimelineDate.start;
+            let boundaryStop = currentTimelineDate.stop;
+            for (const taggedEntry of timelineProperties.timelineTaggedEntries) {
+                // The entry is to the right of the mouse. Use its start date
+                // as the boundary stop and stop iterating.
+                if (taggingMouseDate < taggedEntry.getStart()) {
+                    boundaryStop = taggedEntry.getStart();
+                    break;
+                }
+
+                // The entry is to the left of the mouse. Use its stop date
+                // as the start of the boundary.
+                if (taggedEntry.getStop() <= taggingMouseDate) {
+                    boundaryStart = taggedEntry.getStop();
+                }
+            }
+
+            overlayProperties.taggingState = {
+                initialDate: taggingMouseDate,
+                boundaryStart: boundaryStart,
+                boundaryStop: boundaryStop
+            };
+        }
     });
 
     overlayCanvas.addEventListener("mousemove", (event) => {
-        updateOverlayProperties(event.offsetX, event.offsetY);
+        updateOverlayProperties(event.offsetX, event.offsetY, timelineHelper);
         renderOverlay(timelineHelper);
     });
 
     overlayCanvas.addEventListener("mouseup", (event) => {
-        const specialMark = overlayProperties.specialMark;
-        if (specialMark === undefined) {
-            return;
-        }
-
-        const specialDate = timelineHelper.pixelToDate(specialMark.x);
-        const mouseDate = timelineHelper.pixelToDate(event.offsetX);
-
-        const startDate = specialDate < mouseDate ? specialDate : mouseDate;
-        const stopDate = specialDate < mouseDate ? mouseDate : specialDate;
-
-        switch(specialMark.type) {
-        case SpecialTypes.ZOOMING:
-            const specialDate = timelineHelper.pixelToDate(specialMark.x);
+        if (overlayProperties.zoomState !== undefined) {
+            const zoomState = overlayProperties.zoomState;
             const mouseDate = timelineHelper.pixelToDate(event.offsetX);
+            const initialDate = timelineHelper.pixelToDate(zoomState.initialX);
+
+            const startDate = initialDate < mouseDate ? initialDate : mouseDate;
+            const stopDate = initialDate < mouseDate ? mouseDate : initialDate;
+
             timelineHelper.setBoundaries(startDate, stopDate);
             updateTimelineEntries();
             updateTimelineProperties(timelineHelper);
             renderTimeline(timelineHelper);
-            break;
-        case SpecialTypes.TAGGING:
+        } else if (overlayProperties.taggingState !== undefined) {
+            const taggingState = overlayProperties.taggingState;
+            const initialDate = taggingState.initialDate;
+            const mouseDate = overlayProperties.taggingMouseDate;
+
+            const startDate = initialDate < mouseDate ? initialDate : mouseDate;
+            const stopDate = initialDate < mouseDate ? mouseDate : initialDate;
+
             modalInput.value = "";
             modalSaveButton.disabled = true;
             fetchCategories();
@@ -147,12 +172,10 @@ function setUpListeners() {
             newTaggedEntryBoundaries.start = dateToISOString(startDate);
             newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
             newTaggedEntryDialog.style.display = "block";
-            break;
-        default:
-            alert("FIX ME!");
         }
 
-        overlayProperties.specialMark = undefined;
+        overlayProperties.zoomState = undefined;
+        overlayProperties.taggingState = undefined;
     });
 
     overlayCanvas.addEventListener("mouseleave", (event) => {
@@ -169,7 +192,7 @@ function setUpListeners() {
         }
 
         updateTimelineEntries();
-        updateOverlayProperties(event.offsetX, event.offsetY);
+        updateOverlayProperties(event.offsetX, event.offsetY, timelineHelper);
         renderTimeline(timelineHelper);
         renderOverlay(timelineHelper);
     });
