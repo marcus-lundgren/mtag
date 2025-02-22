@@ -1,3 +1,5 @@
+import { getHourAndMinuteText, getHourAndMinuteAndSecondText } from "./timeline_utilities.js"
+
 const ZOOM_FACTOR = 0.03;
 const MOVE_FACTOR = 0.05;
 const TIMELINE_SIDE_PADDING = 29;
@@ -478,25 +480,6 @@ export const renderOverlay = (timelineHelper) => {
     ctx.strokeRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
     ctx.fillStyle = "yellow";
     ctx.fillText(tooltipText, textX, textY);
-}
-
-export const getHourAndMinuteAndSecondText = (date) => {
-    const hourString = padLeftWithZero(date.getHours());
-    const minuteString = padLeftWithZero(date.getMinutes());
-    const secondString = padLeftWithZero(date.getSeconds());
-
-    return `${hourString}:${minuteString}:${secondString}`;
-}
-
-function getHourAndMinuteText(date) {
-    const hourString = padLeftWithZero(date.getHours());
-    const minuteString = padLeftWithZero(date.getMinutes());
-
-    return `${hourString}:${minuteString}`;
-}
-
-export const padLeftWithZero = (n) => {
-    return n.toString().padStart(2, "0");
 }
 
 function calculateMinuteIncrement(textWidth, canvasWidth, dayDiff) {

@@ -18,6 +18,7 @@ file_paths = {
     "/about.html": "www/about.html",
     "/static/js/timeline.js": "www/static/js/timeline.js",
     "/static/js/timeline_page.js": "www/static/js/timeline_page.js",
+    "/static/js/timeline_utilities.js": "www/static/js/timeline_utilities.js",
     "/static/css/styles.css": "www/static/css/styles.css",
 }
 

@@ -1,8 +1,10 @@
 import { renderTimeline, renderOverlay,
          updateTimelineProperties, updateOverlayProperties,
          timelineProperties, overlayProperties,
-         TimelineHelper, TimelineEntry,
-         getHourAndMinuteAndSecondText, padLeftWithZero } from "./timeline.js";
+         TimelineHelper, TimelineEntry } from "./timeline.js";
+import { getHourAndMinuteAndSecondText, padLeftWithZero,
+         dateToDateString, stringToColor, millisecondsToTimeString,
+         dateToISOString } from "./timeline_utilities.js"
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -483,39 +485,6 @@ function updateTables() {
 
     const totalTaggedTimeSpan = document.getElementById("total-tagged-time");
     totalTaggedTimeSpan.innerText = millisecondsToTimeString(totalTaggedTimeInMilliseconds);
-}
-
-function dateToDateString(date) {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    return year + "-" + padLeftWithZero(month) + "-" + padLeftWithZero(day);
-}
-
-function millisecondsToTimeString(ms) {
-    const msInSeconds = ms / 1000;
-    const hours = Math.floor(msInSeconds / 3600);
-    const minutes = Math.floor((msInSeconds - hours * 3600) / 60);
-    const seconds = Math.floor(msInSeconds % 60);
-    return padLeftWithZero(hours) + ":" + padLeftWithZero(minutes) + ":" + padLeftWithZero(seconds);
-}
-
-function dateToISOString(date) {
-    const seconds = padLeftWithZero(date.getSeconds());
-    const minutes = padLeftWithZero(date.getMinutes());
-    const hours = padLeftWithZero(date.getHours());
-    return `${dateToDateString(date)}T${getHourAndMinuteAndSecondText(date)}`;
-}
-
-async function stringToColor(str) {
-    const utf8 = new TextEncoder().encode(str);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-          .map((bytes) => bytes.toString(16).padStart(2, '0'))
-          .join('');
-    return "#" + hashHex.substring(0, 6);
 }
 
 setUpListeners();
