@@ -2,6 +2,12 @@ export const padLeftWithZero = (n) => {
     return n.toString().padStart(2, "0");
 }
 
+export const getIntervalString = (start, stop) => {
+    const diff = stop - start;
+    return getHourAndMinuteAndSecondText(start) + " - " + getHourAndMinuteAndSecondText(stop)
+        + " (" + millisecondsToTimeString(diff) + ")";
+}
+
 export const getHourAndMinuteAndSecondText = (date) => {
     const hourString = padLeftWithZero(date.getHours());
     const minuteString = padLeftWithZero(date.getMinutes());

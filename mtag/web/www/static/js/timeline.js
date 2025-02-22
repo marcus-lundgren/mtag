@@ -1,4 +1,4 @@
-import { getHourAndMinuteText, getHourAndMinuteAndSecondText } from "./timeline_utilities.js"
+import { getHourAndMinuteText, getHourAndMinuteAndSecondText, getIntervalString } from "./timeline_utilities.js"
 
 const ZOOM_FACTOR = 0.03;
 const MOVE_FACTOR = 0.05;
@@ -306,10 +306,13 @@ export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
     overlayProperties.mouseX = mouseX;
     overlayProperties.mouseY = mouseY;
 
+    const taggingState = overlayProperties.taggingState;
+    const taggingStateExists = taggingState !== undefined;
+
     const entityHeight = timelineProperties.entityHeight;
     const loggedEntryStartY = timelineProperties.loggedEntryStartY;
     overlayProperties.hoveredEntry = undefined;
-    if (loggedEntryStartY <= mouseY && mouseY <= loggedEntryStartY + entityHeight) {
+    if (taggingStateExists || (loggedEntryStartY <= mouseY && mouseY <= loggedEntryStartY + entityHeight)) {
         // Binary search to find the hovered over entry
         const visibleLoggedEntries = timelineProperties.visibleLoggedEntries;
         let start = 0;
@@ -334,7 +337,7 @@ export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
 
     // We don't expect many entries. Perform a linear search.
     const taggedEntryStartY = timelineProperties.taggedEntryStartY;
-    if (taggedEntryStartY <= mouseY && mouseY <= taggedEntryStartY + entityHeight) {
+    if (!taggingStateExists && taggedEntryStartY <= mouseY && mouseY <= taggedEntryStartY + entityHeight) {
         for (const currentTaggedEntry of timelineProperties.visibleTaggedEntries) {
             // No need to iterate further if the mouse is to the left of the entry
             if (mouseX < currentTaggedEntry.getStartX()) {
@@ -356,11 +359,10 @@ export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
     }
 
     let newTaggingMouseDate = timelineHelper.pixelToDate(mouseX);
-    const taggingState = overlayProperties.taggingState;
 
     // We have a tagging state. Use the boundaries within it to determine
     // the new taggingMouseDate.
-    if (taggingState !== undefined) {
+    if (taggingStateExists) {
         if (taggingState.boundaryStart <= newTaggingMouseDate
             && newTaggingMouseDate <= taggingState.boundaryStop) {
             overlayProperties.taggingMouseDate = newTaggingMouseDate;
@@ -449,37 +451,69 @@ export const renderOverlay = (timelineHelper) => {
 
     // Tooltip
     const mouseDate = timelineHelper.pixelToDate(mouseX);
-    const mouseDateString = getHourAndMinuteAndSecondText(mouseDate);
 
     ctx.font = "14px Arial";
     ctx.textBaseline = "top";
 
-    const texts = [mouseDateString];
-    if (hoveredEntry !== undefined) {
-        texts.push(...hoveredEntry.entry.texts);
+    const texts = [];
+
+    const taggingState = overlayProperties.taggingState;
+    if (taggingState === undefined) {
+        const mouseDateString = getHourAndMinuteAndSecondText(mouseDate);
+        texts.push(mouseDateString);
+
+        if (hoveredEntry !== undefined) {
+            texts.push(...hoveredEntry.entry.texts);
+        }
+    } else {
+        texts.push(getIntervalString(taggingState.start, taggingState.stop));
+
+        // Add all of the entry's text, but skipping the initial interval string
+        if (hoveredEntry !== undefined) {
+            texts.push(...hoveredEntry.entry.texts.slice(1, hoveredEntry.entry.texts.length));
+        }
     }
 
-    const tooltipText = texts.join(" || ");
+    const LINE_SPACING = 3;
+    const renderTexts = [];
+    let sumOfAllHeights = 0;
+    let maxWidth = 0;
+    for (let i = 0; i < texts.length; ++i) {
+        const color = i === 0 ? "yellow" : "white";
+        const text = texts[i];
+        const measurement = ctx.measureText(text);
+        const width = measurement.width;
+        const height = measurement.fontBoundingBoxAscent + measurement.fontBoundingBoxDescent;
 
-    const textMeasurement = ctx.measureText(tooltipText);
-    const textWidth = textMeasurement.width;
-    const textHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
+        sumOfAllHeights += height;
+        maxWidth = Math.max(width, maxWidth);
 
-    const rectangleWidth = textWidth + 5 * 2;
-    const rectangleHeight = textHeight + 5 * 2;
+        renderTexts.push({
+            text: text,
+            color: color,
+            height: height
+        });
+    }
+
+    const rectangleWidth = maxWidth + 5 * 2;
+    const rectangleHeight = sumOfAllHeights + LINE_SPACING * (renderTexts.length - 1) + 5 * 2;
 
     const rectangleX = Math.min(mouseX + 10, canvasWidth - rectangleWidth);
     const rectangleY = Math.min(mouseY + 10, canvasHeight - rectangleHeight);
-
-    const textX = rectangleX + 5;
-    const textY = rectangleY + 7;
 
     ctx.fillStyle = "rgba(75, 75, 175, 0.75)";
     ctx.fillRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
     ctx.strokeStyle = "rgba(205, 154, 51, 0.8)"
     ctx.strokeRect(rectangleX, rectangleY, rectangleWidth, rectangleHeight);
-    ctx.fillStyle = "yellow";
-    ctx.fillText(tooltipText, textX, textY);
+
+
+    const textX = rectangleX + 5;
+    let textY = rectangleY + 7;
+    for (const renderText of renderTexts) {
+        ctx.fillStyle = renderText.color;
+        ctx.fillText(renderText.text, textX, textY);
+        textY += LINE_SPACING + renderText.height;
+    }
 }
 
 function calculateMinuteIncrement(textWidth, canvasWidth, dayDiff) {

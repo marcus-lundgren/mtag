@@ -4,7 +4,7 @@ import { renderTimeline, renderOverlay,
          TimelineHelper, TimelineEntry } from "./timeline.js";
 import { getHourAndMinuteAndSecondText, padLeftWithZero,
          dateToDateString, stringToColor, millisecondsToTimeString,
-         dateToISOString } from "./timeline_utilities.js"
+         dateToISOString, getIntervalString } from "./timeline_utilities.js"
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -392,7 +392,9 @@ async function fetchEntries() {
                 color: await stringToColor(le.application_window.application.name)
             };
             loggedEntries.push(parsedLe);
-            timelineLoggedEntries.push(new TimelineEntry(le, parsedLe, timelineHelper, [parsedLe.application, parsedLe.title]));
+            timelineLoggedEntries.push(
+                new TimelineEntry(le, parsedLe, timelineHelper,
+                                  [getIntervalString(parsedLe.start, parsedLe.stop), parsedLe.application, parsedLe.title]));
         };
 
         for (const te of json.tagged_entries) {
@@ -405,7 +407,8 @@ async function fetchEntries() {
                 categoryStr: te.category_str
             };
             taggedEntries.push(parsedTe);
-            timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper, [parsedTe.categoryStr]));
+            timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper,
+                                                         [getIntervalString(parsedTe.start, parsedTe.stop), parsedTe.categoryStr]));
         };
 
         json.activity_entries.forEach((ae) => {
