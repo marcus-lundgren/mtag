@@ -103,6 +103,7 @@ function setUpListeners() {
 
     overlayCanvas.addEventListener("mousedown", (event) => {
         const isZooming = event.shiftKey;
+        overlayProperties.keptTaggingStateForDblClick = undefined;
 
         if (isZooming) {
             overlayProperties.zoomState = {
@@ -130,7 +131,9 @@ function setUpListeners() {
             overlayProperties.taggingState = {
                 initialDate: taggingMouseDate,
                 boundaryStart: boundaryStart,
-                boundaryStop: boundaryStop
+                boundaryStop: boundaryStop,
+                start: taggingMouseDate,
+                stop: taggingMouseDate
             };
         }
     });
@@ -153,33 +156,67 @@ function setUpListeners() {
             updateTimelineEntries();
             updateTimelineProperties(timelineHelper);
             renderTimeline(timelineHelper);
+            overlayProperties.zoomState = undefined;
         } else if (overlayProperties.taggingState !== undefined) {
             const taggingState = overlayProperties.taggingState;
-            const initialDate = taggingState.initialDate;
-            const mouseDate = overlayProperties.taggingMouseDate;
 
-            const startDate = initialDate < mouseDate ? initialDate : mouseDate;
-            const stopDate = initialDate < mouseDate ? mouseDate : initialDate;
+            const startDate = taggingState.start;
+            const stopDate = taggingState.stop;
 
-            modalInput.value = "";
-            modalSaveButton.disabled = true;
-            fetchCategories();
-            modalDateSpan.innerText =
-                getHourAndMinuteAndSecondText(startDate)
-                + " - "
-                + getHourAndMinuteAndSecondText(stopDate)
-                + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
-            newTaggedEntryBoundaries.start = dateToISOString(startDate);
-            newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
-            newTaggedEntryDialog.style.display = "block";
+            // The start and stop is the same. Keep its state so that we can use it
+            // if a double click event happens.
+            if (startDate === stopDate) {
+                taggingState.start = taggingState.boundaryStart;
+                taggingState.stop = taggingState.boundaryStop;
+                overlayProperties.keptTaggingStateForDblClick = taggingState;
+                overlayProperties.taggingState = undefined;
+            } else {
+                modalInput.value = "";
+                modalSaveButton.disabled = true;
+                fetchCategories();
+                modalDateSpan.innerText =
+                    getHourAndMinuteAndSecondText(startDate)
+                    + " - "
+                    + getHourAndMinuteAndSecondText(stopDate)
+                    + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
+                newTaggedEntryBoundaries.start = dateToISOString(startDate);
+                newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
+                newTaggedEntryDialog.style.display = "block";
+            }
         }
-
-        overlayProperties.zoomState = undefined;
-        overlayProperties.taggingState = undefined;
     });
 
     overlayCanvas.addEventListener("mouseleave", (event) => {
+        if (overlayProperties.taggingState !== undefined) {
+            return;
+        }
+
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    });
+
+    overlayCanvas.addEventListener("dblclick", (event) => {
+        const taggingState = overlayProperties.keptTaggingStateForDblClick;
+        if (taggingState === undefined) {
+            return;
+        }
+
+        overlayProperties.taggingState = overlayProperties.keptTaggingStateForDblClick;
+        renderOverlay(timelineHelper);
+
+        const startDate = taggingState.start;
+        const stopDate = taggingState.stop;
+
+        modalInput.value = "";
+        modalSaveButton.disabled = true;
+        fetchCategories();
+        modalDateSpan.innerText =
+            getHourAndMinuteAndSecondText(startDate)
+            + " - "
+            + getHourAndMinuteAndSecondText(stopDate)
+            + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
+        newTaggedEntryBoundaries.start = dateToISOString(startDate);
+        newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
+        newTaggedEntryDialog.style.display = "block";
     });
 
     overlayCanvas.addEventListener("wheel", (event) => {
@@ -225,6 +262,9 @@ function setUpListeners() {
     const modalCancelButton = document.getElementById("modal-cancel");
     modalCancelButton.addEventListener("click", (event) => {
         newTaggedEntryDialog.style.display = "none";
+        overlayProperties.taggingState = undefined;
+        overlayProperties.keptTaggingStateForDblClick = undefined;
+        overlayCanvas.dispatchEvent(new Event("mouseleave"));
     });
 
     modalInput.addEventListener("input", (event) => {
@@ -274,6 +314,9 @@ function setUpListeners() {
             }
 
             newTaggedEntryDialog.style.display = "none";
+            overlayProperties.taggingState = undefined;
+            overlayProperties.keptTaggingStateForDblClick = undefined;
+            overlayCanvas.dispatchEvent(new Event("mouseleave"));
         });
     });
 }

@@ -14,7 +14,8 @@ export const overlayProperties = {
     hoveredEntry: undefined,
     taggingMouseDate: undefined,
     zoomState: undefined,
-    taggingState: undefined
+    taggingState: undefined,
+    keptTaggingStateForDblClick: undefined
 };
 
 export const timelineProperties = {
@@ -367,6 +368,14 @@ export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
             overlayProperties.taggingMouseDate = taggingState.boundaryStop;
         }
 
+        const mouseDate = overlayProperties.taggingMouseDate;
+        const initialDate = taggingState.initialDate;
+
+        const startDate = initialDate < mouseDate ? initialDate : mouseDate;
+        const stopDate = initialDate < mouseDate ? mouseDate : initialDate;
+        taggingState.start = startDate;
+        taggingState.stop = stopDate;
+
         return;
     }
 
@@ -421,10 +430,11 @@ export const renderOverlay = (timelineHelper) => {
         ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
     } else if (overlayProperties.taggingState !== undefined) {
         const taggingState = overlayProperties.taggingState;
-        const initialX = timelineHelper.dateToPixel(taggingState.initialDate);
+        const startX = timelineHelper.dateToPixel(taggingState.start);
+        const stopX = timelineHelper.dateToPixel(taggingState.stop);
 
         ctx.fillStyle = "rgba(51, 51, 51, 0.4)";
-        ctx.fillRect(initialX, 0, taggingMouseX - initialX, canvasHeight);
+        ctx.fillRect(startX, 0, stopX - startX, canvasHeight);
     }
 
     const hoveredEntry = overlayProperties.hoveredEntry;
