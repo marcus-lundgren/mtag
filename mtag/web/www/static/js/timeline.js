@@ -23,7 +23,6 @@ export const overlayProperties = {
 
 export const timelineProperties = {
     canvas: undefined,
-    currentTimelineDate: undefined,
     minuteIncrement: undefined,
 
     // Timeline dimensions
