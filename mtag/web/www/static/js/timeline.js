@@ -3,6 +3,7 @@ import { getHourAndMinuteText, getHourAndMinuteAndSecondText, getIntervalString 
 const ZOOM_FACTOR = 0.03;
 const MOVE_FACTOR = 0.05;
 const TIMELINE_SIDE_PADDING = 29;
+const MIN_BOUNDARY = 5 * 1000;
 const MAX_BOUNDARY = (23 * 3600 + 59 * 60 + 59) * 1000;
 
 const TIMELINE_HEIGHT = 30;
@@ -54,9 +55,8 @@ export class TimelineHelper {
     update() {
         this.canvasWidth = this.canvas.offsetWidth;
         this.canvasWidthWithoutPadding = this.canvasWidth - (TIMELINE_SIDE_PADDING * 2);
-        this.startOfDate = this.currentTimelineDate.date;
-        this.endOfDate = new Date(this.currentTimelineDate.date);
-        this.endOfDate.setHours(23, 59, 59, 0);
+        this.startOfDate = this.currentTimelineDate.startOfDate;
+        this.endOfDate = this.currentTimelineDate.endOfDate;
         this.boundaryStart = this.currentTimelineDate.start;
         this.boundaryStop = this.currentTimelineDate.stop;
         this.boundaryDelta = this.boundaryStop - this.boundaryStart;
@@ -75,8 +75,20 @@ export class TimelineHelper {
     }
 
     setBoundaries(newStart, newStop) {
-        this.currentTimelineDate.start.setTime(newStart.getTime());
-        this.currentTimelineDate.stop.setTime(newStop.getTime());
+        let newStartTime = newStart.getTime();
+        let delta = newStop - newStart;
+
+        if (delta < MIN_BOUNDARY) {
+            delta = MIN_BOUNDARY;
+
+            // Ensure that we don't go beyond the current date
+            if (this.endOfDate.getTime() < newStartTime + delta) {
+                newStartTime = this.endOfDate - delta;
+            }
+        }
+
+        this.currentTimelineDate.start.setTime(newStartTime);
+        this.currentTimelineDate.stop.setTime(newStartTime + delta);
         this.update();
     }
 
@@ -91,7 +103,7 @@ export class TimelineHelper {
 
         if (zoomingIn) {
             // Do not zoom in too far
-            if (zoomStepInMilliseconds < 5000) {
+            if (zoomStepInMilliseconds < MIN_BOUNDARY) {
                 return;
             }
 

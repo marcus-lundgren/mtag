@@ -50,10 +50,13 @@ function callRenderTimeline() {
 
 function setCurrentDate(newDate) {
     const startOfDay = newDate;
-    newDate.setHours(0);
-    currentTimelineDate.start = startOfDay;
+    newDate.setHours(0, 0, 0, 0);
+    currentTimelineDate.startOfDate = new Date(startOfDay);
+    currentTimelineDate.endOfDate = new Date(startOfDay);
+    currentTimelineDate.endOfDate.setHours(23, 59, 59, 0);
+    currentTimelineDate.start = new Date(startOfDay);
     currentTimelineDate.date = new Date(startOfDay);
-    currentTimelineDate.stop = new Date(new Date(startOfDay).setHours(23, 59, 59, 999));
+    currentTimelineDate.stop = new Date(currentTimelineDate.endOfDate);
     timelineHelper.update();
 
     datePicker.value = dateToDateString(startOfDay);
@@ -320,6 +323,38 @@ function setUpListeners() {
             overlayProperties.keptTaggingStateForDblClick = undefined;
             overlayCanvas.dispatchEvent(new Event("mouseleave"));
         });
+    });
+
+    const zoomToFitButton = document.getElementById("zoom-to-fit");
+    zoomToFitButton.addEventListener("click", (event) => {
+        let newStart = undefined;
+        let newStop = undefined;
+
+        const updateBoundariesIfElementExists = (entries) => {
+            if (entries.length === 0) {
+                return;
+            }
+
+            let firstEntry = entries[0];
+            let lastEntry = entries[entries.length -1];
+
+            if (newStart === undefined || firstEntry.start < newStart) {
+                newStart = firstEntry.start;
+            }
+
+            if (newStop === undefined || newStop < lastEntry.stop) {
+                newStop = lastEntry.stop;
+            }
+        }
+
+        updateBoundariesIfElementExists(timelineProperties.timelineTaggedEntries);
+        updateBoundariesIfElementExists(timelineProperties.timelineLoggedEntries);
+
+        newStart = newStart ?? currentTimelineDate.startOfDate;
+        newStop = newStop ?? currentTimelineDate.endOfDate;
+
+        timelineHelper.setBoundaries(newStart, newStop);
+        callRenderTimeline();
     });
 }
 
