@@ -1,4 +1,4 @@
-import { getHourAndMinuteText, getHourAndMinuteAndSecondText, getIntervalString } from "./timeline_utilities.js"
+import { getHourAndMinuteText, getHourAndMinuteAndSecondText, getIntervalString } from "./timeline_utilities.js";
 
 const ZOOM_FACTOR = 0.03;
 const MOVE_FACTOR = 0.05;
