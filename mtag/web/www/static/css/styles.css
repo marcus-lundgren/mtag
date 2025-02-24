@@ -119,3 +119,8 @@ table tbody tr:last-of-type {
 #modal-date-span {
     text-align: center;
 }
+
+#content {
+    margin: 8px;
+}
+
