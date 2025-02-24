@@ -80,11 +80,15 @@ export class TimelineHelper {
 
         if (delta < MIN_BOUNDARY) {
             delta = MIN_BOUNDARY;
+        } else if (MAX_BOUNDARY < delta) {
+            delta = MAX_BOUNDARY;
+        }
 
-            // Ensure that we don't go beyond the current date
-            if (this.endOfDate.getTime() < newStartTime + delta) {
-                newStartTime = this.endOfDate - delta;
-            }
+        // Ensure that we don't go beyond the current date
+        if (this.endOfDate.getTime() < newStartTime + delta) {
+            newStartTime = this.endOfDate.getTime() - delta;
+        } else if (newStartTime < this.startOfDate.getTime()) {
+            newStartTime = this.startOfDate.getTime();
         }
 
         this.currentTimelineDate.start.setTime(newStartTime);

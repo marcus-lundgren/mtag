@@ -4,7 +4,9 @@ import { renderTimeline, renderOverlay,
          TimelineHelper, TimelineEntry } from "./timeline.js";
 import { getHourAndMinuteAndSecondText, padLeftWithZero,
          dateToDateString, stringToColor, millisecondsToTimeString,
-         dateToISOString, getIntervalString } from "./timeline_utilities.js"
+         dateToISOString, getIntervalString } from "./timeline_utilities.js";
+import { updateMinimapProperties, renderMinimap, setUpMinimapListeners } from "./timeline_minimap.js";
+import { fetchEntries } from "./api_client.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -46,6 +48,7 @@ function callRenderTimeline() {
     updateTimelineProperties(timelineHelper);
     updateTimelineEntries();
     renderTimeline(timelineHelper);
+    renderMinimap();
 }
 
 function setCurrentDate(newDate) {
@@ -60,7 +63,8 @@ function setCurrentDate(newDate) {
     timelineHelper.update();
 
     datePicker.value = dateToDateString(startOfDay);
-    fetchEntries();
+    updateMinimapProperties(currentTimelineDate);
+    callFetchEntries();
 }
 
 function addDaysToCurrentDate(daysToAdd) {
@@ -356,6 +360,13 @@ function setUpListeners() {
         timelineHelper.setBoundaries(newStart, newStop);
         callRenderTimeline();
     });
+
+    setUpMinimapListeners((mouseDate) => {
+        const newStart = new Date(mouseDate.getTime() - timelineHelper.getCurrentBoundaryDeltaInTime() / 2);
+        const newStop = new Date(mouseDate.getTime() + timelineHelper.getCurrentBoundaryDeltaInTime() / 2);
+        timelineHelper.setBoundaries(newStart, newStop);
+        callRenderTimeline();
+    });
 }
 
 function optionDblClickListener(event) {
@@ -396,7 +407,9 @@ async function fetchCategories() {
     }
 }
 
-async function fetchEntries() {
+async function callFetchEntries() {
+    const json = await fetchEntries(currentTimelineDate.date);
+
     loggedEntries.length = 0;
     taggedEntries.length = 0;
     activityEntries.length = 0;
@@ -409,58 +422,46 @@ async function fetchEntries() {
     visibleTaggedEntries.length = 0;
     visibleActivityEntries.length = 0;
 
-    const dateString = dateToDateString(currentTimelineDate.date);
-    const url = "/entries/" + dateString;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        }
-
-        const json = await response.json();
-        for (const le of json.logged_entries) {
-            const parsedLe = {
-                start: new Date(le.start),
-                stop: new Date(le.stop),
-                application: le.application_window.application.name,
-                title: le.application_window.title,
-                color: await stringToColor(le.application_window.application.name)
-            };
-            loggedEntries.push(parsedLe);
-            timelineLoggedEntries.push(
-                new TimelineEntry(le, parsedLe, timelineHelper,
-                                  [getIntervalString(parsedLe.start, parsedLe.stop), parsedLe.application, parsedLe.title]));
+    for (const le of json.logged_entries) {
+        const parsedLe = {
+            start: new Date(le.start),
+            stop: new Date(le.stop),
+            application: le.application_window.application.name,
+            title: le.application_window.title,
+            color: await stringToColor(le.application_window.application.name)
         };
+        loggedEntries.push(parsedLe);
+        timelineLoggedEntries.push(
+            new TimelineEntry(le, parsedLe, timelineHelper,
+                              [getIntervalString(parsedLe.start, parsedLe.stop), parsedLe.application, parsedLe.title]));
+    };
 
-        for (const te of json.tagged_entries) {
-            const parsedTe = {
-                start: new Date(te.start),
-                stop: new Date(te.stop),
-                category: te.category.name,
-                url: te.category.url,
-                color: await stringToColor(te.category_str),
-                categoryStr: te.category_str
-            };
-            taggedEntries.push(parsedTe);
-            timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper,
-                                                         [getIntervalString(parsedTe.start, parsedTe.stop), parsedTe.categoryStr]));
+    for (const te of json.tagged_entries) {
+        const parsedTe = {
+            start: new Date(te.start),
+            stop: new Date(te.stop),
+            category: te.category.name,
+            url: te.category.url,
+            color: await stringToColor(te.category_str),
+            categoryStr: te.category_str
         };
+        taggedEntries.push(parsedTe);
+        timelineTaggedEntries.push(new TimelineEntry(te, parsedTe, timelineHelper,
+                                                     [getIntervalString(parsedTe.start, parsedTe.stop), parsedTe.categoryStr]));
+    };
 
-        json.activity_entries.forEach((ae) => {
-            const parsedAe = {
-                start: new Date(ae.start),
-                stop: new Date(ae.stop),
-                color: ae.active ? "#8AD98A" : "#808080"
-            };
-            activityEntries.push(parsedAe);
-            timelineActivityEntries.push(new TimelineEntry(ae, parsedAe, timelineHelper, [(ae.active ? "## Active ##" : "## Inactive ##")]));
-        });
+    json.activity_entries.forEach((ae) => {
+        const parsedAe = {
+            start: new Date(ae.start),
+            stop: new Date(ae.stop),
+            color: ae.active ? "#8AD98A" : "#808080"
+        };
+        activityEntries.push(parsedAe);
+        timelineActivityEntries.push(new TimelineEntry(ae, parsedAe, timelineHelper, [(ae.active ? "## Active ##" : "## Inactive ##")]));
+    });
 
-        callRenderTimeline();
-        updateTables();
-    } catch (error) {
-        console.error(error.message);
-    }
+    callRenderTimeline();
+    updateTables();
 }
 
 function updateTables() {
