@@ -428,4 +428,4 @@ function updateTables() {
 }
 
 setUpListeners();
-setCurrentDate(new Date("2025-01-15"));
+setCurrentDate(new Date());
