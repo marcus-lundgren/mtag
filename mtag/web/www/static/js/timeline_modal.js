@@ -86,6 +86,8 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
 
     modalDeleteButton.addEventListener("click", async (event) => {
         modalWindow.style.display = "none";
+
+        // Ensure that we have an actual number to use
         if (isNaN(+editTaggedEntryProperties.id)) {
             alert("The given database id is not a number!");
             return;
