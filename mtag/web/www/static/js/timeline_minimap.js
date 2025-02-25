@@ -63,9 +63,6 @@ export const renderMinimap = () => {
     ctx.fillStyle = "#FFF";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    ctx.fillStyle = "#FFF";
-    ctx.fillRect(canvasWidth / 2, 0, canvasWidth, canvasHeight);
-
     // Time row
     // - Set up font related things
     const startOfTimeTimeline = new Date(minimapProperties.startOfDate);
