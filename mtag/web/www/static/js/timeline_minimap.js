@@ -15,6 +15,7 @@ export const setUpMinimapListeners = (setNewTimelineCanvasBoundaries) => {
         minimapCanvas.width = minimapContainer.clientWidth;
         minimapCanvas.height = minimapContainer.clientHeight;
         timelineHelper.update();
+        renderMinimap();
     }).observe(minimapContainer);
 
     const callSetNewTimelineCanvasBoundaries = (offsetX) => {
