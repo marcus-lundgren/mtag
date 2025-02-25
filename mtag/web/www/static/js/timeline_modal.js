@@ -1,0 +1,151 @@
+import { getHourAndMinuteAndSecondText, millisecondsToTimeString,
+         dateToISOString} from "./timeline_utilities.js";
+
+const modalWindow = document.getElementById("modal-window");
+const modalCategoriesList = document.getElementById("modal-categories-list");
+const modalDateSpan = document.getElementById("modal-date-span");
+const modalInput = document.getElementById("modal-input");
+const modalSaveButton = document.getElementById("modal-store");
+const createTaggedEntryModal = document.getElementById("create-tagged-entry-modal");
+const editTaggedEntryModal = document.getElementById("edit-tagged-entry-modal");
+
+const newTaggedEntryBoundaries = { start: undefined, stop: undefined };
+const editTaggedEntryProperties = { id: undefined };
+
+function optionDblClickListener(event) {
+    modalInput.value = event.target.text;
+
+    // Fire the input event so that we filter the options again
+    modalInput.dispatchEvent(new Event("input"));
+}
+
+function addOptionToCategoryList(categoryText) {
+    let option = document.createElement("option");
+    option.addEventListener("dblclick", optionDblClickListener);
+    option.text = categoryText;
+    modalCategoriesList.add(option);
+}
+
+async function fetchCategories() {
+    modalCategoriesList.options.length = 0;
+
+    const url = "/categories";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status ${response.status}`);
+        }
+
+        const json = await response.json();
+
+        for (const categoryTuple of json) {
+            const mainName = categoryTuple.main.name;
+            addOptionToCategoryList(mainName);
+            for (const c of categoryTuple.children) {
+                addOptionToCategoryList(mainName + " >> " + c.name);
+            }
+        }
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
+export const showCreateTaggedEntryDialog = (startDate, stopDate) => {
+    modalInput.value = "";
+    modalSaveButton.disabled = true;
+    fetchCategories();
+    modalDateSpan.innerText =
+        getHourAndMinuteAndSecondText(startDate)
+        + " - "
+        + getHourAndMinuteAndSecondText(stopDate)
+        + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
+    newTaggedEntryBoundaries.start = dateToISOString(startDate);
+    newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
+    modalWindow.style.display = "block";
+    createTaggedEntryModal.style.display = "block";
+    editTaggedEntryModal.style.display = "none";
+};
+
+export const showEditTaggedEntryDialog = (databaseId) => {
+    editTaggedEntryProperties.id = databaseId;
+    modalWindow.style.display = "block";
+    createTaggedEntryModal.style.display = "none";
+    editTaggedEntryModal.style.display = "block";
+};
+
+export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntryCancel, onEditPerformed) => {
+    const modalCancelButton = document.getElementById("modal-cancel");
+    modalCancelButton.addEventListener("click", (event) => {
+        modalWindow.style.display = "none";
+        onCreateTaggedEntryCancel();
+    });
+
+    const modalDeleteButton = document.getElementById("modal-delete-button");
+    modalDeleteButton.addEventListener("click", async (event) => {
+        modalWindow.style.display = "none";
+        if (isNaN(+editTaggedEntryProperties.id)) {
+            alert("The given database id is not a number!");
+            return;
+        }
+
+        const url = "/taggedentry/" + editTaggedEntryProperties.id;
+        try {
+            const response = await fetch(url, { method: "DELETE" });
+            if (!response.ok) {
+                throw new Error(`Response status ${response.status}`);
+            }
+        } catch (error) {
+            console.error(error.message);
+        }
+        onEditPerformed();
+    });
+
+    modalInput.addEventListener("input", (event) => {
+        const currentInput = modalInput.value;
+        modalSaveButton.disabled = currentInput.length === 0;
+        for (const option of modalCategoriesList.options) {
+            option.style.display = option.text.includes(currentInput) ? "block" : "none";
+        }
+    });
+
+    modalSaveButton.addEventListener("click", async (event) => {
+        const splitInput = modalInput.value.split(">>").map((s) => s.trim());
+        if (splitInput.length > 2) {
+            alert("Too many '>>' in string");
+            return;
+        }
+
+        const mainToUse = splitInput[0];
+        if (mainToUse.length === 0) {
+            alert("Main category is empty");
+            return;
+        }
+
+        const subToUse = splitInput.length === 1 ? null : splitInput[1];
+        if (subToUse !== null && subToUse.length === 0) {
+            alert("Sub category is empty");
+            return;
+        }
+
+        const response = await fetch("/taggedentry/add", {
+            method: "POST",
+            body: JSON.stringify({
+                main: mainToUse,
+                sub: subToUse,
+                start: newTaggedEntryBoundaries.start,
+                stop: newTaggedEntryBoundaries.stop
+            }),
+            header: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+
+        if (!response.ok) {
+            alert("Unable to save!");
+        } else {
+            onCreateTaggedEntrySaved();
+        }
+
+        modalWindow.style.display = "none";
+    });
+}

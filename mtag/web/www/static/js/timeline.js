@@ -15,6 +15,7 @@ export const overlayProperties = {
     mouseX: undefined,
     mouseY: undefined,
     hoveredEntry: undefined,
+    hoveredEntryIsTaggedEntry: undefined,
     taggingMouseDate: undefined,
     zoomState: undefined,
     taggingState: undefined,
@@ -200,6 +201,10 @@ export class TimelineEntry {
         this.width = this.stopX - this.startX;
     }
 
+    getDatabaseId() {
+        return this.entry.db_id;
+    }
+
     getColor() {
         return this.color;
     }
@@ -327,6 +332,7 @@ export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
     const entityHeight = timelineProperties.entityHeight;
     const loggedEntryStartY = timelineProperties.loggedEntryStartY;
     overlayProperties.hoveredEntry = undefined;
+    overlayProperties.hoveredEntryIsTaggedEntry = false;
     if (taggingStateExists || (loggedEntryStartY <= mouseY && mouseY <= loggedEntryStartY + entityHeight)) {
         // Binary search to find the hovered over entry
         const visibleLoggedEntries = timelineProperties.visibleLoggedEntries;
@@ -369,6 +375,7 @@ export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
                 entry: currentTaggedEntry,
                 startY: taggedEntryStartY
             };
+            overlayProperties.hoveredEntryIsTaggedEntry = true;
             break;
         }
     }

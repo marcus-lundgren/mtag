@@ -1,12 +1,11 @@
-import { renderTimeline, renderOverlay,
-         updateTimelineProperties, updateOverlayProperties,
-         timelineProperties, overlayProperties,
-         TimelineHelper, TimelineEntry } from "./timeline.js";
-import { getHourAndMinuteAndSecondText, padLeftWithZero,
-         dateToDateString, stringToColor, millisecondsToTimeString,
-         dateToISOString, getIntervalString } from "./timeline_utilities.js";
+import { renderTimeline, renderOverlay, updateTimelineProperties, updateOverlayProperties,
+         timelineProperties, overlayProperties, TimelineHelper, TimelineEntry } from "./timeline.js";
+import { dateToDateString, stringToColor, millisecondsToTimeString,
+         getIntervalString } from "./timeline_utilities.js";
 import { updateMinimapProperties, renderMinimap, setUpMinimapListeners } from "./timeline_minimap.js";
 import { fetchEntries } from "./api_client.js";
+import { showCreateTaggedEntryDialog, setUpModalListeners,
+         showEditTaggedEntryDialog } from "./timeline_modal.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -30,12 +29,6 @@ const visibleActivityEntries = timelineProperties.visibleActivityEntries;
 
 const currentTimelineDate = {};
 const timelineHelper = new TimelineHelper(canvasContainer, currentTimelineDate);
-
-const newTaggedEntryDialog = document.getElementById("new-tagged-entry-modal");
-const modalCategoriesList = document.getElementById("modal-categories-list");
-const modalDateSpan = document.getElementById("modal-date-span");
-const modalInput = document.getElementById("modal-input");
-const modalSaveButton = document.getElementById("modal-store");
 
 let newTaggedEntryBoundaries = { start: undefined, stop: undefined };
 
@@ -111,6 +104,11 @@ function setUpListeners() {
     }).observe(canvasContainer);
 
     overlayCanvas.addEventListener("mousedown", (event) => {
+        // Only handle primary button presses
+        if (event.buttons !== 1) {
+            return;
+        }
+
         const isZooming = event.shiftKey;
         overlayProperties.keptTaggingStateForDblClick = undefined;
 
@@ -147,6 +145,13 @@ function setUpListeners() {
         }
     });
 
+    overlayCanvas.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        if (overlayProperties.hoveredEntry !== undefined && overlayProperties.hoveredEntryIsTaggedEntry) {
+            showEditTaggedEntryDialog(overlayProperties.hoveredEntry.entry.getDatabaseId());
+        }
+    });
+
     overlayCanvas.addEventListener("mousemove", (event) => {
         updateOverlayProperties(event.offsetX, event.offsetY, timelineHelper);
         renderOverlay(timelineHelper);
@@ -180,17 +185,7 @@ function setUpListeners() {
                 overlayProperties.keptTaggingStateForDblClick = taggingState;
                 overlayProperties.taggingState = undefined;
             } else {
-                modalInput.value = "";
-                modalSaveButton.disabled = true;
-                fetchCategories();
-                modalDateSpan.innerText =
-                    getHourAndMinuteAndSecondText(startDate)
-                    + " - "
-                    + getHourAndMinuteAndSecondText(stopDate)
-                    + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
-                newTaggedEntryBoundaries.start = dateToISOString(startDate);
-                newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
-                newTaggedEntryDialog.style.display = "block";
+                showCreateTaggedEntryDialog(startDate, stopDate);
             }
         }
     });
@@ -214,18 +209,7 @@ function setUpListeners() {
 
         const startDate = taggingState.start;
         const stopDate = taggingState.stop;
-
-        modalInput.value = "";
-        modalSaveButton.disabled = true;
-        fetchCategories();
-        modalDateSpan.innerText =
-            getHourAndMinuteAndSecondText(startDate)
-            + " - "
-            + getHourAndMinuteAndSecondText(stopDate)
-            + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
-        newTaggedEntryBoundaries.start = dateToISOString(startDate);
-        newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
-        newTaggedEntryDialog.style.display = "block";
+        showCreateTaggedEntryDialog(startDate, stopDate);
     });
 
     overlayCanvas.addEventListener("wheel", (event) => {
@@ -268,66 +252,6 @@ function setUpListeners() {
         });
     });
 
-    const modalCancelButton = document.getElementById("modal-cancel");
-    modalCancelButton.addEventListener("click", (event) => {
-        newTaggedEntryDialog.style.display = "none";
-        overlayProperties.taggingState = undefined;
-        overlayProperties.keptTaggingStateForDblClick = undefined;
-        overlayCanvas.dispatchEvent(new Event("mouseleave"));
-    });
-
-    modalInput.addEventListener("input", (event) => {
-        const currentInput = modalInput.value;
-        modalSaveButton.disabled = currentInput.length === 0;
-        for (const option of modalCategoriesList.options) {
-            option.style.display = option.text.includes(currentInput) ? "block" : "none";
-        }
-    });
-
-    modalSaveButton.addEventListener("click", async (event) => {
-        const splitInput = modalInput.value.split(">>").map((s) => s.trim());
-        if (splitInput.length > 2) {
-            alert("Too many '>>' in string");
-            return;
-        }
-
-        const mainToUse = splitInput[0];
-        if (mainToUse.length === 0) {
-            alert("Main category is empty");
-            return;
-        }
-
-        const subToUse = splitInput.length === 1 ? null : splitInput[1];
-        if (subToUse !== null && subToUse.length === 0) {
-            alert("Sub category is empty");
-            return;
-        }
-
-        const response = await fetch("/taggedentry/add", {
-            method: "POST",
-            body: JSON.stringify({
-                main: mainToUse,
-                sub: subToUse,
-                start: newTaggedEntryBoundaries.start,
-                stop: newTaggedEntryBoundaries.stop
-            }),
-            header: {
-                "Content-type": "application/json; charset=UTF-8"
-            }
-        })
-
-        if (!response.ok) {
-            alert("Unable to save!");
-        } else {
-            await callFetchEntries();
-        }
-
-        newTaggedEntryDialog.style.display = "none";
-        overlayProperties.taggingState = undefined;
-        overlayProperties.keptTaggingStateForDblClick = undefined;
-        overlayCanvas.dispatchEvent(new Event("mouseleave"));
-    });
-
     const zoomToFitButton = document.getElementById("zoom-to-fit");
     zoomToFitButton.addEventListener("click", (event) => {
         let newStart = undefined;
@@ -366,44 +290,22 @@ function setUpListeners() {
         timelineHelper.setBoundaries(newStart, newStop);
         callRenderTimeline();
     });
-}
 
-function optionDblClickListener(event) {
-    modalInput.value = event.target.text;
-
-    // Fire the input event so that we filter the options again
-    modalInput.dispatchEvent(new Event("input"));
-}
-
-function addOptionToCategoryList(categoryText) {
-    let option = document.createElement("option");
-    option.addEventListener("dblclick", optionDblClickListener);
-    option.text = categoryText;
-    modalCategoriesList.add(option);
-}
-
-async function fetchCategories() {
-    modalCategoriesList.options.length = 0;
-
-    const url = "/categories";
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        }
-
-        const json = await response.json();
-
-        for (const categoryTuple of json) {
-            const mainName = categoryTuple.main.name;
-            addOptionToCategoryList(mainName);
-            for (const c of categoryTuple.children) {
-                addOptionToCategoryList(mainName + " >> " + c.name);
-            }
-        }
-    } catch (error) {
-        console.error(error.message);
-    }
+    setUpModalListeners(
+        async () => {
+            await callFetchEntries();
+            overlayProperties.taggingState = undefined;
+            overlayProperties.keptTaggingStateForDblClick = undefined;
+            overlayCanvas.dispatchEvent(new Event("mouseleave"));
+        },
+        () => {
+            overlayProperties.taggingState = undefined;
+            overlayProperties.keptTaggingStateForDblClick = undefined;
+            overlayCanvas.dispatchEvent(new Event("mouseleave"));
+        },
+        async () => {
+            await callFetchEntries();
+        });
 }
 
 async function callFetchEntries() {

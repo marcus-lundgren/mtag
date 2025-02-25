@@ -19,6 +19,7 @@ file_paths = {
     "/static/js/api_client.js": "www/static/js/api_client.js",
     "/static/js/timeline.js": "www/static/js/timeline.js",
     "/static/js/timeline_minimap.js": "www/static/js/timeline_minimap.js",
+    "/static/js/timeline_modal.js": "www/static/js/timeline_modal.js",
     "/static/js/timeline_page.js": "www/static/js/timeline_page.js",
     "/static/js/timeline_utilities.js": "www/static/js/timeline_utilities.js",
     "/static/css/styles.css": "www/static/css/styles.css",
@@ -113,6 +114,22 @@ class RequestHandler(BaseHTTPRequestHandler):
                     main_name=data["main"],
                     sub_name=data["sub"])
                 TaggedEntryRepository().insert(conn=conn, tagged_entry=tagged_entry)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+
+    def do_DELETE(self):
+        print("DELETE called")
+        print("----", self.path)
+
+        if self.path.startswith("/taggedentry/"):
+            db_id = self.path[len("/taggedentry/"):]
+            if not db_id.isdigit():
+                raise Exception(f"Given database_id is not a number")
+
+            print("Deleting tagged entry with ID:", db_id)
+            with database_helper.create_connection() as conn:
+                TaggedEntryRepository().delete(conn=conn, db_id=db_id)
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.end_headers()

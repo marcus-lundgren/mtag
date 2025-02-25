@@ -106,7 +106,7 @@ table tbody tr:last-of-type {
     border-bottom: 2px solid darkorange;
 }
 
-#new-tagged-entry-modal {
+#modal-window {
     display: none;
     position: fixed;
     z-index: 1;
@@ -132,6 +132,11 @@ table tbody tr:last-of-type {
 
 #content {
     margin: 8px;
+}
+
+#edit-tagged-entry-modal,
+#create-tagged-entry-modal {
+    display: none;
 }
 
 #zoom-to-fit {
