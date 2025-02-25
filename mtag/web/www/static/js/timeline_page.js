@@ -51,7 +51,7 @@ function callRenderTimeline() {
     renderMinimap();
 }
 
-function setCurrentDate(newDate) {
+async function setCurrentDate(newDate) {
     const startOfDay = newDate;
     newDate.setHours(0, 0, 0, 0);
     currentTimelineDate.startOfDate = new Date(startOfDay);
@@ -64,13 +64,13 @@ function setCurrentDate(newDate) {
 
     datePicker.value = dateToDateString(startOfDay);
     updateMinimapProperties(currentTimelineDate);
-    callFetchEntries();
+    await callFetchEntries();
 }
 
-function addDaysToCurrentDate(daysToAdd) {
+async function addDaysToCurrentDate(daysToAdd) {
     const newDate = new Date(currentTimelineDate.date);
     newDate.setDate(newDate.getDate() + daysToAdd);
-    setCurrentDate(newDate);
+    await setCurrentDate(newDate);
 }
 
 function updateTimelineEntries() {
@@ -243,7 +243,7 @@ function setUpListeners() {
         renderOverlay(timelineHelper);
     });
 
-    datePicker.addEventListener("change", (event) => {
+    datePicker.addEventListener("change", async (event) => {
         let newDate = datePicker.valueAsDate;
 
         // If NULL, then default to the current date
@@ -251,7 +251,7 @@ function setUpListeners() {
             newDate = new Date();
             newDate.setHours(0, 0, 0, 0);
         }
-        setCurrentDate(newDate);
+        await setCurrentDate(newDate);
     });
 
     const dateButtonsSetup = {
@@ -263,8 +263,8 @@ function setUpListeners() {
 
     Object.keys(dateButtonsSetup).forEach((buttonId) => {
         const button = document.getElementById(buttonId);
-        button.addEventListener("click", (event) => {
-            addDaysToCurrentDate(dateButtonsSetup[buttonId]);
+        button.addEventListener("click", async (event) => {
+            await addDaysToCurrentDate(dateButtonsSetup[buttonId]);
         });
     });
 
@@ -284,7 +284,7 @@ function setUpListeners() {
         }
     });
 
-    modalSaveButton.addEventListener("click", (event) => {
+    modalSaveButton.addEventListener("click", async (event) => {
         const splitInput = modalInput.value.split(">>").map((s) => s.trim());
         if (splitInput.length > 2) {
             alert("Too many '>>' in string");
@@ -303,7 +303,7 @@ function setUpListeners() {
             return;
         }
 
-        fetch("/taggedentry/add", {
+        const response = await fetch("/taggedentry/add", {
             method: "POST",
             body: JSON.stringify({
                 main: mainToUse,
@@ -314,19 +314,18 @@ function setUpListeners() {
             header: {
                 "Content-type": "application/json; charset=UTF-8"
             }
-        }).then((response) => {
-            console.log(response)
-            if (!response.ok) {
-                alert("Unable to save!");
-            } else {
-                fetchEntries();
-            }
+        })
 
-            newTaggedEntryDialog.style.display = "none";
-            overlayProperties.taggingState = undefined;
-            overlayProperties.keptTaggingStateForDblClick = undefined;
-            overlayCanvas.dispatchEvent(new Event("mouseleave"));
-        });
+        if (!response.ok) {
+            alert("Unable to save!");
+        } else {
+            await callFetchEntries();
+        }
+
+        newTaggedEntryDialog.style.display = "none";
+        overlayProperties.taggingState = undefined;
+        overlayProperties.keptTaggingStateForDblClick = undefined;
+        overlayCanvas.dispatchEvent(new Event("mouseleave"));
     });
 
     const zoomToFitButton = document.getElementById("zoom-to-fit");
