@@ -6,8 +6,10 @@ const modalCategoriesList = document.getElementById("modal-categories-list");
 const modalDateSpan = document.getElementById("modal-date-span");
 const modalInput = document.getElementById("modal-input");
 const modalSaveButton = document.getElementById("modal-store");
+const modalDeleteButton = document.getElementById("modal-delete-button");
 const createTaggedEntryModal = document.getElementById("create-tagged-entry-modal");
 const editTaggedEntryModal = document.getElementById("edit-tagged-entry-modal");
+const enableDeleteButtonCheckbox = document.getElementById("enable-delete-button");
 
 const newTaggedEntryBoundaries = { start: undefined, stop: undefined };
 const editTaggedEntryProperties = { id: undefined };
@@ -71,6 +73,8 @@ export const showEditTaggedEntryDialog = (databaseId) => {
     modalWindow.style.display = "block";
     createTaggedEntryModal.style.display = "none";
     editTaggedEntryModal.style.display = "block";
+    enableDeleteButtonCheckbox.checked = false;
+    modalDeleteButton.disabled = true;
 };
 
 export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntryCancel, onEditPerformed) => {
@@ -80,7 +84,6 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
         onCreateTaggedEntryCancel();
     });
 
-    const modalDeleteButton = document.getElementById("modal-delete-button");
     modalDeleteButton.addEventListener("click", async (event) => {
         modalWindow.style.display = "none";
         if (isNaN(+editTaggedEntryProperties.id)) {
@@ -147,5 +150,9 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
         }
 
         modalWindow.style.display = "none";
+    });
+
+    enableDeleteButtonCheckbox.addEventListener("change", (event) => {
+        modalDeleteButton.disabled = !enableDeleteButtonCheckbox.checked;
     });
 }
