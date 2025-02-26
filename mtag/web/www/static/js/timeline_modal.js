@@ -106,10 +106,10 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
     });
 
     modalInput.addEventListener("input", (event) => {
-        const currentInput = modalInput.value;
+        const currentInput = modalInput.value.toLowerCase();
         modalSaveButton.disabled = currentInput.length === 0;
         for (const option of modalCategoriesList.options) {
-            option.style.display = option.text.includes(currentInput) ? "block" : "none";
+            option.style.display = option.text.toLowerCase().includes(currentInput) ? "block" : "none";
         }
     });
 
