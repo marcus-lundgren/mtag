@@ -106,24 +106,15 @@ table tbody tr:last-of-type {
     border-bottom: 2px solid darkorange;
 }
 
-#modal-window {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+.modal-window {
+    width: 500px;
+    margin-top: 20px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+    border: 1px solid black;
 }
 
-#modal-content {
-  background-color: #fefefe;
-  margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 500px;
+#modal-window::backdrop {
+    background-color: rgba(0,0,0,0.4);
 }
 
 #modal-date-span {
@@ -132,11 +123,6 @@ table tbody tr:last-of-type {
 
 #content {
     margin: 8px;
-}
-
-#edit-tagged-entry-modal,
-#create-tagged-entry-modal {
-    display: none;
 }
 
 #zoom-to-fit {

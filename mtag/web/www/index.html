@@ -1,34 +1,28 @@
-<div id="modal-window">
-  <div id="modal-content">
-    <!-- Create new tagged entry -->
-    <div id="create-tagged-entry-modal">
-      <p id="modal-date-span"></p>
-      <div>
-        <input id="modal-input" type="text" style="width: calc(100% - 8px); margin-bottom: 10px; display: block;" />
-        <select id="modal-categories-list" size="10" style="width: 100%;">
-        </select>
-      </div>
-
-      <div style="text-align: end; padding-top: 20px;">
-        <button id="modal-store">Save</button>
-        <button id="modal-cancel">Cancel</button>
-      </div>
-    </div>
-
-    <!-- Edit tagged entry -->
-    <div id="edit-tagged-entry-modal">
-      <i>Implement me!</i>
-
-      <div style="display: flex; justify-content: space-between; padding-top: 20px;">
-        <div>
-          <input type="checkbox" id="enable-delete-button" />
-          <label for="enable-delete-button">Enable delete button</label>
-        </div>
-        <button id="modal-delete-button">Delete</button>
-      </div>
-    </div>
+<dialog id="create-tagged-entry-modal" class="modal-window">
+  <p id="modal-date-span"></p>
+  <div>
+    <input id="modal-input" type="text" style="width: calc(100% - 8px); margin-bottom: 10px; display: block;" autofocus/>
+    <select id="modal-categories-list" size="10" style="width: 100%;">
+    </select>
   </div>
-</div>
+
+  <div style="text-align: end; padding-top: 20px;">
+    <button id="modal-store">Save</button>
+    <button id="modal-cancel">Cancel</button>
+  </div>
+</dialog>
+
+<dialog id="edit-tagged-entry-modal" class="modal-window">
+  <i>Implement me!</i>
+
+  <div style="display: flex; justify-content: space-between; padding-top: 20px;">
+    <div>
+      <input type="checkbox" id="enable-delete-button" />
+      <label for="enable-delete-button">Enable delete button</label>
+    </div>
+    <button id="modal-delete-button">Delete</button>
+  </div>
+</dialog>
 
 <div style="display: flex; justify-content: space-between;">
   <div id="toolbar">

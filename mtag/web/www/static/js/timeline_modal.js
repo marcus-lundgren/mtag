@@ -1,7 +1,6 @@
 import { getHourAndMinuteAndSecondText, millisecondsToTimeString,
          dateToISOString} from "./timeline_utilities.js";
 
-const modalWindow = document.getElementById("modal-window");
 const modalCategoriesList = document.getElementById("modal-categories-list");
 const modalDateSpan = document.getElementById("modal-date-span");
 const modalInput = document.getElementById("modal-input");
@@ -63,29 +62,25 @@ export const showCreateTaggedEntryDialog = (startDate, stopDate) => {
         + " (" + millisecondsToTimeString(stopDate - startDate) + ")";
     newTaggedEntryBoundaries.start = dateToISOString(startDate);
     newTaggedEntryBoundaries.stop = dateToISOString(stopDate);
-    modalWindow.style.display = "block";
-    createTaggedEntryModal.style.display = "block";
-    editTaggedEntryModal.style.display = "none";
+    createTaggedEntryModal.showModal();
 };
 
 export const showEditTaggedEntryDialog = (databaseId) => {
     editTaggedEntryProperties.id = databaseId;
-    modalWindow.style.display = "block";
-    createTaggedEntryModal.style.display = "none";
-    editTaggedEntryModal.style.display = "block";
     enableDeleteButtonCheckbox.checked = false;
     modalDeleteButton.disabled = true;
+    editTaggedEntryModal.showModal();
 };
 
 export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntryCancel, onEditPerformed) => {
     const modalCancelButton = document.getElementById("modal-cancel");
     modalCancelButton.addEventListener("click", (event) => {
-        modalWindow.style.display = "none";
+        createTaggedEntryModal.close();
         onCreateTaggedEntryCancel();
     });
 
     modalDeleteButton.addEventListener("click", async (event) => {
-        modalWindow.style.display = "none";
+        createTaggedEntryModal.close();
 
         // Ensure that we have an actual number to use
         if (isNaN(+editTaggedEntryProperties.id)) {
@@ -151,7 +146,7 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
             onCreateTaggedEntrySaved();
         }
 
-        modalWindow.style.display = "none";
+        createTaggedEntryModal.close();
     });
 
     enableDeleteButtonCheckbox.addEventListener("change", (event) => {
