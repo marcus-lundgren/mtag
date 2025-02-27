@@ -40,9 +40,6 @@ export const millisecondsToTimeString = (ms) => {
 }
 
 export const dateToISOString = (date) => {
-    const seconds = padLeftWithZero(date.getSeconds());
-    const minutes = padLeftWithZero(date.getMinutes());
-    const hours = padLeftWithZero(date.getHours());
     return `${dateToDateString(date)}T${getHourAndMinuteAndSecondText(date)}`;
 }
 
