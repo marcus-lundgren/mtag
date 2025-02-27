@@ -76,6 +76,9 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
     const modalCancelButton = document.getElementById("modal-cancel");
     modalCancelButton.addEventListener("click", (event) => {
         createTaggedEntryModal.close();
+    });
+
+    createTaggedEntryModal.addEventListener("close", (event) => {
         onCreateTaggedEntryCancel();
     });
 
