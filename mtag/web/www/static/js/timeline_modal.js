@@ -1,5 +1,6 @@
 import { getHourAndMinuteAndSecondText, millisecondsToTimeString,
          dateToISOString} from "./timeline_utilities.js";
+import { fetchCategories } from "./api_client.js";
 
 const modalCategoriesList = document.getElementById("modal-categories-list");
 const modalDateSpan = document.getElementById("modal-date-span");
@@ -27,34 +28,23 @@ function addOptionToCategoryList(categoryText) {
     modalCategoriesList.add(option);
 }
 
-async function fetchCategories() {
+async function callFetchCategories() {
     modalCategoriesList.options.length = 0;
 
-    const url = "/categories";
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
+    const json = await fetchCategories();
+    for (const categoryTuple of json) {
+        const mainName = categoryTuple.main.name;
+        addOptionToCategoryList(mainName);
+        for (const c of categoryTuple.children) {
+            addOptionToCategoryList(mainName + " >> " + c.name);
         }
-
-        const json = await response.json();
-
-        for (const categoryTuple of json) {
-            const mainName = categoryTuple.main.name;
-            addOptionToCategoryList(mainName);
-            for (const c of categoryTuple.children) {
-                addOptionToCategoryList(mainName + " >> " + c.name);
-            }
-        }
-    } catch (error) {
-        console.error(error.message);
     }
 }
 
 export const showCreateTaggedEntryDialog = (startDate, stopDate) => {
     modalInput.value = "";
     modalSaveButton.disabled = true;
-    fetchCategories();
+    callFetchCategories();
     modalDateSpan.innerText =
         getHourAndMinuteAndSecondText(startDate)
         + " - "

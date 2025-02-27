@@ -129,3 +129,23 @@ table tbody tr:last-of-type {
     margin-right: 10px;
     padding: 2px 4px;
 }
+
+#category-page-container {
+    display: flex;
+}
+
+.category-list {
+    margin: 0 10px;
+}
+
+.category-list select {
+    width: 200px;
+    height: 100%;
+}
+
+#category-list-separator {
+    align-self: center;
+    font-weight: bold;
+    font-size: 20px;
+    margin: 0 10px;
+}
