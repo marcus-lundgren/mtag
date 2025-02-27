@@ -1,7 +1,7 @@
 import { renderTimeline, renderOverlay, updateTimelineProperties, updateOverlayProperties,
          timelineProperties, overlayProperties, TimelineHelper, TimelineEntry } from "./timeline.js";
 import { dateToDateString, stringToColor, millisecondsToTimeString,
-         getIntervalString } from "./timeline_utilities.js";
+         getIntervalString, getHourAndMinuteAndSecondText } from "./timeline_utilities.js";
 import { updateMinimapProperties, renderMinimap, setUpMinimapListeners } from "./timeline_minimap.js";
 import { fetchEntries } from "./api_client.js";
 import { showCreateTaggedEntryDialog, setUpModalListeners,
@@ -380,10 +380,13 @@ function updateTables() {
     loggedEntries.forEach((le) => {
         const row = leTableBody.insertRow();
         const startCell = row.insertCell();
-        startCell.innerText = le.start.toISOString();
+        startCell.innerText = getHourAndMinuteAndSecondText(le.start);
 
         const stopCell = row.insertCell();
-        stopCell.innerText = le.stop.toISOString();
+        stopCell.innerText = getHourAndMinuteAndSecondText(le.stop);
+
+        const durationCell = row.insertCell();
+        durationCell.innerText = millisecondsToTimeString(le.stop - le.start);
 
         const applicationCell = row.insertCell();
         applicationCell.innerText = le.application;
