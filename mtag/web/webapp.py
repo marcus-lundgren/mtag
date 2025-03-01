@@ -82,6 +82,14 @@ class RequestHandler(BaseHTTPRequestHandler):
             with database_helper.create_connection() as conn:
                 categories = CategoryRepository().get_all(conn=conn)
             self._set_json_response([{"main": category_to_json(main), "children": [category_to_json(c) for c in children]} for (main, children) in categories])
+        elif self.path.startswith("/category/"):
+            db_id = self.path[len("/category/"):]
+            if not db_id.isdigit():
+                raise Exception(f"Given database_id is not a number")
+
+            with database_helper.create_connection() as conn:
+                category = CategoryRepository().get(conn=conn, db_id=db_id)
+            self._set_json_response(category_to_json(category))
         else:
             self._set_not_found_response()
 

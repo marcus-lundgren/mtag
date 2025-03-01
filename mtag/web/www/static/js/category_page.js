@@ -1,15 +1,19 @@
-import { fetchCategories } from "./api_client.js";
+import { fetchCategories, fetchCategory } from "./api_client.js";
 
 const mainList = document.getElementById("main-list");
 const subList = document.getElementById("sub-list");
 const categoryNameInput = document.getElementById("category-name");
+const categoryUrlInput = document.getElementById("category-url");
 
 const addSubOption = (sub) => {
     let option = document.createElement("option");
     option.text = sub.name;
     option.value = sub.db_id;
-    option.addEventListener("click", () => {
-        categoryNameInput.value = sub.name;
+    option.addEventListener("click", async () => {
+        const category = await fetchCategory(sub.db_id);
+        console.log(category);
+        categoryNameInput.value = category.name;
+        categoryUrlInput.value = category.url;
     });
     subList.add(option);
 }
