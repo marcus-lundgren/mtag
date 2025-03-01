@@ -8,20 +8,24 @@
     <select size="20" id="sub-list">
     </select>
   </div>
-  <div>
+  <div id="category-details">
     <div>
-      <span>Name</span><input id="category-name" type="text" /><input type="checkbox" id="change-name-checkbox"><label for="change-name-checkbox">Edit</label>
+      <span class="category-input-title">Name</span><input id="category-name" type="text" /><input type="checkbox" id="change-name-checkbox"><label for="change-name-checkbox">Edit</label>
     </div>
     <div>
-      Time tagged <i>IMPLEMENT ME!</i>
+      <span class="category-input-title">Time tagged</span>
+      <span>IMPLEMENT ME!</span>
     </div>
     <div>
-      <span>URL</span><input type="text" id="category-url" />
+      <span class="category-input-title">URL</span><input type="text" id="category-url" />
     </div>
     <div>
-      <span>Change parent</span>
+      <span class="category-input-title">Change parent</span>
+      <select>
+      </select>
     </div>
     <div>
+      <span class="category-input-title">Delete category</span>
       <button type="click">Delete</button><input type="checkbox" id="allow-delete-checkbox" /><label for="allow-delete-checkbox">Unlock delete</label>
     </div>
   </div>

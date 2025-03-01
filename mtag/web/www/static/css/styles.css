@@ -149,3 +149,23 @@ table tbody tr:last-of-type {
     font-size: 20px;
     margin: 0 10px;
 }
+
+#category-details {
+    width: 40%;
+}
+
+#category-details input[type=text] {
+    width: 100%;
+}
+
+#category-details > div {
+    padding-bottom: 10px;
+    padding-left: 10px;
+}
+
+.category-input-title {
+    display: block;
+    font-size: 0.8em;
+    padding-top: 10px;
+    font-style: italic;
+}
