@@ -158,6 +158,10 @@ table tbody tr:last-of-type {
     width: 100%;
 }
 
+#category-details select {
+    width: 100%;
+}
+
 #category-details > div {
     padding-bottom: 10px;
     padding-left: 10px;
