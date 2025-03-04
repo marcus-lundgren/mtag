@@ -2,7 +2,7 @@ import { renderTimeline, renderOverlay, updateTimelineProperties, updateOverlayP
          timelineProperties, overlayProperties, TimelineHelper, TimelineEntry } from "./timeline.js";
 import { dateToDateString, stringToColor, millisecondsToTimeString,
          getIntervalString, getHourAndMinuteAndSecondText } from "./timeline_utilities.js";
-import { updateMinimapProperties, renderMinimap, setUpMinimapListeners } from "./timeline_minimap.js";
+import { updateMinimapProperties, renderMinimap, setUpMinimapListeners, setMinimapEntries } from "./timeline_minimap.js";
 import { fetchEntries } from "./api_client.js";
 import { showCreateTaggedEntryDialog, setUpModalListeners,
          showEditTaggedEntryDialog } from "./timeline_modal.js";
@@ -361,6 +361,7 @@ async function callFetchEntries() {
         timelineActivityEntries.push(new TimelineEntry(ae, parsedAe, timelineHelper, [(ae.active ? "## Active ##" : "## Inactive ##")]));
     });
 
+    setMinimapEntries(json.tagged_entries, json.logged_entries);
     callRenderTimeline();
     updateTables();
 }

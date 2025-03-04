@@ -4,7 +4,11 @@ import { TimelineHelper } from "./timeline.js";
 const minimapContainer = document.getElementById("minimap-container");
 const minimapCanvas = document.getElementById("minimap");
 
-const minimapProperties = {};
+const minimapProperties = {
+    taggedEntryBlocks: [],
+    loggedEntryBlocks: []
+};
+
 let actualCurrentTimelineDate = undefined;
 
 const timelineHelper = new TimelineHelper(minimapContainer, minimapProperties);
@@ -48,14 +52,54 @@ export const updateMinimapProperties = (currentTimelineDate) => {
     minimapProperties.stop = currentTimelineDate.endOfDate;
     minimapProperties.endOfDate = currentTimelineDate.endOfDate;
     timelineHelper.update();
+}
+
+export const setMinimapEntries = (taggedEntries, loggedEntries) => {
+    minimapProperties.taggedEntryBlocks.length = 0;
+    minimapProperties.loggedEntryBlocks.length = 0;
+
+    function addBlocks(entries, blocksList) {
+        let currentBlock = { start: undefined, stop: undefined };
+        for (const entry of entries) {
+            // Continue with the current block
+            if (currentBlock.stop === entry.start) {
+                currentBlock.stop = entry.stop;
+                continue;
+            }
+
+            // We have an existing block, but the current entry doesn't start where it stops.
+            // Add it to the list and create a new block
+            if (currentBlock.stop !== undefined && currentBlock.stop !== entry.start) {
+                currentBlock.stop = new Date(currentBlock.stop);
+                blocksList.push(currentBlock);
+                currentBlock = { start: undefined, stop: undefined };
+            }
+
+            // Our current block is empty. Initialize it with the current entries start and stop.
+            if (currentBlock.stop === undefined) {
+                currentBlock.start = new Date(entry.start);
+                currentBlock.stop = entry.stop;
+                continue;
+            }
+        }
+
+        // Add the finally created block if it exists
+        if (currentBlock.stop !== undefined) {
+            currentBlock.stop = new Date(currentBlock.stop);
+            blocksList.push(currentBlock);
+        }
+    }
+
+    addBlocks(taggedEntries, minimapProperties.taggedEntryBlocks);
+    addBlocks(loggedEntries, minimapProperties.loggedEntryBlocks);
 };
 
 export const renderMinimap = () => {
-    const TIMELINE_HEIGHT = 10;
     const canvasWidth = minimapCanvas.width;
     const canvasHeight = minimapCanvas.height;
-
-    const entriesHeight = 20;
+    const entriesHeight = canvasHeight / 5;
+    const taggedEntriesStartY = entriesHeight * 1;
+    const loggedEntriesStartY = entriesHeight * 3.5;
 
     const ctx = minimapCanvas.getContext("2d");
 
@@ -66,7 +110,6 @@ export const renderMinimap = () => {
     // Time row
     // - Set up font related things
     const startOfTimeTimeline = new Date(minimapProperties.startOfDate);
-    const TIMELINE_START_Y = TIMELINE_HEIGHT - 10;
 
     ctx.font = "20px Arial";
     ctx.textAlign = "center";
@@ -80,6 +123,22 @@ export const renderMinimap = () => {
         const timeText = padLeftWithZero(currentTime.getHours());
         ctx.fillStyle = "#777";
         ctx.fillText(timeText, lineX, canvasHeight / 2);
+    }
+
+    // Tagged entry blocks
+    ctx.fillStyle = "rgb(255, 163, 0)";
+    for (const block of minimapProperties.taggedEntryBlocks) {
+        const start = timelineHelper.dateToPixel(block.start);
+        const stop = timelineHelper.dateToPixel(block.stop);
+        ctx.fillRect(start, taggedEntriesStartY, stop - start, entriesHeight);
+    }
+
+    // Logged entry blocks
+    ctx.fillStyle = "rgb(77, 77, 205)";
+    for (const block of minimapProperties.loggedEntryBlocks) {
+        const start = timelineHelper.dateToPixel(block.start);
+        const stop = timelineHelper.dateToPixel(block.stop);
+        ctx.fillRect(start, loggedEntriesStartY, stop - start, entriesHeight);
     }
 
     // Draw the current viewport boundary in the timeline canvas
