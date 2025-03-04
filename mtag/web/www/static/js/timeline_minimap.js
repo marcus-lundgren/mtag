@@ -116,13 +116,14 @@ export const renderMinimap = () => {
     ctx.textBaseline = "top";
     ctx.strokeStyle = "#B3B3B3";
     const timelineStop = new Date(minimapProperties.endOfDate);
+    const timeTextStartY = canvasHeight / 2;
     for (let currentTime = startOfTimeTimeline;
          currentTime < timelineStop;
          currentTime.setHours(currentTime.getHours() + 1)) {
         const lineX = timelineHelper.dateToPixel(currentTime);
         const timeText = padLeftWithZero(currentTime.getHours());
         ctx.fillStyle = "#777";
-        ctx.fillText(timeText, lineX, canvasHeight / 2);
+        ctx.fillText(timeText, lineX, timeTextStartY);
     }
 
     // Tagged entry blocks
