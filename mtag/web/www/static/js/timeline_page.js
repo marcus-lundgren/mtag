@@ -217,13 +217,13 @@ function setUpListeners() {
         if (event.deltaY !== 0) {
             const mouseDate = timelineHelper.pixelToDate(event.offsetX);
             timelineHelper.zoom(event.deltaY < 0, mouseDate, callRenderTimeline);
-        } else if (event.deltaX !== 0) {
+        }
+
+        if (event.deltaX !== 0) {
             timelineHelper.move(event.deltaX < 0, callRenderTimeline);
         }
 
-        updateTimelineEntries();
         updateOverlayProperties(event.offsetX, event.offsetY, timelineHelper);
-        renderTimeline(timelineHelper);
         renderOverlay(timelineHelper);
     });
 
