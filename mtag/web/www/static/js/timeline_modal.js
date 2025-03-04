@@ -73,8 +73,6 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
     });
 
     modalDeleteButton.addEventListener("click", async (event) => {
-        createTaggedEntryModal.close();
-
         // Ensure that we have an actual number to use
         if (isNaN(+editTaggedEntryProperties.id)) {
             alert("The given database id is not a number!");
@@ -90,6 +88,8 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
         } catch (error) {
             console.error(error.message);
         }
+
+        editTaggedEntryModal.close();
         onEditPerformed();
     });
 
