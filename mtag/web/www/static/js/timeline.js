@@ -305,15 +305,23 @@ export const renderTimeline = (timelineHelper) => {
     }
 
     // Tagged entries
+    const typeColorHeight = 15;
+    const taggedEntriesTypeColorStartY = timelineProperties.taggedEntryStartY + entriesHeight - typeColorHeight;
     timelineProperties.visibleTaggedEntries.forEach((te) => {
         ctx.fillStyle = te.getColor();
         ctx.fillRect(te.getStartX(), timelineProperties.taggedEntryStartY, te.getWidth(), entriesHeight);
+
+        ctx.fillStyle = "rgb(255, 163, 0)";
+        ctx.fillRect(te.getStartX(), taggedEntriesTypeColorStartY, te.getWidth(), typeColorHeight);
     });
 
     // Logged entries
     timelineProperties.visibleLoggedEntries.forEach((le) => {
         ctx.fillStyle = le.getColor();
         ctx.fillRect(le.getStartX(), timelineProperties.loggedEntryStartY, le.getWidth(), entriesHeight);
+
+        ctx.fillStyle = "rgb(77, 77, 205)";
+        ctx.fillRect(le.getStartX(), timelineProperties.loggedEntryStartY, le.getWidth(), typeColorHeight);
     });
 
     // Draw the sides
