@@ -32,10 +32,13 @@ export const dateToDateString = (date) => {
 }
 
 export const millisecondsToTimeString = (ms) => {
-    const msInSeconds = ms / 1000;
-    const hours = Math.floor(msInSeconds / 3600);
-    const minutes = Math.floor((msInSeconds - hours * 3600) / 60);
-    const seconds = Math.floor(msInSeconds % 60);
+    return secondsToTimeString(ms / 1000);
+}
+
+export const secondsToTimeString = (totalSeconds) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds - hours * 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
     return padLeftWithZero(hours) + ":" + padLeftWithZero(minutes) + ":" + padLeftWithZero(seconds);
 }
 

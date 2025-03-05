@@ -1,4 +1,5 @@
 import { fetchCategories, fetchCategory } from "./api_client.js";
+import { secondsToTimeString } from "./timeline_utilities.js";
 
 const mainList = document.getElementById("main-list");
 const subList = document.getElementById("sub-list");
@@ -6,6 +7,7 @@ const categoryNameInput = document.getElementById("category-name");
 const changeNameCheckbox = document.getElementById("change-name-checkbox");
 const categoryUrlInput = document.getElementById("category-url");
 const changeParentSelect = document.getElementById("change-parent-select");
+const taggedTime = document.getElementById("tagged-time");
 
 const updateCategoryDetails = async (categoryId) => {
     const category = await fetchCategory(categoryId);
@@ -14,6 +16,7 @@ const updateCategoryDetails = async (categoryId) => {
     changeNameCheckbox.checked = false;
     categoryUrlInput.value = category.url;
     changeParentSelect.value = category.parent_id ?? -1;
+    taggedTime.innerText = secondsToTimeString(category.seconds);
 }
 
 const addSubOption = (sub) => {

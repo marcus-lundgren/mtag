@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ..entity import Category, LoggedEntry, ApplicationWindow, Application, TaggedEntry, ActivityEntry
 from ..helper import database_helper
+from ..helper.statistics_helper import get_total_category_tagged_time_by_id
 from ..repository import CategoryRepository, LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
 
 date_validator = re.compile(r"\d\d\d\d-\d\d-\d\d")
@@ -89,7 +90,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             with database_helper.create_connection() as conn:
                 category = CategoryRepository().get(conn=conn, db_id=db_id)
-            self._set_json_response(category_to_json(category))
+            json = category_to_json(category)
+            json["seconds"] = get_total_category_tagged_time_by_id(category.db_id)
+            self._set_json_response(json)
+
+            self._set_json_response({"seconds": seconds})
         else:
             self._set_not_found_response()
 
