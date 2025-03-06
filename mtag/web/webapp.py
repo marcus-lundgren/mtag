@@ -93,8 +93,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             json = category_to_json(category)
             json["seconds"] = get_total_category_tagged_time_by_id(category.db_id)
             self._set_json_response(json)
-
-            self._set_json_response({"seconds": seconds})
         else:
             self._set_not_found_response()
 
