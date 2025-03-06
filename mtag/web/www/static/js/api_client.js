@@ -13,7 +13,7 @@ export const fetchEntries = async (date) => {
     } catch (error) {
         console.error(error.message);
     }
-}
+};
 
 export const fetchCategories = async () => {
     const url = "/categories";
@@ -27,7 +27,7 @@ export const fetchCategories = async () => {
     } catch (error) {
         console.error(error.message);
     }
-}
+};
 
 export const fetchCategory = async (id) => {
     // Ensure that we have an actual number to use
@@ -47,7 +47,7 @@ export const fetchCategory = async (id) => {
     } catch (error) {
         console.error(error.message);
     }
-}
+};
 
 export const fetchCategoryStatistics = async (main, sub) => {
     console.log(main, sub);
