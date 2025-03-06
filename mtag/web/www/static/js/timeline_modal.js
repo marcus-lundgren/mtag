@@ -1,6 +1,6 @@
 import { getHourAndMinuteAndSecondText, millisecondsToTimeString,
-         dateToISOString} from "./timeline_utilities.js";
-import { fetchCategories } from "./api_client.js";
+         dateToISOString, secondsToTimeString } from "./timeline_utilities.js";
+import { fetchCategories, fetchCategoryStatistics } from "./api_client.js";
 
 const modalCategoriesList = document.getElementById("modal-categories-list");
 const modalDateSpan = document.getElementById("modal-date-span");
@@ -10,6 +10,7 @@ const modalDeleteButton = document.getElementById("modal-delete-button");
 const createTaggedEntryModal = document.getElementById("create-tagged-entry-modal");
 const editTaggedEntryModal = document.getElementById("edit-tagged-entry-modal");
 const enableDeleteButtonCheckbox = document.getElementById("enable-delete-button");
+const previouslyTaggedTimeSpan = document.getElementById("previously-tagged-time");
 
 const newTaggedEntryBoundaries = { start: undefined, stop: undefined };
 const editTaggedEntryProperties = { id: undefined };
@@ -93,7 +94,18 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
         onEditPerformed();
     });
 
-    modalInput.addEventListener("input", (event) => {
+    modalInput.addEventListener("input", async (event) => {
+        // Render the previously total tagged time
+        const [main, sub] = parseInput(modalInput.value);
+        console.log(main, sub);
+        if (0 < main.length) {
+            const seconds = await fetchCategoryStatistics(main, sub);
+            previouslyTaggedTimeSpan.innerText = secondsToTimeString(seconds);
+        } else {
+            previouslyTaggedTimeSpan.innerText = "-";
+        }
+
+        // Filter the list of categories based on the input
         const currentInput = modalInput.value.toLowerCase();
         modalSaveButton.disabled = currentInput.length === 0;
         for (const option of modalCategoriesList.options) {
@@ -108,13 +120,13 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
             return;
         }
 
-        const mainToUse = splitInput[0];
+        const mainToUse = splitInput[0].trim();
         if (mainToUse.length === 0) {
             alert("Main category is empty");
             return;
         }
 
-        const subToUse = splitInput.length === 1 ? null : splitInput[1];
+        const subToUse = splitInput.length === 1 ? null : splitInput[1].trim();
         if (subToUse !== null && subToUse.length === 0) {
             alert("Sub category is empty");
             return;
@@ -145,4 +157,13 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
     enableDeleteButtonCheckbox.addEventListener("change", (event) => {
         modalDeleteButton.disabled = !enableDeleteButtonCheckbox.checked;
     });
-}
+};
+
+const parseInput = (input) => {
+    const splitInput = input.split(">>").map((s) => s.trim());
+    if (splitInput.length > 2) {
+        throw new Exception("Too many '>>' in string");
+    }
+
+    return [splitInput[0], (splitInput.length === 1 ? "" : splitInput[1])];
+};

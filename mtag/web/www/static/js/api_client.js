@@ -48,3 +48,37 @@ export const fetchCategory = async (id) => {
         console.error(error.message);
     }
 }
+
+export const fetchCategoryStatistics = async (main, sub) => {
+    console.log(main, sub);
+    const params = new URLSearchParams();
+    const mainToUse = main.trim();
+    if (mainToUse.length === 0) {
+        alert("The given main is empty or whitespace!");
+        return;
+    }
+
+    params.append("main", mainToUse);
+
+    if (sub) {
+        let subToUse = sub.trim();
+        if (subToUse.length === 0) {
+            alert("The given main is empty or whitespace!");
+            return;
+        }
+
+        params.append("sub", subToUse);
+    }
+
+    const url = "/category/statistics?" + params;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status ${response.status}`);
+        }
+
+        return (await response.json()).seconds;
+    } catch (error) {
+        console.error(error.message);
+    }
+};

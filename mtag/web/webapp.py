@@ -4,10 +4,11 @@ import re
 import os
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import parse_qs
 
 from ..entity import Category, LoggedEntry, ApplicationWindow, Application, TaggedEntry, ActivityEntry
 from ..helper import database_helper
-from ..helper.statistics_helper import get_total_category_tagged_time_by_id
+from ..helper.statistics_helper import get_total_category_tagged_time_by_id, get_total_category_tagged_time
 from ..repository import CategoryRepository, LoggedEntryRepository, TaggedEntryRepository, ActivityEntryRepository
 
 date_validator = re.compile(r"\d\d\d\d-\d\d-\d\d")
@@ -83,6 +84,17 @@ class RequestHandler(BaseHTTPRequestHandler):
             with database_helper.create_connection() as conn:
                 categories = CategoryRepository().get_all(conn=conn)
             self._set_json_response([{"main": category_to_json(main), "children": [category_to_json(c) for c in children]} for (main, children) in categories])
+        elif self.path.startswith(("/category/statistics")):
+            params = parse_qs(self.path.split("?")[1])
+
+            if "main" in params:
+                main = params["main"][0]
+                sub = params["sub"][0] if "sub" in params else None
+                seconds = get_total_category_tagged_time(main_name=main, sub_name=sub)
+            else:
+                raise Exception("Statistics requires main and optional sub")
+
+            self._set_json_response({"seconds": seconds})
         elif self.path.startswith("/category/"):
             db_id = self.path[len("/category/"):]
             if not db_id.isdigit():
