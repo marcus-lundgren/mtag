@@ -99,10 +99,13 @@ class RequestHandler(BaseHTTPRequestHandler):
             db_id = self.path[len("/category/"):]
             throw_if_not_digit(db_id)
 
+            category_repository = CategoryRepository()
             with database_helper.create_connection() as conn:
-                category = CategoryRepository().get(conn=conn, db_id=db_id)
+                category = category_repository.get(conn=conn, db_id=db_id)
+                subs = category_repository.get_all_subs(conn=conn, db_id=db_id)
             json = category_to_json(category)
             json["seconds"] = get_total_category_tagged_time_by_id(category.db_id)
+            json["has_subs"] = len(subs) > 0
             self._set_json_response(json)
         else:
             self._set_not_found_response()
@@ -144,8 +147,31 @@ class RequestHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             body = self.rfile.read(content_length)
             data = json.loads(body.decode("utf-8"))
-            print(data)
-            raise Exception("NOT IMPLEMENTED")
+
+            db_id = data["id"]
+            name = data["name"].strip()
+            url = data["url"].strip()
+            parent_id = data["parentId"]
+
+            throw_if_not_digit(db_id)
+            if len(name) == 0:
+                raise Exception("Name is not allowed to be empty")
+
+            if parent_id is not None:
+                throw_if_not_digit(parent_id)
+
+                # Ensure that we aren't a main category with sub categories
+                with database_helper.create_connection() as conn:
+                    subs = CategoryRepository().get_all_subs(conn=conn, db_id=db_id)
+                if len(subs) > 0:
+                    raise Exception("Cannot change parent of a category with existing sub categories")
+
+            category = Category(db_id=db_id, name=name, url=url, parent_id=parent_id)
+            with database_helper.create_connection() as conn:
+                CategoryRepository().update(conn=conn, category=category)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
 
     def do_DELETE(self):
         print("DELETE called")

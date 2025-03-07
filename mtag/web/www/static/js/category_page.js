@@ -20,6 +20,7 @@ const updateCategoryDetails = async (categoryId) => {
     changeNameCheckbox.checked = false;
     categoryUrlInput.value = category.url;
     changeParentSelect.value = category.parent_id ?? -1;
+    changeParentSelect.disabled = category.has_subs;
     taggedTime.innerText = secondsToTimeString(category.seconds);
 }
 
@@ -108,12 +109,19 @@ const setupListeners = () => {
         categoryNameInput.disabled = !changeNameCheckbox.checked;
     });
 
-    saveCategoryButton.addEventListener("click", (event) => {
+    saveCategoryButton.addEventListener("click", async (event) => {
         const databaseId = subList.value;
         const name = categoryNameInput.value;
         const url = categoryUrlInput.value;
-        const parentId = changeParentSelect.value;
-        fetchUpdateTaggedEntry(databaseId, name, url, parentId);
+        let parentId = changeParentSelect.value;
+
+        // No parent selected. Set the id to NULL
+        if (parentId === "-1") {
+            parentId = null;
+        }
+
+        await fetchUpdateTaggedEntry(databaseId, name, url, parentId);
+        window.location.reload();
     });
 
     categoryNameInput.addEventListener("input", (event) => {

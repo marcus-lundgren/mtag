@@ -82,7 +82,9 @@ export const fetchCategoryStatistics = async (main, sub) => {
 
 export const fetchUpdateTaggedEntry = async (databaseId, name, url, parentId) => {
     throwIfNotANumber(databaseId);
-    throwIfNotANumber(parentId);
+    if (parentId !== null) {
+        throwIfNotANumber(parentId);
+    }
     const nameToUse = name.trim();
     throwIfEmptyString(nameToUse);
 
