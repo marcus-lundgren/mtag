@@ -97,8 +97,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._set_json_response({"seconds": seconds})
         elif self.path.startswith("/category/"):
             db_id = self.path[len("/category/"):]
-            if not db_id.isdigit():
-                raise Exception(f"Given database_id is not a number")
+            throw_if_not_digit(db_id)
 
             with database_helper.create_connection() as conn:
                 category = CategoryRepository().get(conn=conn, db_id=db_id)
@@ -154,8 +153,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         if self.path.startswith("/taggedentry/"):
             db_id = self.path[len("/taggedentry/"):]
-            if not db_id.isdigit():
-                raise Exception(f"Given database_id is not a number")
+            throw_if_not_digit(db_id)
 
             print("Deleting tagged entry with ID:", db_id)
             with database_helper.create_connection() as conn:
@@ -178,6 +176,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             return f.read()
 
 
+def throw_if_not_digit(num):
+    if not num.isdigit():
+        raise Exception(f"Value '{num}' is not a digit")
 
 def activity_entry_to_json(ae: ActivityEntry):
     return {
