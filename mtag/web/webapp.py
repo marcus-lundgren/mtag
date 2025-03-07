@@ -138,9 +138,15 @@ class RequestHandler(BaseHTTPRequestHandler):
                     main_name=data["main"],
                     sub_name=data["sub"])
                 TaggedEntryRepository().insert(conn=conn, tagged_entry=tagged_entry)
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html")
-        self.end_headers()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+        elif self.path == "/taggedentry/edit":
+            content_length = int(self.headers['Content-Length'])
+            body = self.rfile.read(content_length)
+            data = json.loads(body.decode("utf-8"))
+            print(data)
+            raise Exception("NOT IMPLEMENTED")
 
     def do_DELETE(self):
         print("DELETE called")

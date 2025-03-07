@@ -1,4 +1,5 @@
-import { fetchCategories, fetchCategory } from "./api_client.js";
+import { fetchCategories, fetchCategory,
+         fetchUpdateTaggedEntry } from "./api_client.js";
 import { secondsToTimeString } from "./timeline_utilities.js";
 
 const mainList = document.getElementById("main-list");
@@ -8,6 +9,7 @@ const changeNameCheckbox = document.getElementById("change-name-checkbox");
 const categoryUrlInput = document.getElementById("category-url");
 const changeParentSelect = document.getElementById("change-parent-select");
 const taggedTime = document.getElementById("tagged-time");
+const saveCategoryButton = document.getElementById("save-button");
 
 let categoryTuples = undefined;
 
@@ -104,6 +106,19 @@ const setupListeners = () => {
 
     changeNameCheckbox.addEventListener("change", (event) => {
         categoryNameInput.disabled = !changeNameCheckbox.checked;
+    });
+
+    saveCategoryButton.addEventListener("click", (event) => {
+        const databaseId = subList.value;
+        const name = categoryNameInput.value;
+        const url = categoryUrlInput.value;
+        const parentId = changeParentSelect.value;
+        fetchUpdateTaggedEntry(databaseId, name, url, parentId);
+    });
+
+    categoryNameInput.addEventListener("input", (event) => {
+        const value = event.target.value.trim();
+        saveCategoryButton.disabled = value.length === 0;
     });
 };
 

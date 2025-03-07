@@ -31,10 +31,7 @@ export const fetchCategories = async () => {
 
 export const fetchCategory = async (id) => {
     // Ensure that we have an actual number to use
-    if (isNaN(+id)) {
-        alert("The given database id is not a number!");
-        return;
-    }
+    throwIfNotANumber(id);
 
     const url = "/category/" + id;
     try {
@@ -82,3 +79,43 @@ export const fetchCategoryStatistics = async (main, sub) => {
         console.error(error.message);
     }
 };
+
+export const fetchUpdateTaggedEntry = async (databaseId, name, url, parentId) => {
+    throwIfNotANumber(databaseId);
+    throwIfNotANumber(parentId);
+    const nameToUse = name.trim();
+    throwIfEmptyString(nameToUse);
+
+    try {
+        const response = await fetch("/taggedentry/edit", {
+            method: "POST",
+            body: JSON.stringify({
+                id: databaseId,
+                name: nameToUse,
+                url: url.trim(),
+                parentId: parentId
+            }),
+            header: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        });
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
+const throwIfNotANumber = (value) => {
+    if (isNaN(+value)) {
+        const errorMessage = `The given value '${value}' is not a number!`;
+        alert(errorMessage);
+        throw new Error(errorMessage);
+    }
+}
+
+const throwIfEmptyString = (str) => {
+    if (str.trim().length === 0) {
+        const errorMessage = "The given is string is empty or whitespace!";
+        alert(errorMessage);
+        throw new Error(errorMessage);
+    }
+}
