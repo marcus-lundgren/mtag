@@ -162,7 +162,7 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
 const parseInput = (input) => {
     const splitInput = input.split(">>").map((s) => s.trim());
     if (splitInput.length > 2) {
-        throw new Exception("Too many '>>' in string");
+        throw new Error("Too many '>>' in string");
     }
 
     return [splitInput[0], (splitInput.length === 1 ? "" : splitInput[1])];
