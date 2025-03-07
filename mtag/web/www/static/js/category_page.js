@@ -9,6 +9,8 @@ const categoryUrlInput = document.getElementById("category-url");
 const changeParentSelect = document.getElementById("change-parent-select");
 const taggedTime = document.getElementById("tagged-time");
 
+let categoryTuples = undefined;
+
 const updateCategoryDetails = async (categoryId) => {
     const category = await fetchCategory(categoryId);
     categoryNameInput.disabled = true;
@@ -19,38 +21,17 @@ const updateCategoryDetails = async (categoryId) => {
     taggedTime.innerText = secondsToTimeString(category.seconds);
 }
 
-const addSubOption = (sub) => {
+const addSubOption = (name, databaseId) => {
     let option = document.createElement("option");
-    option.text = sub.name;
-    option.value = sub.db_id;
-    option.addEventListener("click", async (event) => {
-        await updateCategoryDetails(event.target.value);
-    });
+    option.text = name;
+    option.value = databaseId;
     subList.add(option);
 }
 
-const addMainOption = (main, subs) => {
+const addMainOption = (main) => {
     let option = document.createElement("option");
     option.text = main.name;
     option.value = main.db_id;
-    option.addEventListener("click", () => {
-        subList.options.length = 0;
-
-        // TODO - Fix this hack?
-        main.name = "[Main]";
-        addSubOption(main);
-
-        // Select the main from the subs list
-        subList.value = main.db_id;
-
-        // Update the details to show the main's information
-        updateCategoryDetails(main.db_id);
-
-        // Add the subs
-        for (const sub of subs) {
-            addSubOption(sub);
-        }
-    });
     mainList.add(option);
 };
 
@@ -69,15 +50,58 @@ const callFetchCategories = async () => {
     // Add an "empty" option
     addParentChoiceOption("", -1);
 
-    const json = await fetchCategories();
-    for (const categoryTuple of json) {
+    categoryTuples = await fetchCategories();
+    let isFirstMain = true;
+    for (const categoryTuple of categoryTuples) {
         const main = categoryTuple.main;
         addParentChoiceOption(main.name, main.db_id);
-        addMainOption(main, categoryTuple.children);
+        addMainOption(main);
+
+        if (isFirstMain) {
+            isFirstMain = false;
+            mainList.value = main.db_id;
+            mainList.dispatchEvent(new Event("change"));
+        }
     }
 };
 
 const setupListeners = () => {
+    mainList.addEventListener("change", (event) => {
+        const mainDatabaseId = +mainList.value;
+        let tuple = undefined;
+        for (const t of categoryTuples) {
+            if (t.main.db_id === mainDatabaseId) {
+                tuple = t;
+                break;
+            }
+        }
+
+        if (tuple === undefined) {
+            throw new Error(`Unable to find chosen main with id = ${mainDatabaseId}`);
+        }
+
+        subList.options.length = 0;
+
+        // Add the main as a sub option
+        addSubOption("[Main]", mainDatabaseId);
+
+        // Select the main from the subs list
+        subList.value = mainDatabaseId;
+
+        // Update the details to show the main's information
+        updateCategoryDetails(mainDatabaseId);
+
+        // Add the subs
+        for (const sub of tuple.children) {
+            addSubOption(sub.name, sub.db_id);
+        }
+    });
+
+    subList.addEventListener("change", (event) => {
+        const databaseId = +subList.value;
+        updateCategoryDetails(databaseId);
+    });
+
     changeNameCheckbox.addEventListener("change", (event) => {
         categoryNameInput.disabled = !changeNameCheckbox.checked;
     });
