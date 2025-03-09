@@ -2,15 +2,17 @@ import { getHourAndMinuteAndSecondText, millisecondsToTimeString,
          dateToISOString, secondsToTimeString } from "./timeline_utilities.js";
 import { fetchCategories, fetchCategoryStatistics } from "./api_client.js";
 
+const createTaggedEntryModal = document.getElementById("create-tagged-entry-modal");
 const modalCategoriesList = document.getElementById("modal-categories-list");
 const modalDateSpan = document.getElementById("modal-date-span");
 const modalInput = document.getElementById("modal-input");
 const modalSaveButton = document.getElementById("modal-store");
-const modalDeleteButton = document.getElementById("modal-delete-button");
-const createTaggedEntryModal = document.getElementById("create-tagged-entry-modal");
+const previouslyTaggedTimeSpan = document.getElementById("previously-tagged-time");
+
 const editTaggedEntryModal = document.getElementById("edit-tagged-entry-modal");
 const enableDeleteButtonCheckbox = document.getElementById("enable-delete-button");
-const previouslyTaggedTimeSpan = document.getElementById("previously-tagged-time");
+const modalDeleteButton = document.getElementById("modal-delete-button");
+const modalEditCancelButton = document.getElementById("modal-edit-cancel");
 
 const newTaggedEntryBoundaries = { start: undefined, stop: undefined };
 const editTaggedEntryProperties = { id: undefined };
@@ -156,6 +158,10 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
 
     enableDeleteButtonCheckbox.addEventListener("change", (event) => {
         modalDeleteButton.disabled = !enableDeleteButtonCheckbox.checked;
+    });
+
+    modalEditCancelButton.addEventListener("click", () => {
+        editTaggedEntryModal.close();
     });
 };
 
