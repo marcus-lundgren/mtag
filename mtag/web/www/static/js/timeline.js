@@ -107,7 +107,7 @@ export class TimelineHelper {
 
         if (zoomingIn) {
             // Do not zoom in too far
-            if (zoomStepInMilliseconds < MIN_BOUNDARY) {
+            if (this.boundaryDelta < MIN_BOUNDARY) {
                 return;
             }
 
