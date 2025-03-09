@@ -116,7 +116,7 @@ const throwIfNotANumber = (value) => {
 
 const throwIfEmptyString = (str) => {
     if (str.trim().length === 0) {
-        const errorMessage = "The given is string is empty or whitespace!";
+        const errorMessage = "The given string is empty or whitespace!";
         alert(errorMessage);
         throw new Error(errorMessage);
     }
