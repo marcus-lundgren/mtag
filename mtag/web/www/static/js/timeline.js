@@ -3,7 +3,7 @@ import { getHourAndMinuteText, getHourAndMinuteAndSecondText, getIntervalString 
 const ZOOM_FACTOR = 0.03;
 const MOVE_FACTOR = 0.05;
 const TIMELINE_SIDE_PADDING = 29;
-const MIN_BOUNDARY = 5 * 1000;
+const MIN_BOUNDARY =  5 * 60 * 1000;
 const MAX_BOUNDARY = (23 * 3600 + 59 * 60 + 59) * 1000;
 
 const TIMELINE_HEIGHT = 30;
