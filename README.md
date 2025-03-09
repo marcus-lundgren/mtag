@@ -10,10 +10,9 @@ GPLv3.
 
 ## Requirements
 
-The supported platforms are Linux (X11 and Logind are required) and Windows (only tested on 10, may work on older versions).
+The supported platforms are Linux (X11 and Logind are required) and Windows (only tested on 10 and 11, may work on older versions).
 
 * Python 3.6 or later (use the x86_64 variant if running a 64 bit OS)
-* PyGtk 3.0 (https://pygobject.readthedocs.io/en/latest/getting_started.html)
 * Linux
   * Logind (to determine screen lock state)
   * X11 (to determine active window and its PID)
@@ -46,4 +45,4 @@ Ensure that the `start_watcher` is executed at logon. The correct watcher implem
 
 ### MTag
 
-Run `start_mtag` and enjoy.
+Run `start_mtag` and brows to the outputted URL, which is hosted on localhost.
