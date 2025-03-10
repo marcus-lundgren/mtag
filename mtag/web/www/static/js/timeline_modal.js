@@ -25,7 +25,7 @@ function optionDblClickListener(event) {
 }
 
 function addOptionToCategoryList(categoryText) {
-    let option = document.createElement("option");
+    const option = document.createElement("option");
     option.addEventListener("dblclick", optionDblClickListener);
     option.text = categoryText;
     modalCategoriesList.add(option);
