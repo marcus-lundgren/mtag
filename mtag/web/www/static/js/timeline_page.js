@@ -422,7 +422,11 @@ function updateTables() {
         if (url !== undefined) {
             // TODO - Do this server side instead?
             url = url.replace("{{date}}", dateToDateString(currentTimelineDate.date));
-            urlCell.innerHTML = `<a href="${url}" target="_blank">${url}</a>`
+            const linkElement = document.createElement("a");
+            linkElement.innerText = url;
+            linkElement.href = url;
+            linkElement.target = "_blank";
+            urlCell.append(linkElement);
         }
     };
 
