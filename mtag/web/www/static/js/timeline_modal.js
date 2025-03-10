@@ -99,7 +99,6 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
     modalInput.addEventListener("input", async (event) => {
         // Render the previously total tagged time
         const [main, sub] = parseInput(modalInput.value);
-        console.log(main, sub);
         if (0 < main.length) {
             const seconds = await fetchCategoryStatistics(main, sub);
             previouslyTaggedTimeSpan.innerText = secondsToTimeString(seconds);

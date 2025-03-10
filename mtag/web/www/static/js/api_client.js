@@ -47,7 +47,6 @@ export const fetchCategory = async (id) => {
 };
 
 export const fetchCategoryStatistics = async (main, sub) => {
-    console.log(main, sub);
     const params = new URLSearchParams();
     const mainToUse = main.trim();
     if (mainToUse.length === 0) {
