@@ -167,10 +167,9 @@ function setUpListeners() {
             const stopDate = initialDate < mouseDate ? mouseDate : initialDate;
 
             timelineHelper.setBoundaries(startDate, stopDate);
-            updateTimelineEntries();
-            updateTimelineProperties(timelineHelper);
-            renderTimeline(timelineHelper);
             overlayProperties.zoomState = undefined;
+            callRenderTimeline();
+            renderOverlay(timelineHelper)
         } else if (overlayProperties.taggingState !== undefined) {
             const taggingState = overlayProperties.taggingState;
 
