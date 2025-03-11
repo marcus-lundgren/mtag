@@ -98,7 +98,7 @@ export const renderMinimap = () => {
     const canvasWidth = minimapCanvas.width;
     const canvasHeight = minimapCanvas.height;
     const entriesHeight = canvasHeight / 5;
-    const taggedEntriesStartY = entriesHeight * 1;
+    const taggedEntriesStartY = entriesHeight * 0.5;
     const loggedEntriesStartY = entriesHeight * 3.5;
 
     const ctx = minimapCanvas.getContext("2d");
@@ -111,9 +111,9 @@ export const renderMinimap = () => {
     // - Set up font related things
     const startOfTimeTimeline = new Date(minimapProperties.startOfDate);
 
-    ctx.font = "20px Arial";
+    ctx.font = "16px Arial";
     ctx.textAlign = "center";
-    ctx.textBaseline = "top";
+    ctx.textBaseline = "middle";
     ctx.strokeStyle = "#B3B3B3";
     const timelineStop = new Date(minimapProperties.endOfDate);
     const timeTextStartY = canvasHeight / 2;
