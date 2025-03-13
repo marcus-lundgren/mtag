@@ -49,9 +49,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def _set_not_found_response(self) -> None:
         self.send_response(404)
+        self.end_headers()
 
     def _set_bad_request_response(self) -> None:
         self.send_response(400)
+        self.end_headers()
 
     def do_GET(self):
         # Static files
@@ -175,6 +177,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
             self.end_headers()
+        else:
+            self._set_not_found_response()
 
     def do_DELETE(self):
         print("DELETE called")
