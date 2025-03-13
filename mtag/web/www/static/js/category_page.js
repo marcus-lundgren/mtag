@@ -1,5 +1,5 @@
-import { fetchCategories, fetchCategory,
-         fetchUpdateTaggedEntry } from "./api_client.js";
+import { fetchCategories, fetchCategory, fetchUpdateTaggedEntry,
+         fetchDeleteCategory } from "./api_client.js";
 import { secondsToTimeString } from "./timeline_utilities.js";
 
 const mainList = document.getElementById("main-list");
@@ -10,6 +10,8 @@ const categoryUrlInput = document.getElementById("category-url");
 const changeParentSelect = document.getElementById("change-parent-select");
 const taggedTime = document.getElementById("tagged-time");
 const saveCategoryButton = document.getElementById("save-button");
+const deleteButton = document.getElementById("delete-button");
+const enableDeleteButtonCheckbox = document.getElementById("allow-delete-checkbox");
 
 let categoryTuples = undefined;
 
@@ -22,6 +24,11 @@ const updateCategoryDetails = async (categoryId) => {
     changeParentSelect.value = category.parent_id ?? -1;
     changeParentSelect.disabled = category.has_subs;
     taggedTime.innerText = secondsToTimeString(category.seconds);
+
+    const deleteIsPossible = !category.has_subs && category.seconds === 0;
+    enableDeleteButtonCheckbox.disabled = !deleteIsPossible;
+    enableDeleteButtonCheckbox.checked = false;
+    deleteButton.disabled = true;
 }
 
 const addSubOption = (name, databaseId) => {
@@ -127,6 +134,15 @@ const setupListeners = () => {
     categoryNameInput.addEventListener("input", (event) => {
         const value = event.target.value.trim();
         saveCategoryButton.disabled = value.length === 0;
+    });
+
+    enableDeleteButtonCheckbox.addEventListener("change", (event) => {
+        deleteButton.disabled = !enableDeleteButtonCheckbox.checked;
+    });
+
+    deleteButton.addEventListener("click", async (event) => {
+        await fetchDeleteCategory(subList.value);
+        window.location.reload();
     });
 };
 

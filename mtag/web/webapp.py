@@ -42,6 +42,11 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(string_response.encode("utf-8"))
 
+    def _set_ok_without_content(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+
     def _set_not_found_response(self) -> None:
         self.send_response(404)
 
@@ -140,9 +145,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     main_name=data["main"],
                     sub_name=data["sub"])
                 TaggedEntryRepository().insert(conn=conn, tagged_entry=tagged_entry)
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html")
-                self.end_headers()
+                self._set_ok_without_content()
         elif self.path == "/taggedentry/edit":
             content_length = int(self.headers['Content-Length'])
             body = self.rfile.read(content_length)
@@ -184,9 +187,19 @@ class RequestHandler(BaseHTTPRequestHandler):
             print("Deleting tagged entry with ID:", db_id)
             with database_helper.create_connection() as conn:
                 TaggedEntryRepository().delete(conn=conn, db_id=db_id)
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html")
-        self.end_headers()
+            self._set_ok_without_content()
+        elif self.path.startswith("/category/"):
+            db_id = self.path[len("/category/"):]
+            throw_if_not_digit(db_id)
+
+            print("Deleting category with ID:", db_id)
+            category_repository = CategoryRepository()
+            with database_helper.create_connection() as conn:
+                c = category_repository.get(conn=conn, db_id=db_id)
+                category_repository.delete(conn=conn, category=c)
+            self._set_ok_without_content()
+        else:
+            self._set_not_found_response()
 
     def _html_page_loader(self, page_contents: str) -> str:
         html_base_path = self._get_local_file_path("/www/base.html")

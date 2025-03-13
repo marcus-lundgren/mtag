@@ -26,9 +26,17 @@
     </div>
     <div>
       <span class="category-input-title">Delete category</span>
-      <button type="click" disabled="disabled">Delete</button><input type="checkbox" id="allow-delete-checkbox"  disabled="disabled"/><label for="allow-delete-checkbox">Unlock delete</label>
+      <div style="display: flex; justify-content: space-between">
+        <button type="click" id="delete-button">Delete</button>
+        <div>
+          <input type="checkbox" id="allow-delete-checkbox"/>
+          <label for="allow-delete-checkbox">Unlock delete</label>
+        </div>
+      </div>
     </div>
-    <button type="click" id="save-button">Save</button>
+    <div style="text-align: end">
+      <button style="padding: 10px 20px;" type="click" id="save-button">Save</button>
+    </div>
   </div>
 </div>
 

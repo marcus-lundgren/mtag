@@ -105,6 +105,20 @@ export const fetchUpdateTaggedEntry = async (databaseId, name, url, parentId) =>
     }
 }
 
+export const fetchDeleteCategory = async (id) => {
+    throwIfNotANumber(id);
+
+    const url = "/category/" + id;
+    try {
+        const response = await fetch(url, { method: "DELETE" });
+        if (!response.ok) {
+            throw new Error(`Response status ${response.status}`);
+        }
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
 const throwIfNotANumber = (value) => {
     if (isNaN(+value)) {
         const errorMessage = `The given value '${value}' is not a number!`;
