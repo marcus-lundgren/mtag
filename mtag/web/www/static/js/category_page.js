@@ -1,4 +1,4 @@
-import { fetchCategories, fetchCategory, fetchUpdateTaggedEntry,
+import { fetchCategories, fetchCategory, fetchUpdateCategory,
          fetchDeleteCategory } from "./api_client.js";
 import { secondsToTimeString } from "./timeline_utilities.js";
 
@@ -127,7 +127,7 @@ const setupListeners = () => {
             parentId = null;
         }
 
-        await fetchUpdateTaggedEntry(databaseId, name, url, parentId);
+        await fetchUpdateCategory(databaseId, name, url, parentId);
         window.location.reload();
     });
 
