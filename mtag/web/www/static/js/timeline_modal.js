@@ -1,6 +1,7 @@
 import { getHourAndMinuteAndSecondText, millisecondsToTimeString,
          dateToISOString, secondsToTimeString } from "./timeline_utilities.js";
-import { fetchCategories, fetchCategoryStatistics } from "./api_client.js";
+import { fetchCategories, fetchCategoryStatistics, fetchDeleteTaggedEntry
+       } from "./api_client.js";
 
 const createTaggedEntryModal = document.getElementById("create-tagged-entry-modal");
 const modalCategoriesList = document.getElementById("modal-categories-list");
@@ -76,22 +77,7 @@ export const setUpModalListeners = (onCreateTaggedEntrySaved, onCreateTaggedEntr
     });
 
     modalDeleteButton.addEventListener("click", async (event) => {
-        // Ensure that we have an actual number to use
-        if (isNaN(+editTaggedEntryProperties.id)) {
-            alert("The given database id is not a number!");
-            return;
-        }
-
-        const url = "/taggedentry/" + editTaggedEntryProperties.id;
-        try {
-            const response = await fetch(url, { method: "DELETE" });
-            if (!response.ok) {
-                throw new Error(`Response status ${response.status}`);
-            }
-        } catch (error) {
-            console.error(error.message);
-        }
-
+        await fetchDeleteTaggedEntry(editTaggedEntryProperties.id);
         editTaggedEntryModal.close();
         onEditPerformed();
     });

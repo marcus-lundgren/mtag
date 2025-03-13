@@ -105,6 +105,20 @@ export const fetchUpdateCategory = async (databaseId, name, url, parentId) => {
     }
 }
 
+export const fetchDeleteTaggedEntry = async (id) => {
+    throwIfNotANumber(id);
+
+    const url = "/taggedentry/" + id;
+    try {
+        const response = await fetch(url, { method: "DELETE" });
+        if (!response.ok) {
+            throw new Error(`Response status ${response.status}`);
+        }
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
 export const fetchDeleteCategory = async (id) => {
     throwIfNotANumber(id);
 
