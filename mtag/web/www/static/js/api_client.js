@@ -88,7 +88,7 @@ export const fetchUpdateCategory = async (databaseId, name, url, parentId) => {
     throwIfEmptyString(nameToUse);
 
     try {
-        const response = await fetch("/taggedentry/edit", {
+        const response = await fetch("/category/edit", {
             method: "POST",
             body: JSON.stringify({
                 id: databaseId,

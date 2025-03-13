@@ -146,7 +146,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     sub_name=data["sub"])
                 TaggedEntryRepository().insert(conn=conn, tagged_entry=tagged_entry)
                 self._set_ok_without_content()
-        elif self.path == "/taggedentry/edit":
+        elif self.path == "/category/edit":
             content_length = int(self.headers['Content-Length'])
             body = self.rfile.read(content_length)
             data = json.loads(body.decode("utf-8"))
