@@ -33,12 +33,22 @@ export const setUpMinimapListeners = (setNewTimelineCanvasBoundaries) => {
         setNewTimelineCanvasBoundaries(mouseDate);
     };
 
+    let isMoving = false;
     minimapCanvas.addEventListener("mousedown", (event) => {
+        isMoving = true;
         callSetNewTimelineCanvasBoundaries(event.offsetX);
     });
 
+    minimapCanvas.addEventListener("mouseleave", (event) => {
+        isMoving = false;
+    });
+
+    minimapCanvas.addEventListener("mouseup", (event) => {
+        isMoving = false;
+    });
+
     minimapCanvas.addEventListener("mousemove", (event) => {
-        if (event.buttons === 1) {
+        if (isMoving) {
             callSetNewTimelineCanvasBoundaries(event.offsetX);
         }
     });
