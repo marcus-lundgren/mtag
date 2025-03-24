@@ -11,6 +11,7 @@ const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
 const timelineCanvas = document.getElementById('timeline');
 const datePicker = document.getElementById("date-picker");
+const refreshButton = document.getElementById("refresh");
 
 timelineProperties.canvas = timelineCanvas;
 overlayProperties.canvas = overlayCanvas;
@@ -45,8 +46,15 @@ function callRenderTimeline() {
 }
 
 async function setCurrentDate(newDate) {
-    const startOfDay = newDate;
+    // Ensure that we start at the start of the day
     newDate.setHours(0, 0, 0, 0);
+
+    // Only enable the refresh button if we're on today's date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    refreshButton.disabled = newDate.getTime() !== today.getTime();
+
+    const startOfDay = newDate;
     currentTimelineDate.startOfDate = new Date(startOfDay);
     currentTimelineDate.endOfDate = new Date(startOfDay);
     currentTimelineDate.endOfDate.setHours(23, 59, 59, 0);
@@ -281,6 +289,10 @@ function setUpListeners() {
 
         timelineHelper.setBoundaries(newStart, newStop);
         callRenderTimeline();
+    });
+
+    refreshButton.addEventListener("click", async (event) => {
+        await callFetchEntries();
     });
 
     setUpMinimapListeners((mouseDate) => {
