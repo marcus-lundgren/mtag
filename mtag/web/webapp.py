@@ -20,6 +20,7 @@ file_paths = {
     "/about.html": "www/about.html",
     "/static/js/api_client.js": "www/static/js/api_client.js",
     "/static/js/category_page.js": "www/static/js/category_page.js",
+    "/static/js/datepicker.js": "www/static/js/datepicker.js",
     "/static/js/timeline.js": "www/static/js/timeline.js",
     "/static/js/timeline_minimap.js": "www/static/js/timeline_minimap.js",
     "/static/js/timeline_modal.js": "www/static/js/timeline_modal.js",

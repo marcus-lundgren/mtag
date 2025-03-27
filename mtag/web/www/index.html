@@ -34,11 +34,34 @@
 
 <div style="display: flex; justify-content: space-between;">
   <div id="toolbar">
-    <input id="minus-one-week-button" type="button" value="<< -1 week"></input>
-    <input id="minus-one-day-button"type="button" value="< -1 day"></input>
-    <input id="date-picker" type="date"/>
-    <input id="plus-one-day-button" type="button" value="1 day >"></input>
-    <input id="plus-one-week-button" type="button" value="1 week >>"></input>
+    <div>
+      <input id="minus-one-week-button" type="button" value="<< -1 week"></input>
+      <input id="minus-one-day-button"type="button" value="< -1 day"></input>
+      <button id="date-picker" type="button">[W12] thursday march 27</button>
+      <input id="plus-one-day-button" type="button" value="1 day >"></input>
+      <input id="plus-one-week-button" type="button" value="1 week >>"></input>
+    </div>
+    <div id="calendar-container" style="display: none;">
+      <div id="calendar-controls">
+        <button id="minus-month" type="button">&lt;</button>
+        <div style="display: inline-block;">
+          <span id="chosen-month"></span>
+          <span id="chosen-year"></span>
+        </div>
+        <button id="plus-month" type="button">&gt;</button>
+      </div>
+      <div id="calendar">
+        <span></span>
+        <span class="weekday-header">M</span>
+        <span class="weekday-header">T</span>
+        <span class="weekday-header">W</span>
+        <span class="weekday-header">T</span>
+        <span class="weekday-header">F</span>
+        <span class="weekday-header">S</span>
+        <span class="weekday-header">S</span>
+      </div>
+      <button id="today-button" type="button">Today</button>
+    </div>
   </div>
   <div>
     <button id="refresh" type="button">Refresh</button>

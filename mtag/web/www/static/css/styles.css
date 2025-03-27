@@ -173,3 +173,68 @@ table tbody tr:last-of-type {
     padding-top: 10px;
     font-style: italic;
 }
+
+#calendar-container {
+    display: none;
+    margin: 10px auto;
+    width: 300px;
+    background-color: #EEE;
+    padding: 3px 10px 10px 3px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+#today-button {
+    margin-top: 10px;
+    width: 100%;
+}
+
+#calendar-controls {
+    display: flex;
+    justify-content: space-between;
+}
+
+#calendar-controls > button {
+    width: 30px;
+}
+
+#chosen-date {
+    text-align: center;
+}
+
+#calendar {
+    display: grid;
+    grid-template-columns: repeat(8, auto);
+    width: 100%;
+}
+
+#calendar span {
+    text-align: center;
+}
+
+#calendar .weekday-header {
+    border-bottom: 1px solid black;
+    color: #444;
+}
+
+#calendar .week-num {
+    border-right: 1px solid black;
+    color: orange;
+}
+
+#calendar .day {
+    color: #44A;
+    margin: 2px;
+}
+
+#calendar .selectable {
+    cursor: pointer;
+}
+
+#calendar .selected {
+    background-color: #44A;
+    color: yellow;
+}
+
+#calendar .selectable:hover {
+    background-color: #999;
+}

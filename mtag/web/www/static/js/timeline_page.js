@@ -6,6 +6,7 @@ import { updateMinimapProperties, renderMinimap, setUpMinimapListeners, setMinim
 import { fetchEntries } from "./api_client.js";
 import { showCreateTaggedEntryDialog, setUpModalListeners,
          showEditTaggedEntryDialog } from "./timeline_modal.js";
+import { initDatepicker, addDaysToCurrentDate } from "./datepicker.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -63,15 +64,12 @@ async function setCurrentDate(newDate) {
     currentTimelineDate.stop = new Date(currentTimelineDate.endOfDate);
     timelineHelper.update();
 
-    datePicker.value = dateToDateString(startOfDay);
+    const weekdayText = startOfDay.toLocaleString("en-us", { weekday: "short" });
+    const monthText = startOfDay.toLocaleString("en-us", { month: "short" });
+    const dayText = startOfDay.toLocaleString("en-us", { day: "numeric" });
+    datePicker.innerText = `[??] ${weekdayText} ${monthText} ${dayText}`;
     updateMinimapProperties(currentTimelineDate);
     await callFetchEntries();
-}
-
-async function addDaysToCurrentDate(daysToAdd) {
-    const newDate = new Date(currentTimelineDate.date);
-    newDate.setDate(newDate.getDate() + daysToAdd);
-    await setCurrentDate(newDate);
 }
 
 function updateTimelineEntries() {
@@ -234,15 +232,9 @@ function setUpListeners() {
         renderOverlay(timelineHelper);
     });
 
-    datePicker.addEventListener("change", async (event) => {
-        let newDate = datePicker.valueAsDate;
-
-        // If NULL, then default to the current date
-        if (newDate === null) {
-            newDate = new Date();
-            newDate.setHours(0, 0, 0, 0);
-        }
-        await setCurrentDate(newDate);
+    const calendarContainer = document.getElementById("calendar-container");
+    datePicker.addEventListener("click", async (event) => {
+        calendarContainer.style.display = calendarContainer.style.display === "none" ? "block" : "none";
     });
 
     const dateButtonsSetup = {
@@ -447,4 +439,4 @@ function updateTables() {
 }
 
 setUpListeners();
-setCurrentDate(new Date());
+initDatepicker(new Date(), async (newDate) => await setCurrentDate(newDate));
