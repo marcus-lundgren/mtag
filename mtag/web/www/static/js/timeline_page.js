@@ -67,7 +67,7 @@ async function setCurrentDate(newDate) {
     const weekdayText = startOfDay.toLocaleString("en-us", { weekday: "short" });
     const monthText = startOfDay.toLocaleString("en-us", { month: "short" });
     const dayText = startOfDay.toLocaleString("en-us", { day: "numeric" });
-    datePicker.innerText = `[??] ${weekdayText} ${monthText} ${dayText}`;
+    datePicker.innerText = `[W ??] ${weekdayText} ${monthText} ${dayText}`;
     updateMinimapProperties(currentTimelineDate);
     await callFetchEntries();
 }
