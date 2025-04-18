@@ -93,7 +93,7 @@ export const getWeekNum = (chosenDate) => {
     const januaryForth = new Date(chosenDate.getFullYear(), 0, 4);
     const mondayOfJanuaryForthWeek = getMondayOfDatesWeek(januaryForth);
     const mondayOfChosenDateWeek = getMondayOfDatesWeek(chosenDate);
-    const weekNum = 1 + Math.ceil((mondayOfChosenDateWeek - mondayOfJanuaryForthWeek) / (1000 * 60 * 60 * 24 * 7));
+    const weekNum = 1 + Math.round((mondayOfChosenDateWeek - mondayOfJanuaryForthWeek) / (1000 * 60 * 60 * 24 * 7));
 
     // We've calculated that we are on the week before week one.
     // Calculate the week of the last day of the previous year.
