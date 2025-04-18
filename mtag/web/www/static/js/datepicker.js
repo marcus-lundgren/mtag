@@ -159,8 +159,8 @@ export const renderDatepicker = () => {
 
             let currentWeekNum = firstWeekNum + weekNumIndex;
 
-            // Ensure that we actually are on week 53 instead of week 1 of next year
-            if (currentWeekNum === 53) {
+            // Ensure that we actually are on weeks above 52
+            if (currentWeekNum > 52) {
                 const currentMonday = new Date(firstDateOfMonth);
                 currentMonday.setDate(currentMonday.getDate() + weekNumIndex * 7);
                 currentWeekNum = getWeekNum(currentMonday);
