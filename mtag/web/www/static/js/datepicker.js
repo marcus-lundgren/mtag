@@ -78,8 +78,48 @@ export const addDaysToCurrentDate = (daysToAdd) => {
     chosenDateHasBeenUpdated();
 };
 
-function getWeekdayOffset(chosenDate) {
-    const worseIndex = new Date(chosenDate.getFullYear(), chosenDate.getMonth(), 1).getDay();
+function getMondayOfDatesWeek(date) {
+    let mondayOfDateWeek = new Date(date);
+    const weekdayOfDate = date.getDay();
+    if (weekdayOfDate !== 1) {
+        const daysToSubtract = weekdayOfDate !== 0 ? weekdayOfDate - 1 : 6;
+        mondayOfDateWeek.setDate(mondayOfDateWeek.getDate() - daysToSubtract);
+    }
+
+    return mondayOfDateWeek;
+}
+
+export const getWeekNum = (chosenDate) => {
+    const januaryForth = new Date(chosenDate.getFullYear(), 0, 4);
+    const mondayOfJanuaryForthWeek = getMondayOfDatesWeek(januaryForth);
+    const mondayOfChosenDateWeek = getMondayOfDatesWeek(chosenDate);
+    const weekNum = 1 + Math.ceil((mondayOfChosenDateWeek - mondayOfJanuaryForthWeek) / (1000 * 60 * 60 * 24 * 7));
+
+    // We've calculated that we are on the week before week one.
+    // Calculate the week of the last day of the previous year.
+    if (weekNum < 1) {
+        const lastDateOfPreviousYear = new Date(chosenDate.getFullYear() - 1, 11, 31);
+        return getWeekNum(lastDateOfPreviousYear);
+    }
+
+    // No special case needs to be made if aren't on week 53
+    if (weekNum < 53) {
+        return weekNum;
+    }
+
+    // We need to determine if we actually are on week 53 or if we are on week 1.
+    const lastDateOfDecember = new Date(chosenDate.getFullYear(), 11, 31);
+    const lastDateOfDecemberDay = lastDateOfDecember.getDay();
+    const lastWeekContainsNextJanuaryForth = lastDateOfDecemberDay !== 0 && lastDateOfDecemberDay < 4;
+    return lastWeekContainsNextJanuaryForth ? 1 : weekNum;
+}
+
+function getFirstDateOfMonth(chosenDate) {
+    return new Date(chosenDate.getFullYear(), chosenDate.getMonth(), 1);
+}
+
+function getWeekdayOffset(date) {
+    const worseIndex = date.getDay();
     return worseIndex === 0 ? 6 : worseIndex - 1;
 }
 
@@ -91,7 +131,9 @@ export const renderDatepicker = () => {
     console.log("Rendering: ", chosenDate);
     chosenYearSpan.innerText = chosenDate.getFullYear();
     chosenMonthSpan.innerText = chosenDate.toLocaleString("en-us", { month: "long" });
-    const firstDayOffset = getWeekdayOffset(chosenDate);
+    const firstDateOfMonth = getFirstDateOfMonth(chosenDate);
+    const firstWeekNum = getWeekNum(firstDateOfMonth);
+    const firstDayOffset = getWeekdayOffset(firstDateOfMonth);
     const numberOfDaysInMonth = getNumberOfDaysInMonth(chosenDate);
 
     for (const square of daySquares) {
@@ -108,8 +150,19 @@ export const renderDatepicker = () => {
         const normalizedIndex = i === 0 ? 0 : i - (7 - firstDayOffset) + 7;
 
         if (normalizedIndex % 7 === 0) {
-            const weekNum = weekNumSquares[normalizedIndex / 7];
-            weekNum.innerText = 1 + (normalizedIndex / 7);
+            const weekNumIndex = normalizedIndex / 7;
+            const weekNumSquare = weekNumSquares[weekNumIndex];
+
+            let currentWeekNum = firstWeekNum + weekNumIndex;
+
+            // Ensure that we actually are on week 53 instead of week 1 of next year
+            if (currentWeekNum === 53) {
+                const currentMonday = new Date(firstDateOfMonth);
+                currentMonday.setDate(currentMonday.getDate() + weekNumIndex * 7);
+                currentWeekNum = getWeekNum(currentMonday);
+            }
+
+            weekNumSquare.innerText = currentWeekNum;
         }
 
         const daySquare = daySquares[daySquareIndex];

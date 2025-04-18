@@ -6,7 +6,7 @@ import { updateMinimapProperties, renderMinimap, setUpMinimapListeners, setMinim
 import { fetchEntries } from "./api_client.js";
 import { showCreateTaggedEntryDialog, setUpModalListeners,
          showEditTaggedEntryDialog } from "./timeline_modal.js";
-import { initDatepicker, addDaysToCurrentDate } from "./datepicker.js";
+import { initDatepicker, addDaysToCurrentDate, getWeekNum } from "./datepicker.js";
 
 const canvasContainer = document.getElementById("canvas-container");
 const overlayCanvas = document.getElementById('overlay');
@@ -67,7 +67,7 @@ async function setCurrentDate(newDate) {
     const weekdayText = startOfDay.toLocaleString("en-us", { weekday: "short" });
     const monthText = startOfDay.toLocaleString("en-us", { month: "short" });
     const dayText = startOfDay.toLocaleString("en-us", { day: "numeric" });
-    datePicker.innerText = `[W ??] ${weekdayText} ${monthText} ${dayText}`;
+    datePicker.innerText = `[W ${getWeekNum(newDate)}] ${weekdayText} ${monthText} ${dayText}`;
     updateMinimapProperties(currentTimelineDate);
     await callFetchEntries();
 }
