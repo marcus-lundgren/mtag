@@ -143,6 +143,10 @@ export const renderDatepicker = () => {
         square.classList.remove("selected");
     }
 
+    for (const weekSquare of weekNumSquares) {
+        weekSquare.innerText = "";
+    }
+
     const chosenDay = chosenDate.getDate();
     for (let i = 0; i < numberOfDaysInMonth; ++i) {
         const day = i + 1;
