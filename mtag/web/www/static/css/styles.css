@@ -245,6 +245,11 @@ table tbody tr:last-of-type {
     color: yellow;
 }
 
+#calendar span.selected:hover {
+    background-color: yellow;
+    color: #44A;
+}
+
 #calendar .selectable:hover {
     background-color: #CCF;
 }
