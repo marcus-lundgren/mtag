@@ -232,6 +232,7 @@ table tbody tr:last-of-type {
 #calendar .day {
     color: #44A;
     border: 1px solid white;
+    background-color: #AAA;
 }
 
 #calendar .selectable {
