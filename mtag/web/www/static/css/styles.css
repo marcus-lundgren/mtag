@@ -180,11 +180,13 @@ table tbody tr:last-of-type {
 
 #calendar-container {
     display: none;
-    margin: 10px auto;
+    position: absolute;
+    margin: 10px auto auto 80px;
     width: 300px;
     background-color: #EEE;
-    padding: 3px 10px 10px 3px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    padding: 3px 8px 8px 8px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 1);
+    z-index: 100;
 }
 
 #today-button {
@@ -209,11 +211,11 @@ table tbody tr:last-of-type {
     display: grid;
     grid-template-columns: repeat(8, auto);
     width: 100%;
+    margin-top: 10px;
 }
 
 #calendar span {
     text-align: center;
-    margin: 2px;
 }
 
 #calendar .weekday-header {
@@ -224,14 +226,17 @@ table tbody tr:last-of-type {
 #calendar .week-num {
     border-right: 1px solid black;
     color: orange;
+    background-color: #222;
 }
 
 #calendar .day {
     color: #44A;
+    border: 1px solid white;
 }
 
 #calendar .selectable {
     cursor: pointer;
+    background-color: #AAF;
 }
 
 #calendar .selected {
@@ -240,5 +245,5 @@ table tbody tr:last-of-type {
 }
 
 #calendar .selectable:hover {
-    background-color: #999;
+    background-color: #CCF;
 }
