@@ -528,7 +528,7 @@ export const renderOverlay = (timelineHelper) => {
     const rectangleWidth = maxWidth + 5 * 2;
     const rectangleHeight = sumOfAllHeights + LINE_SPACING * (renderTexts.length - 1) + 5 * 2;
 
-    const rectangleX = Math.min(mouseX + 10, canvasWidth - rectangleWidth);
+    const rectangleX = Math.min(mouseX + 10, Math.max(canvasWidth - rectangleWidth, 0));
     const rectangleY = Math.min(mouseY + 10, canvasHeight - rectangleHeight);
 
     ctx.fillStyle = "rgba(75, 75, 175, 0.75)";
