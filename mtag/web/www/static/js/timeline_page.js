@@ -109,12 +109,13 @@ function setUpListeners() {
         renderTimeline(timelineHelper);
     }).observe(canvasContainer);
 
-    overlayCanvas.addEventListener("mousedown", (event) => {
+    overlayCanvas.addEventListener("mousedown", async (event) => {
         // Only handle primary button presses
         if (event.buttons !== 1) {
             return;
         }
 
+        await overlayCanvas.requestPointerLock();
         const isZooming = event.shiftKey;
         overlayProperties.keptTaggingStateForDblClick = undefined;
 
@@ -159,14 +160,25 @@ function setUpListeners() {
     });
 
     overlayCanvas.addEventListener("mousemove", (event) => {
-        updateOverlayProperties(event.offsetX, event.offsetY, timelineHelper);
+        let newX = event.offsetX;
+        let newY = event.offsetY;
+
+        // We are currently locking the pointer. Use the movement properties
+        // in conjunction with the previously saved mouse value.
+        if (document.pointerLockElement === overlayCanvas) {
+            newX = overlayProperties.mouseX + event.movementX;
+            newY = overlayProperties.mouseY + event.movementY;
+        }
+
+        updateOverlayProperties(newX, newY, timelineHelper);
         renderOverlay(timelineHelper);
     });
 
     overlayCanvas.addEventListener("mouseup", (event) => {
+        document.exitPointerLock();
         if (overlayProperties.zoomState !== undefined) {
             const zoomState = overlayProperties.zoomState;
-            const mouseDate = timelineHelper.pixelToDate(event.offsetX);
+            const mouseDate = timelineHelper.pixelToDate(overlayProperties.mouseX);
             const initialDate = timelineHelper.pixelToDate(zoomState.initialX);
 
             const startDate = initialDate < mouseDate ? initialDate : mouseDate;

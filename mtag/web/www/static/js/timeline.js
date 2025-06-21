@@ -331,7 +331,8 @@ export const renderTimeline = (timelineHelper) => {
 }
 
 export const updateOverlayProperties = (mouseX, mouseY, timelineHelper) => {
-    overlayProperties.mouseX = mouseX;
+    // Ensure that we don't get negative value for the x position
+    overlayProperties.mouseX = Math.max(mouseX, 0);
     overlayProperties.mouseY = mouseY;
 
     const taggingState = overlayProperties.taggingState;
