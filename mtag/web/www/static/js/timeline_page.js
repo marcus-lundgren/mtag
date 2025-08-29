@@ -196,7 +196,7 @@ function setUpListeners() {
             timelineHelper.setBoundaries(startDate, stopDate);
             overlayProperties.zoomState = undefined;
             callRenderTimeline();
-            renderOverlay(timelineHelper)
+            renderOverlay(timelineHelper);
         } else if (overlayProperties.taggingState !== undefined) {
             const taggingState = overlayProperties.taggingState;
 
