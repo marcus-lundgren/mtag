@@ -117,7 +117,10 @@ function setUpListeners() {
 
         await overlayCanvas.requestPointerLock();
         const isZooming = event.shiftKey;
-        overlayProperties.keptTaggingStateForDblClick = undefined;
+
+        // Reset the kept tagging state
+        const keptTaggingStateForDblClick = overlayProperties.keptTaggingStateForDblClick;
+        overlayProperties.keptTaggingStateForDblClick = undefined
 
         if (isZooming) {
             overlayProperties.zoomState = {
@@ -149,6 +152,12 @@ function setUpListeners() {
                 start: taggingMouseDate,
                 stop: taggingMouseDate
             };
+
+            // It seems like we are starting to perform the second click of a double-click.
+            // Set the old kept state back so that we can compare against it later.
+            if (taggingStatesAreEqual(overlayProperties.taggingState, keptTaggingStateForDblClick)) {
+                overlayProperties.keptTaggingStateForDblClick = keptTaggingStateForDblClick;
+            }
         }
     });
 
@@ -191,14 +200,21 @@ function setUpListeners() {
         } else if (overlayProperties.taggingState !== undefined) {
             const taggingState = overlayProperties.taggingState;
 
-            const startDate = taggingState.start;
-            const stopDate = taggingState.stop;
-
             // The start and stop is the same. Keep its state so that we can use it
             // if a double click event happens.
-            if (startDate === stopDate) {
-                taggingState.start = taggingState.boundaryStart;
-                taggingState.stop = taggingState.boundaryStop;
+            if (datesAreEqual(taggingState.start, taggingState.stop)) {
+                // If the current tagging states is equivalent to the previous one, then assume that this is a
+                // double-click. Tag the boundary.
+                if (taggingStatesAreEqual(taggingState, overlayProperties.keptTaggingStateForDblClick)) {
+                    taggingState.start = taggingState.boundaryStart;
+                    taggingState.stop = taggingState.boundaryStop;
+                    renderOverlay(timelineHelper);
+                    showCreateTaggedEntryDialog(taggingState.boundaryStart, taggingState.boundaryStop);
+                    return;
+                }
+
+                // Assume that this is a new first click on what could potentially be a double click.
+                // Save the current state and reset it.
                 overlayProperties.keptTaggingStateForDblClick = taggingState;
                 overlayProperties.taggingState = undefined;
             } else {
@@ -213,20 +229,6 @@ function setUpListeners() {
         }
 
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-    });
-
-    overlayCanvas.addEventListener("dblclick", (event) => {
-        const taggingState = overlayProperties.keptTaggingStateForDblClick;
-        if (taggingState === undefined) {
-            return;
-        }
-
-        overlayProperties.taggingState = overlayProperties.keptTaggingStateForDblClick;
-        renderOverlay(timelineHelper);
-
-        const startDate = taggingState.start;
-        const stopDate = taggingState.stop;
-        showCreateTaggedEntryDialog(startDate, stopDate);
     });
 
     overlayCanvas.addEventListener("wheel", (event) => {
@@ -448,6 +450,20 @@ function updateTables() {
 
     const totalTaggedTimeSpan = document.getElementById("total-tagged-time");
     totalTaggedTimeSpan.innerText = millisecondsToTimeString(totalTaggedTimeInMilliseconds);
+}
+
+function taggingStatesAreEqual(t1, t2) {
+    if (t1 === undefined || t2 === undefined) {
+        return false;
+    }
+
+    return datesAreEqual(t1.boundaryStart, t2.boundaryStart)
+        && datesAreEqual(t1.start, t2.start) && datesAreEqual(t1.stop, t2.stop)
+        && datesAreEqual(t1.boundaryStop, t2.boundaryStop);
+}
+
+function datesAreEqual(d1, d2) {
+    return d1.getTime() === d2.getTime();
 }
 
 setUpListeners();
