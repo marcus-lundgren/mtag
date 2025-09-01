@@ -218,7 +218,7 @@ function setUpListeners() {
                 overlayProperties.keptTaggingStateForDblClick = taggingState;
                 overlayProperties.taggingState = undefined;
             } else {
-                showCreateTaggedEntryDialog(startDate, stopDate);
+                showCreateTaggedEntryDialog(taggingState.start, taggingState.stop);
             }
         }
     });
