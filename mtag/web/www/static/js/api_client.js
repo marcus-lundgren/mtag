@@ -96,7 +96,7 @@ export const fetchUpdateCategory = async (databaseId, name, url, parentId) => {
                 url: url.trim(),
                 parentId: parentId
             }),
-            header: {
+            headers: {
                 "Content-type": "application/json; charset=UTF-8"
             }
         });
