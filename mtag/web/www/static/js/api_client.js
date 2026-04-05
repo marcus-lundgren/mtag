@@ -68,7 +68,9 @@ const apiFetch = async (url, options = {}) => {
         }
         return response;
     } catch (error) {
-        console.error('API Error:', error.message);
+        const errorMessage = 'API Error:' + error.message;
+        console.error(errorMessage);
+        alert(errorMessage);
         throw error;
     }
 };
@@ -78,7 +80,9 @@ const parseJsonResponse = async (response) => {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error('JSON Parsing Error:', error.message);
+        const errorMessage = 'JSON Parsing Error:' + error.message;
+        console.error(errorMessage);
+        alert(errorMessage);
         throw error;
     }
 };
