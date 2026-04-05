@@ -2,149 +2,99 @@ import { dateToDateString } from "./timeline_utilities.js";
 
 export const fetchEntries = async (date) => {
     const dateString = dateToDateString(date);
-    const url = "/entries/" + dateString;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error(error.message);
-    }
+    const response = await apiFetch(`/entries/${dateString}`);
+    return await parseJsonResponse(response);
 };
 
 export const fetchCategories = async () => {
-    const url = "/categories";
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error(error.message);
-    }
+    const response = await apiFetch('/categories');
+    return await parseJsonResponse(response);
 };
 
 export const fetchCategory = async (id) => {
-    // Ensure that we have an actual number to use
-    throwIfNotANumber(id);
-
-    const url = "/category/" + id;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error(error.message);
-    }
+    throwIfNotANumber(id, 'Category ID');
+    const response = await apiFetch(`/category/${id}`);
+    return await parseJsonResponse(response);
 };
 
 export const fetchCategoryStatistics = async (main, sub) => {
-    const params = new URLSearchParams();
-    const mainToUse = main.trim();
-    if (mainToUse.length === 0) {
-        alert("The given main is empty or whitespace!");
-        return;
-    }
+    throwIfEmptyString(main, 'Main category');
 
-    params.append("main", mainToUse);
-
+    const params = new URLSearchParams({ main: main.trim() });
     if (sub) {
-        let subToUse = sub.trim();
-        if (subToUse.length === 0) {
-            alert("The given main is empty or whitespace!");
-            return;
-        }
-
-        params.append("sub", subToUse);
+        throwIfEmptyString(sub, 'Sub category');
+        params.append('sub', sub.trim());
     }
 
-    const url = "/category/statistics?" + params;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        }
-
-        return (await response.json()).seconds;
-    } catch (error) {
-        console.error(error.message);
-    }
+    const response = await apiFetch(`/category/statistics?${params}`);
+    const data = await parseJsonResponse(response);
+    return data.seconds;
 };
 
 export const fetchUpdateCategory = async (databaseId, name, url, parentId) => {
-    throwIfNotANumber(databaseId);
+    throwIfNotANumber(databaseId, 'Database ID');
     if (parentId !== null) {
-        throwIfNotANumber(parentId);
+        throwIfNotANumber(parentId, 'Parent ID');
     }
-    const nameToUse = name.trim();
-    throwIfEmptyString(nameToUse);
+    throwIfEmptyString(name, 'Category name');
 
-    try {
-        const response = await fetch("/category/edit", {
-            method: "POST",
-            body: JSON.stringify({
-                id: databaseId,
-                name: nameToUse,
-                url: url.trim(),
-                parentId: parentId
-            }),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8"
-            }
-        });
-    } catch (error) {
-        console.log(error.message);
-    }
-}
+    await apiFetch('/category/edit', {
+        method: 'POST',
+        body: JSON.stringify({
+            id: databaseId,
+            name: name.trim(),
+            url: url.trim(),
+            parentId: parentId
+        }),
+        headers: { 'Content-type': 'application/json; charset=UTF-8' }
+    });
+};
 
 export const fetchDeleteTaggedEntry = async (id) => {
-    throwIfNotANumber(id);
-
-    const url = "/taggedentry/" + id;
-    try {
-        const response = await fetch(url, { method: "DELETE" });
-        if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
-        }
-    } catch (error) {
-        console.error(error.message);
-    }
-}
+    throwIfNotANumber(id, 'Entry ID');
+    await apiFetch(`/taggedentry/${id}`, { method: 'DELETE' });
+};
 
 export const fetchDeleteCategory = async (id) => {
-    throwIfNotANumber(id);
+    throwIfNotANumber(id, 'Category ID');
+    await apiFetch(`/category/${id}`, { method: 'DELETE' });
+};
 
-    const url = "/category/" + id;
+const apiFetch = async (url, options = {}) => {
     try {
-        const response = await fetch(url, { method: "DELETE" });
+        const response = await fetch(url, options);
         if (!response.ok) {
-            throw new Error(`Response status ${response.status}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        return response;
     } catch (error) {
-        console.error(error.message);
+        console.error('API Error:', error.message);
+        throw error;
     }
-}
+};
 
-const throwIfNotANumber = (value) => {
+const parseJsonResponse = async (response) => {
+    try {
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('JSON Parsing Error:', error.message);
+        throw error;
+    }
+};
+
+const throwIfNotANumber = (value, paramName) => {
     if (isNaN(+value)) {
-        const errorMessage = `The given value '${value}' is not a number!`;
+        const errorMessage = `${paramName} must be a valid number`;
         alert(errorMessage);
         throw new Error(errorMessage);
     }
-}
+};
 
-const throwIfEmptyString = (str) => {
+const throwIfEmptyString = (str, paramName) => {
     if (str.trim().length === 0) {
-        const errorMessage = "The given string is empty or whitespace!";
+        const errorMessage = `${paramName} cannot be empty or whitespace`;
         alert(errorMessage);
         throw new Error(errorMessage);
     }
-}
+};
